@@ -16,3 +16,6 @@ export const DB_PASSWORD = "root";
 
 export const URL_OLLAMA = "http://";
 export const MODEL_OLLAMA = "llama3:latest";
+
+export const OLLAMA_MODEL = "llama3:latest";
+export const OLLAMA_LOCATION = "http://localhost:11434";

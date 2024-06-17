@@ -5,6 +5,9 @@ import { TABLE_POST } from "@/settings";
 import { parse } from "@/lib/quick-parse";
 import { StringRecordId } from "surrealdb.js";
 import { createFile } from "@/lib/actions.file";
+import { getAgent } from "@/lib/actions.agent";
+import { Post } from "@/types/post_client";
+import { respond } from "@/lib/actions.ai";
 // POSTS
 /**
  * Creates a new post in the database.
@@ -21,9 +24,9 @@ export const createPost = async (
     parent_id,
     attachments = [],
   }: {
-    user_id: string | undefined;
-    parent_id: string | undefined;
-    attachments: any[];
+    user_id?: string;
+    parent_id?: string;
+    attachments?: any[];
   } = {}
 ) => {
   const files = [];
@@ -41,7 +44,51 @@ export const createPost = async (
       type: file.type,
     })),
   });
+
   return parse(post);
+};
+
+const getRelevantKnowlede = async (messages, user_id) => {
+  // TODO: Retrieve relevant knowledge from ideas
+  // TODO: Retrieve relevant knowledge from user's posts/memories
+  // TODO: Retrieve relevant knodledge from user's docs
+  return "";
+};
+
+export const createPostAI = async ({
+  user_id,
+  parent_id,
+}: {
+  user_id: string;
+  parent_id: string;
+}) => {
+  // get system prompt from agent
+  const agent = await getAgent(user_id);
+  console.log("AGENT", agent, user_id);
+  const { systemPrompt } = await getAgent(user_id);
+  // get messages from post and all parents
+  const messages = [];
+  let identifier = parent_id;
+  do {
+    const post = await getPost(identifier);
+    messages.unshift([post.user_id ? "assistant" : "user", post.content]);
+    identifier = post.parent_id;
+  } while (identifier);
+
+  const relevantKnowledge = await getRelevantKnowlede(messages, user_id);
+  // add system prompt to messages
+  if (relevantKnowledge) {
+    messages.unshift([
+      "system",
+      `You will use the following relevant knowledge to respond to the user:
+${relevantKnowledge}`,
+    ]);
+  }
+  messages.unshift(["system", systemPrompt]);
+  // add relevant knowledge to messages
+  const [_, content] = await respond(messages, { relevantKnowledge });
+
+  return createPost(content, { user_id, parent_id });
 };
 
 /**
@@ -65,15 +112,20 @@ export const getPost = async (identifier: string, depth = 0) => {
       }
     );
 
-    //
-    for (const child of children) {
+    for (const child of children as Post[]) {
+      // console.log({ child }, child.id.toString());
+      // console.log(await getPost(child.id.toString(), depth - 1));
       post.children.push(await getPost(child.id.toString(), depth - 1));
     }
+  }
+  if (post.user_id) {
+    console.log("U", post.user_id);
+    post.agent = await getAgent(post.user_id as string);
   }
   return parse(post);
 };
 
-export const getTopLevelPosts = async () => {
+export const getTopLevelPosts = async (hydrateUser = true) => {
   const [posts] = await db.query(
     "SELECT * FROM type::table($table) WHERE parent_id = $parent_id",
     {
@@ -81,6 +133,14 @@ export const getTopLevelPosts = async () => {
       parent_id: null,
     }
   );
+  if (hydrateUser) {
+    const hydratedPosts = posts.map(async (post) => {
+      post.agent = await getAgent(post.user_id);
+      return post;
+    });
+    return parse(await Promise.all(hydratedPosts));
+  }
+
   return parse(posts);
 };
 

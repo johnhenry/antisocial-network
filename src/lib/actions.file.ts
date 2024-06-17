@@ -1,3 +1,5 @@
+"use server";
+
 import db from "@/lib/db";
 import { TABLE_FILE } from "@/settings";
 import { parse } from "@/lib/quick-parse";

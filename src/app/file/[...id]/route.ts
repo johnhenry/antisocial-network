@@ -14,7 +14,6 @@ export const GET = async (request, options) => {
     const id = decodeURIComponent(params.id.join("/"));
     const file = pathMode ? await getFileByPath(id) : await getFile(id);
     const content = objectMode ? JSON.stringify(file) : base64to(file.content);
-    console.log({ content });
 
     const contentType = objectMode ? "application/json" : file.type;
     return new Response(content, {
