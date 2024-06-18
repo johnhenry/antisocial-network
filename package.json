@@ -17,7 +17,9 @@
     "obfo": "^0.0.4",
     "react": "19.0.0-rc-f994737d14-20240522",
     "react-dom": "^19.0.0-rc-f994737d14-20240522",
-    "surrealdb.js": "^1.0.0-beta.9"
+    "surrealdb.js": "^1.0.0-beta.9",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.1"
   },
   "devDependencies": {
     "@types/node": "^20",

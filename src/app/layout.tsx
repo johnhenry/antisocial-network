@@ -26,9 +26,10 @@ export default function RootLayout({
               <h1>{metadata.title}</h1>
             </a>
             <nav>
+              <a href="/agent">Agents</a>
               <a href="/idea">Ideas</a>
               <a href="/doc">Docs</a>
-              <a href="/agent">Agents</a>
+              <a href="/tool">Tools</a>
             </nav>
           </header>
           {children}

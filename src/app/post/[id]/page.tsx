@@ -32,6 +32,8 @@ const renderPostWithChildren = ({ post }: { post: Post }) => {
 const Page: FC<{ params: { id: string } }> = ({ params }) => {
   const identifier = decodeURIComponent(params.id || "");
   const [post, setPost] = useState<Post | null>(null);
+  const [requestResponse, setRequestResponse] = useState<Boolean>(true);
+  const toggleRequestResponse = () => setRequestResponse(!requestResponse);
   const router = useRouter();
   const newPostCreated = async (newPost: Post) => {
     if (post) {
@@ -98,15 +100,22 @@ const Page: FC<{ params: { id: string } }> = ({ params }) => {
             ))
           : null}
       </footer>
-      <ComponentPostCreate
-        newPostCreated={newPostCreated}
-        parent_id={identifier}
-        user_id={agent.id}
-      ></ComponentPostCreate>
-      <RequestResponse
-        newPostCreated={newPostCreated}
-        parent_id={identifier}
-      ></RequestResponse>
+      <button type="button" onClick={toggleRequestResponse}>
+        {requestResponse ? "Respond Directly" : "Request Response"}
+      </button>
+      {requestResponse ? (
+        <RequestResponse
+          newPostCreated={newPostCreated}
+          parent_id={identifier}
+        ></RequestResponse>
+      ) : (
+        <ComponentPostCreate
+          newPostCreated={newPostCreated}
+          parent_id={identifier}
+          user_id={agent.id}
+        ></ComponentPostCreate>
+      )}
+
       {post.children.length ? (
         <ul className="posts">
           {post.children.map((post, index) => (

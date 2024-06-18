@@ -21,10 +21,11 @@ export type Agent = {
   id: string;
   timestamp: string;
   name: string;
-  generatedDescription: string;
-  description: string;
-  qualities: [string, string][];
   systemPrompt: string;
+  description: string;
+  combinedQualities: string;
+  qualities: [string, string][];
   model: string;
   image: string;
+  indexed: string;
 };

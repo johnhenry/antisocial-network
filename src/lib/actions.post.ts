@@ -64,7 +64,6 @@ export const createPostAI = async ({
 }) => {
   // get system prompt from agent
   const agent = await getAgent(user_id);
-  console.log("AGENT", agent, user_id);
   const { systemPrompt } = await getAgent(user_id);
   // get messages from post and all parents
   const messages = [];

@@ -6,6 +6,8 @@ import { parse } from "@/lib/quick-parse";
 import { StringRecordId } from "surrealdb.js";
 import { generateSystemPrompt } from "@/lib/actions.ai.mjs";
 
+import nameGenerator from "@/util/random-name-generator";
+
 const nameExists = async (name: string): Promise<boolean> => {
   const [agent]: [any] = await db.query(
     "SELECT * FROM type::table($table) WHERE name = $name",
@@ -18,23 +20,24 @@ const nameExists = async (name: string): Promise<boolean> => {
 };
 
 const generateRandomName = async () => {
-  let name = "";
-  do {
-    name = Math.random().toString(36).substring(2);
-  } while (await nameExists(name));
-  return name;
+  for (const name of nameGenerator()) {
+    if (await nameExists(name)) {
+      continue;
+    }
+    return name;
+  }
 };
 
 export const createAgent = async ({
-  model = "",
-  description = "",
+  model = null,
+  description = null,
   qualities = [],
-  image = "",
+  image = null,
 }: {
-  model?: string;
-  description?: string;
+  model?: string | null;
+  description?: string | null;
   qualities?: [string, string][];
-  image?: string;
+  image?: string | null;
 } = {}) => {
   const name = await generateRandomName();
   const combinedQualities = qualities
@@ -45,6 +48,10 @@ export const createAgent = async ({
     description
   );
 
+  const indexed = [name, systemPrompt, description, combinedQualities]
+    .filter(Boolean)
+    .join("\n ------------------ \n");
+
   const [agent] = await db.create(TABLE_AGENT, {
     timestamp: new Date().toISOString(),
     name,
@@ -54,30 +61,31 @@ export const createAgent = async ({
     description,
     qualities,
     image,
+    indexed,
   });
   return parse(agent);
 };
 export const updateAgent = async (
   identifier: string,
   {
-    name = "",
-    model = "",
-    description = "",
+    name = null,
+    model = null,
+    description = null,
     qualities = [],
-    image = "",
+    image = null,
   }: {
-    name?: string;
-    model?: string;
-    description?: string;
+    name?: string | null;
+    model?: string | null;
+    description?: string | null;
     qualities?: [string, string][];
-    image?: string;
+    image?: string | null;
   } = {}
 ) => {
   const id = new StringRecordId(identifier);
   // get agent
   const agent = await db.select(id);
   // name is different
-  if (agent.name !== name) {
+  if (name && agent.name !== name) {
     if (await nameExists(name)) {
       return parse(agent);
     }
@@ -98,7 +106,7 @@ export const updateAgent = async (
     let _;
     [_, agent.systemPrompt] = await generateSystemPrompt(
       combinedQualities,
-      description
+      description || ""
     );
     agent.qualities = qualities;
     agent.description = description;
@@ -107,6 +115,15 @@ export const updateAgent = async (
   if (model !== agent.model) {
     agent.model = model;
   }
+  agent.indexed = [
+    agent.name,
+    agent.systemPrompt,
+    agent.description,
+    agent.combinedQualities,
+  ]
+    .filter(Boolean)
+    .join("\n ------------------ \n");
+
   const updatedAgent = await db.update(id, agent);
   return parse(updatedAgent);
 };

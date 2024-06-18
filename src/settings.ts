@@ -19,3 +19,5 @@ export const MODEL_OLLAMA = "llama3:latest";
 
 export const OLLAMA_MODEL = "llama3:latest";
 export const OLLAMA_LOCATION = "http://localhost:11434";
+
+export const DEFAULT_USER_IMAGE = "/static/user.webp";

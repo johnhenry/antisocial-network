@@ -172,14 +172,14 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: var(--size-gap);
-
-  padding: var(--size-gap);
+  /* padding: var(--size-gap); */
 }
 
 .post {
   border-radius: var(--size-gap-inner);
   overflow: hidden;
   border: 1px solid var(--color-text);
+  overflow: hidden;
   > header {
     display: flex;
     justify-items: center;
@@ -187,7 +187,6 @@ h2 {
     color: var(--color-background);
     background-color: var(--color-text);
     padding: var(--size-gap-inner);
-
     > img {
       width: 3rem;
       height: 3rem;
@@ -217,6 +216,11 @@ h2 {
     display: flex;
     gap: var(--size-gap-inner);
     padding: var(--size-gap-inner);
+  }
+  .posts & {
+    border: none;
+    margin-right: 0;
+    margin-left: var(--size-gap);
   }
 }
 
@@ -260,11 +264,24 @@ h2 {
   padding: var(--size-gap-inner);
   border-radius: var(--size-gap-inner);
   border: 1px solid var(--color-text);
-  > img {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 50%;
+  > header {
+    display: flex;
+    place-items: center;
+    > img {
+      border-radius: 50%;
+    }
   }
+  > main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-gap-inner);
+    > span {
+      &::before {
+        content: "@";
+      }
+    }
+  }
+
   > h2 {
     font-size: 2rem;
     &::before {
@@ -289,41 +306,138 @@ h2 {
 
 .create-request {
   border: 1px dashed var(--color-text);
-  > header {
-    position: relative;
-    > button {
-      --size: 1rem;
-      padding: 0;
-      width: var(--size);
-      aspect-ratio: 1;
-      border-radius: 50%;
-      display: none;
-      position: absolute;
-      font-size: 0.5rem;
-      top: calc(-1 * var(--size) / 2);
-      right: calc(-1 * var(--size) / 2);
-      :hover > & {
-        display: block;
-      }
-    }
+  display: flex;
+  padding: var(--size-gap);
+  gap: var(--size-gap-inner);
+  max-height: 256px;
+
+  &:focus-within {
+    border-size: 2px;
+    border-style: solid;
   }
   > main {
-    > input {
-      width: 100%;
-      padding: var(--size-gap-inner);
-      margin-bottom: var(--size-gap);
-      &:focus {
-        outline: none;
-        -webkit-text-fill-color: inherit; /* Will override color (regardless of order) */
-        -webkit-text-stroke: inherit;
+    flex: 1;
+    display: flex;
+    place-items: center;
+    place-content: center;
+    gap: var(--size-gap-inner);
+    > main {
+      flex: 1;
+      display: flex;
+      height: 100%;
+      flex-direction: column;
+      position: relative;
+      gap: var(--size-gap-inner);
+      place-content: center;
+      > p {
+        text-align: center;
       }
-      &::placeholder {
-        /* color: var(--color-text); */
+      > header {
+        gap: var(--size-gap-inner);
+        > * {
+          display: inline-block;
+          margin: var(--size-gap-inner);
+        }
+      }
+      > main {
+        overflow: scroll;
+      }
+
+      > button.close {
+        --size: 1.5rem;
+        width: var(--size);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        padding: 0;
+        /* display: none; */
+        position: absolute;
+        font-size: 0.75rem;
+        top: 0;
+        right: 0;
+        :hover > & {
+          display: block;
+        }
       }
     }
   }
   > footer {
+    flex: 1;
     display: flex;
+    flex-direction: column;
+    gap: var(--size-gap);
+    > input {
+      width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+      padding: var(--size-gap-inner);
+      border-radius: var(--size-gap);
+      background-color: var(--color-text);
+      color: var(--color-background);
+    }
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: var(--size-gap);
+      overflow: scroll;
+      /* height: 128px; */
+    }
+  }
+}
+
+.section-agent {
+  display: flex;
+  gap: var(--size-gap-inner);
+  > header {
+    flex: 0;
+    display: flex;
+    flex-direction: column;
     gap: var(--size-gap-inner);
+    > img {
+      min-width: 256px;
+      aspect-ratio: 1;
+    }
+    > .agent-qualities {
+      display: flex;
+      flex-direction: column;
+      gap: var(--size-gap-inner);
+      .quality {
+        position: relative;
+        input,
+        textarea {
+          border: 1px solid var(--color-text);
+          padding: var(--size-gap-inner);
+          width: 100%;
+        }
+        > button.close {
+          --size: 1.5rem;
+          width: var(--size);
+          aspect-ratio: 1;
+          /* border-radius: 50%; */
+          padding: 0;
+          /* display: none; */
+          position: absolute;
+          font-size: 0.75rem;
+          top: 0;
+          right: 0;
+          :hover > & {
+            display: block;
+          }
+        }
+      }
+    }
+  }
+  > main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-gap-inner);
+    > img {
+      border-radius: 50%;
+    }
+    textarea {
+      border: 1px solid var(--color-text);
+      width: 100%;
+      padding: var(--size-gap-inner);
+    }
   }
 }

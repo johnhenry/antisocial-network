@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { getAllAgents, createAgent } from "@/lib/actions.agent";
 import sortOnTimestamp from "@/util/sort-on-timestamp";
 import { useRouter } from "next/navigation";
+
+import AgentRenderer from "@/components/agent/index";
 const Page = () => {
   const [agents, setAgents] = useState<any[]>([]);
   const router = useRouter();
@@ -31,15 +33,13 @@ const Page = () => {
     <section>
       <h2>Agents</h2>
       <button type="button" onClick={() => newAgent()}>
-        + Agent
+        +
       </button>
-      <ul>
-        {agents.map((agent) => (
-          <li key={agent.id}>
-            <h3>{agent.name}</h3>
-            <a href={`/agent/${agent.id}`}>View</a>
-            <p>{agent.description}</p>
-          </li>
+      <ul className="posts">
+        {agents.map((agent, index) => (
+          <a className="agent" href={`/agent/${agent.id}`} key={index}>
+            <AgentRenderer agent={agent} key={agent.id} />
+          </a>
         ))}
       </ul>
     </section>

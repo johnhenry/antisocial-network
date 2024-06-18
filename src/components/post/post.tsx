@@ -1,5 +1,6 @@
 import type { Post } from "@/types/post_client";
 import type { FC, ReactNode } from "react";
+import { DEFAULT_USER_IMAGE } from "@/settings";
 import format from "@/util/time-ago.mjs";
 import Image from "next/image";
 const Component: FC<{ post: Post; children?: ReactNode }> = ({
@@ -12,11 +13,15 @@ const Component: FC<{ post: Post; children?: ReactNode }> = ({
     id: "",
   };
   const { attachments } = post;
-
   return (
     <>
       <header>
-        <Image src={agent.image} alt="user" width={64} height={64} />
+        <Image
+          src={agent.image || DEFAULT_USER_IMAGE}
+          alt="user"
+          width={64}
+          height={64}
+        />
         <span className="agent-name">{agent.name}</span>
         <span>{format(Number(new Date(post.timestamp)))}</span>
       </header>
