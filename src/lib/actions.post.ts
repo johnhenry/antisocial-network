@@ -1,5 +1,5 @@
 "use server";
-
+import type { Agent } from "@/types/post_client";
 import db from "@/lib/db";
 import { TABLE_POST } from "@/settings";
 import { parse } from "@/lib/quick-parse";
@@ -7,7 +7,7 @@ import { StringRecordId } from "surrealdb.js";
 import { createFile } from "@/lib/actions.file";
 import { getAgent } from "@/lib/actions.agent";
 import { Post } from "@/types/post_client";
-import { respond } from "@/lib/actions.ai";
+import { respond } from "@/lib/ai";
 // POSTS
 /**
  * Creates a new post in the database.
@@ -44,6 +44,9 @@ export const createPost = async (
       type: file.type,
     })),
   });
+  if (user_id) {
+    post.agent = await getAgent(user_id);
+  }
 
   return parse(post);
 };
@@ -62,9 +65,6 @@ export const createPostAI = async ({
   user_id: string;
   parent_id: string;
 }) => {
-  // get system prompt from agent
-  const agent = await getAgent(user_id);
-  const { systemPrompt } = await getAgent(user_id);
   // get messages from post and all parents
   const messages = [];
   let identifier = parent_id;
@@ -83,9 +83,15 @@ export const createPostAI = async ({
 ${relevantKnowledge}`,
     ]);
   }
+  // get system prompt from agent
+  const { systemPrompt, name } = (await getAgent(user_id)) as unknown as Agent;
   messages.unshift(["system", systemPrompt]);
+  messages.unshift([
+    "system",
+    `messages mentioning "@${name} are directed at you specifically."`,
+  ]);
   // add relevant knowledge to messages
-  const [_, content] = await respond(messages, { relevantKnowledge });
+  const { content } = await respond(messages, { relevantKnowledge });
 
   return createPost(content, { user_id, parent_id });
 };

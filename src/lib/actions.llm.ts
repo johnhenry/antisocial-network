@@ -3,7 +3,7 @@ import { ChatOllama } from "@langchain/community/chat_models/ollama";
 // import { PromptTemplate } from "@langchain/core/prompts";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { JsonOutputFunctionsParser } from "@langchain/core/output_parsers/openai_functions";
-import { MODEL_OLLAMA as model } from "@/settings";
+import { MODEL_BASIC as model } from "@/settings";
 import { getAgent } from "@/lib/actions.agent";
 
 type FUNCTION_DEFINITION = {

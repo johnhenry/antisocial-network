@@ -7,6 +7,9 @@ import { createPost, createPostAI } from "@/lib/actions.post";
 import fileToBase64 from "@/util/to-base64";
 import Image from "next/image";
 
+import generateAgentScores from "@/lib/gen-agent-scores";
+
+// import { subtractionDistraction as generateAgentScores } from "@/lib/gen-agent-scores";
 import { getAllAgents } from "@/lib/actions.agent";
 
 import AgentRenderer from "@/components/agent/index";
@@ -22,17 +25,19 @@ const Component: FC<{
     setFilterString(event.target.value.trim().toLowerCase());
   };
   const generateNewPost = async () => {
-    if (!confirm("Generating new post...")) {
-      return;
-    }
-    if (!agent) {
-      alert(
-        "Automatic selection not yet implemented! Please select an agent manually."
-      );
-      return;
+    setTimeout(() => {
+      alert("Generating new post...");
+    });
+    let user_id;
+    if (agent) {
+      user_id = agent.id;
+    } else {
+      const { scores } = await generateAgentScores(agents, parent_id);
+      scores.sort((a, b) => b.score - a.score);
+      user_id = scores[0].agent;
     }
     const post: Post = await createPostAI({
-      user_id: agent.id,
+      user_id,
       parent_id,
     });
     newPostCreated(post);

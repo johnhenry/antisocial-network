@@ -4,7 +4,7 @@ import db from "@/lib/db";
 import { TABLE_AGENT } from "@/settings";
 import { parse } from "@/lib/quick-parse";
 import { StringRecordId } from "surrealdb.js";
-import { generateSystemPrompt } from "@/lib/actions.ai.mjs";
+import generateSystemPrompt from "@/lib/gen-system-prompt";
 
 import nameGenerator from "@/util/random-name-generator";
 
@@ -43,7 +43,7 @@ export const createAgent = async ({
   const combinedQualities = qualities
     .map(([name, description]) => `- ${name}\n  - ${description}`)
     .join("\n");
-  const [_, systemPrompt] = await generateSystemPrompt(
+  const { content: systemPrompt } = await generateSystemPrompt(
     combinedQualities,
     description
   );
@@ -104,10 +104,11 @@ export const updateAgent = async (
   ) {
     // update system prompt, description and combinedQualities
     let _;
-    [_, agent.systemPrompt] = await generateSystemPrompt(
+    const { content: systemPrompt } = await generateSystemPrompt(
       combinedQualities,
       description || ""
     );
+    agent.systemPrompt = systemPrompt;
     agent.qualities = qualities;
     agent.description = description;
     agent.combinedQualities = combinedQualities;

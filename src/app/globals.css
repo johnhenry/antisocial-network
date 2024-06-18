@@ -141,6 +141,12 @@ h2 {
     > :first-child {
       margin-bottom: auto;
     }
+    > .request-response {
+      &.active {
+        background-color: green;
+        color: white;
+      }
+    }
   }
   &:focus-within {
     border-size: 2px;

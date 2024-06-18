@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-
+import { TABLE_AGENT } from "@/settings";
 const schema = z.object({
   scores: z
     .array(
       z.object({
-        agent: z.string().describe("The name of the agent."),
-        score: z.number().describe("The score of the agent."),
+        agent: z.string().describe(`ID of the agent e.g. ${TABLE_AGENT}:???`),
+        score: z.number().describe("Float score of the agent from 0 to 1"),
       })
     )
     .describe("The list of agents and their scores."),

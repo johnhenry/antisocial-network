@@ -6,6 +6,9 @@ import obfo from "obfo";
 import { createPost } from "@/lib/actions.post";
 import fileToBase64 from "@/util/to-base64";
 import Image from "next/image";
+import { getAllAgents } from "@/lib/actions.agent";
+import generateAgentScores from "@/lib/gen-agent-scores";
+import { createPostAI } from "@/lib/actions.post";
 
 const Component: FC<{
   newPostCreated: Function;
@@ -28,11 +31,24 @@ const Component: FC<{
     if (!content && !attachments.length) {
       return;
     }
+
     const post: Post = await createPost(content, {
       attachments,
       user_id,
       parent_id,
     });
+
+    if (requestResponse) {
+      const agents = await getAllAgents();
+      const { scores } = await generateAgentScores(agents, post.id);
+      scores.sort((a, b) => b.score - a.score);
+      const user_id = scores[0].agent;
+      await createPostAI({
+        user_id,
+        parent_id: post.id,
+      });
+    }
+
     newPostCreated(post);
   };
   const attach: ChangeEventHandler = async (event) => {
