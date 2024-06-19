@@ -5,7 +5,7 @@ import { TABLE_AGENT } from "@/settings";
 import { parse } from "@/lib/quick-parse";
 import { StringRecordId } from "surrealdb.js";
 import generateSystemPrompt from "@/lib/gen-system-prompt";
-
+import { embed } from "@/lib/ai";
 import nameGenerator from "@/util/random-name-generator";
 
 const nameExists = async (name: string): Promise<boolean> => {
@@ -27,6 +27,9 @@ const generateRandomName = async () => {
     return name;
   }
 };
+type GeneratedPrompt = {
+  content: string;
+};
 
 export const createAgent = async ({
   model = null,
@@ -43,14 +46,16 @@ export const createAgent = async ({
   const combinedQualities = qualities
     .map(([name, description]) => `- ${name}\n  - ${description}`)
     .join("\n");
-  const { content: systemPrompt } = await generateSystemPrompt(
+  const { content: systemPrompt } = (await generateSystemPrompt(
     combinedQualities,
     description
-  );
+  )) as GeneratedPrompt;
 
   const indexed = [name, systemPrompt, description, combinedQualities]
     .filter(Boolean)
     .join("\n ------------------ \n");
+
+  const embedding = embed(systemPrompt);
 
   const [agent] = await db.create(TABLE_AGENT, {
     timestamp: new Date().toISOString(),
@@ -61,10 +66,12 @@ export const createAgent = async ({
     description,
     qualities,
     image,
+    embedding,
     indexed,
   });
   return parse(agent);
 };
+
 export const updateAgent = async (
   identifier: string,
   {
@@ -104,11 +111,12 @@ export const updateAgent = async (
   ) {
     // update system prompt, description and combinedQualities
     let _;
-    const { content: systemPrompt } = await generateSystemPrompt(
+    const { content: systemPrompt } = (await generateSystemPrompt(
       combinedQualities,
       description || ""
-    );
+    )) as GeneratedPrompt;
     agent.systemPrompt = systemPrompt;
+    agent.embedding = embed(systemPrompt);
     agent.qualities = qualities;
     agent.description = description;
     agent.combinedQualities = combinedQualities;
@@ -129,8 +137,10 @@ export const updateAgent = async (
   return parse(updatedAgent);
 };
 
-export const getAgent = async (identifier: string) => {
-  if (!identifier) return null;
+export const getAgent = async (identifier: string | null) => {
+  if (!identifier) {
+    return null;
+  }
   const id = new StringRecordId(identifier);
   const agent = db.select(id);
   return agent;

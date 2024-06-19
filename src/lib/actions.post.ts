@@ -5,9 +5,13 @@ import { TABLE_POST } from "@/settings";
 import { parse } from "@/lib/quick-parse";
 import { StringRecordId } from "surrealdb.js";
 import { createFile } from "@/lib/actions.file";
+import { embed } from "@/lib/ai";
 import { getAgent } from "@/lib/actions.agent";
 import { Post } from "@/types/post_client";
 import { respond } from "@/lib/ai";
+
+// TODO: parse and embed mentions, links and other entities within the post content at creation time. This way @mentions can always point to the correct agent.
+
 // POSTS
 /**
  * Creates a new post in the database.
@@ -20,12 +24,12 @@ import { respond } from "@/lib/ai";
 export const createPost = async (
   content: string,
   {
-    user_id,
-    parent_id,
+    user_id = null,
+    parent_id = null,
     attachments = [],
   }: {
-    user_id?: string;
-    parent_id?: string;
+    user_id?: string | null;
+    parent_id?: string | null;
     attachments?: any[];
   } = {}
 ) => {
@@ -33,11 +37,13 @@ export const createPost = async (
   for (const file of attachments) {
     files.push(await createFile(file));
   }
+  const embedding = await embed(content);
   const [post] = await db.create(TABLE_POST, {
     timestamp: new Date().toISOString(),
     user_id,
     parent_id: parent_id ? new StringRecordId(parent_id) : null,
     content,
+    embedding,
     attachments: files.map((file) => ({
       id: file.id,
       path: file.path,
@@ -47,7 +53,6 @@ export const createPost = async (
   if (user_id) {
     post.agent = await getAgent(user_id);
   }
-
   return parse(post);
 };
 
@@ -59,21 +64,22 @@ const getRelevantKnowlede = async (messages, user_id) => {
 };
 
 export const createPostAI = async ({
-  user_id,
-  parent_id,
+  user_id = null,
+  parent_id = null,
 }: {
-  user_id: string;
-  parent_id: string;
-}) => {
+  user_id?: string | null;
+  parent_id?: string | null;
+} = {}) => {
   // get messages from post and all parents
   const messages = [];
-  let identifier = parent_id;
-  do {
-    const post = await getPost(identifier);
-    messages.unshift([post.user_id ? "assistant" : "user", post.content]);
-    identifier = post.parent_id;
-  } while (identifier);
-
+  if (parent_id) {
+    let identifier = parent_id;
+    do {
+      const post = await getPost(identifier);
+      messages.unshift([post.user_id ? "assistant" : "user", post.content]);
+      identifier = post.parent_id;
+    } while (identifier);
+  }
   const relevantKnowledge = await getRelevantKnowlede(messages, user_id);
   // add system prompt to messages
   if (relevantKnowledge) {
@@ -118,8 +124,6 @@ export const getPost = async (identifier: string, depth = 0) => {
     );
 
     for (const child of children as Post[]) {
-      // console.log({ child }, child.id.toString());
-      // console.log(await getPost(child.id.toString(), depth - 1));
       post.children.push(await getPost(child.id.toString(), depth - 1));
     }
   }

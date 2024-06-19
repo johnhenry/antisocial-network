@@ -28,5 +28,5 @@
 - Add per-agent settings
   - temperature
   - model
-  - etc.
+  - etc.https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
 - Store and retrieve relevant knowledge when answering (see: `relevantKnowledge` function)

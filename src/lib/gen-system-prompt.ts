@@ -25,7 +25,10 @@ please create a detailed and concise description for an AI agent that incorporat
 {qualities}
 `;
 
-const generateSystemPrompt = async (qualities = "", description = "") => {
+const generateSystemPrompt = async (
+  qualities: string | null = null,
+  description: string | null = null
+) => {
   const messages: [string, string][] = [["system", SYSTEM_PROMPT]];
   switch (true) {
     case !!(qualities && description):
