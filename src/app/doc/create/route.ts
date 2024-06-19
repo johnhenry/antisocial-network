@@ -1,5 +1,7 @@
 import parsePDF from "@/lib/parsers/pdf";
 import semanticChunker from "@/lib/chunkers/semantic";
+import { createMeme, setRelationshipProceeds } from "@/lib/actions.meme";
+import { createDoc, setRelationshipContains } from "@/lib/actions.doc";
 
 export const POST = async (request: Request) => {
   const [type, subtype] = request.headers.get("content-type")!.split("/");
@@ -14,10 +16,17 @@ export const POST = async (request: Request) => {
             (await request.arrayBuffer()) as Buffer,
             semanticChunker
           );
-          console.log({ metadata });
-          console.log("chunking...");
-          for await (const { chunk } of content) {
-            console.log(chunk);
+          const doc = await createDoc({ metadata });
+          console.log(doc);
+          let previousMemeId = null;
+          for await (const { chunk, embedding } of content) {
+            const meme = await createMeme(chunk, embedding);
+            console.log(meme);
+            await setRelationshipContains(doc.id, meme.id);
+            if (previousMemeId) {
+              await setRelationshipProceeds(previousMemeId, meme.id);
+            }
+            previousMemeId = meme.id;
           }
           return new Response(JSON.stringify({ id: "123", metadata }), {
             headers: {
@@ -39,7 +48,7 @@ export const POST = async (request: Request) => {
   } else {
   }
 
-  // retunr json
+  // return json
   return new Response(JSON.stringify({ id: "123" }), {
     headers: {
       "Content-Type": "application/json",

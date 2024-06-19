@@ -15,6 +15,7 @@ export type Post = {
   attachments: File[];
   children: Post[];
   agent?: Agent;
+  hash: string;
 };
 
 export type Agent = {
@@ -28,4 +29,21 @@ export type Agent = {
   model: string;
   image: string;
   indexed: string;
+};
+
+export type Meme = {
+  id: string;
+  timestamp: string;
+  embedding: number[];
+  hash: string;
+  content: string;
+};
+
+export type Doc = {
+  id: string;
+  timestamp: string;
+  title: string | null;
+  author: string | null;
+  publisher: string | null;
+  publisherDate: string | null;
 };

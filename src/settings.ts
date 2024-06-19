@@ -8,6 +8,7 @@ export const TABLE_DOC = `doc${MAGIC_STRING}`;
 export const TABLE_TOOL = `tool${MAGIC_STRING}`;
 export const TABLE_FILE = `file${MAGIC_STRING}`;
 export const TABLE_EMBEDDING = `embedding${MAGIC_STRING}`;
+export const TABLE_MEME = `meme${MAGIC_STRING}`;
 
 export const DB_PATH = "http://127.0.0.1:8000/rpc";
 export const DB_DATABASE = "test";

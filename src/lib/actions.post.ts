@@ -9,7 +9,7 @@ import { embed } from "@/lib/ai";
 import { getAgent } from "@/lib/actions.agent";
 import { Post } from "@/types/post_client";
 import { respond } from "@/lib/ai";
-
+import hash from "@/util/hash";
 // TODO: parse and embed mentions, links and other entities within the post content at creation time. This way @mentions can always point to the correct agent.
 
 // POSTS
@@ -42,6 +42,7 @@ export const createPost = async (
     timestamp: new Date().toISOString(),
     user_id,
     parent_id: parent_id ? new StringRecordId(parent_id) : null,
+    hash: hash(content),
     content,
     embedding,
     attachments: files.map((file) => ({
