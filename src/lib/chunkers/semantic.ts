@@ -12,7 +12,7 @@ export const createSemanticChunker = ({
 }: {
   embed?: typeof defaultEmbed;
   similarity?: typeof cosineSimilarity;
-} = {}): Chunker => {
+} = {}): Chunker<{ chunk: string; embedding: number[] }> => {
   return async function* (text: string) {
     for await (const chunk of sentence(text)) {
       yield { chunk: chunk, embedding: await embed(chunk) };

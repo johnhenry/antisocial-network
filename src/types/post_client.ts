@@ -45,5 +45,8 @@ export type Doc = {
   title: string | null;
   author: string | null;
   publisher: string | null;
-  publisherDate: string | null;
+  publishDate: string | null;
+  hash: string;
+  type: string;
+  metadata: Record<string, any>;
 };

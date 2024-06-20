@@ -1,6 +1,6 @@
 "use server";
 import type { Agent } from "@/types/post_client";
-import db from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { TABLE_AGENT } from "@/settings";
 import { parse } from "@/lib/quick-parse";
 import { StringRecordId } from "surrealdb.js";
@@ -9,6 +9,7 @@ import { embed } from "@/lib/ai";
 import nameGenerator from "@/util/random-name-generator";
 
 const nameExists = async (name: string): Promise<boolean> => {
+  const db = await getDB();
   const [agent]: [any] = await db.query(
     "SELECT * FROM type::table($table) WHERE name = $name",
     {
@@ -42,6 +43,7 @@ export const createAgent = async ({
   qualities?: [string, string][];
   image?: string | null;
 } = {}) => {
+  const db = await getDB();
   const name = await generateRandomName();
   const combinedQualities = qualities
     .map(([name, description]) => `- ${name}\n  - ${description}`)
@@ -88,6 +90,7 @@ export const updateAgent = async (
     image?: string | null;
   } = {}
 ) => {
+  const db = await getDB();
   const id = new StringRecordId(identifier);
   // get agent
   const agent = await db.select(id);
@@ -138,6 +141,7 @@ export const updateAgent = async (
 };
 
 export const getAgent = async (identifier: string | null) => {
+  const db = await getDB();
   if (!identifier) {
     return null;
   }
@@ -146,4 +150,7 @@ export const getAgent = async (identifier: string | null) => {
   return agent;
 };
 
-export const getAllAgents = () => db.select(TABLE_AGENT);
+export const getAllAgents = async () => {
+  const db = await getDB();
+  return await db.select(TABLE_AGENT);
+};

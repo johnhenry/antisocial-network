@@ -1,23 +1,35 @@
 "use server";
 import type { Doc } from "@/types/post_client";
-import db from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { TABLE_DOC } from "@/settings";
 import { parse } from "@/lib/quick-parse";
+import type { RecordId } from "surrealdb.js";
 import { StringRecordId } from "surrealdb.js";
+import semanticChunker from "@/lib/chunkers/semantic";
+import { createMeme } from "@/lib/actions.meme";
+import { relate } from "@/lib/db";
+import { TABLE_CONTAINS, TABLE_PROCEEDS } from "@/settings";
+
+import hash from "@/util/hash";
 
 export const createDoc = async ({
   title = null,
   author = null,
   publisher = null,
   publishDate = null,
-  metadata = null,
+  metadata = {},
+  type = null,
+  text = "",
 }: {
   title?: string | null;
   author?: string | null;
   publisher?: string | null;
   publishDate?: string | null;
-  metadata?: any;
+  type?: string | null;
+  metadata?: Record<string, any>;
+  text?: string;
 } = {}): Promise<Doc> => {
+  const db = await getDB();
   const [doc] = await db.create(TABLE_DOC, {
     timestamp: new Date().toISOString(),
     title,
@@ -25,7 +37,21 @@ export const createDoc = async ({
     publisher,
     publishDate,
     metadata,
+    type,
+    hash: hash(text),
   });
+  let previousMemeId = null;
+  // embed chunks
+  for await (const { chunk, embedding } of semanticChunker(text)) {
+    const meme = await createMeme(chunk, embedding);
+    const id = new StringRecordId(meme.id) as unknown as RecordId;
+    await relate(doc.id, TABLE_CONTAINS, id);
+    if (previousMemeId) {
+      await relate(previousMemeId, TABLE_PROCEEDS, id);
+    }
+    previousMemeId = id;
+  }
+
   return parse(doc);
 };
 
@@ -36,15 +62,14 @@ export const updateDoc = async (
     author = null,
     publisher = null,
     publishDate = null,
-    metadata = null,
   }: {
     title?: string | null;
     author?: string | null;
     publisher?: string | null;
     publishDate?: string | null;
-    metadata?: any;
   } = {}
 ): Promise<Doc> => {
+  const db = await getDB();
   const id = new StringRecordId(identifier);
   // get agent
   const doc = await db.select(id);
@@ -52,20 +77,11 @@ export const updateDoc = async (
   doc.author = author;
   doc.publisher = publisher;
   doc.publishDate = publishDate;
-  doc.metadata = metadata;
   const updatedDoc = await db.update(id, doc);
   return parse(updatedDoc);
 };
 
-export const setRelationshipContains = async (
-  doc_id: string,
-  meme_id: string
-) => {
-  return parse(
-    await db.relate(
-      new StringRecordId(doc_id),
-      "contains",
-      new StringRecordId(meme_id)
-    )
-  );
+export const getDoc = async (identifier: string): Promise<Doc> => {
+  const db = await getDB();
+  return parse(await db.select(new StringRecordId(identifier)));
 };

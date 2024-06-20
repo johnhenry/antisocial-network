@@ -28,7 +28,7 @@ export default function RootLayout({
             <nav>
               <a href="/agent">Agents</a>
               <a href="/doc">Docs</a>
-              <a href="/meme">Meme</a>
+              <a href="/meme">Memes</a>
               <a href="/tool">Tools</a>
             </nav>
           </header>

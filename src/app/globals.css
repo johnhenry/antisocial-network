@@ -447,3 +447,11 @@ h2 {
     }
   }
 }
+
+.section-doc {
+  > form,
+  > form > details {
+    display: flex;
+    flex-direction: column;
+  }
+}

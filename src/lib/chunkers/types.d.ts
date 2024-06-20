@@ -1,1 +1,1 @@
-export type Chunker = (text: string) => AsyncGenerator<any>;
+export type Chunker<T = any> = (text: string) => AsyncGenerator<T>;

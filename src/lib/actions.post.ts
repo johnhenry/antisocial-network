@@ -1,6 +1,6 @@
 "use server";
 import type { Agent } from "@/types/post_client";
-import db from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { TABLE_POST } from "@/settings";
 import { parse } from "@/lib/quick-parse";
 import { StringRecordId } from "surrealdb.js";
@@ -33,6 +33,7 @@ export const createPost = async (
     attachments?: any[];
   } = {}
 ) => {
+  const db = await getDB();
   const files = [];
   for (const file of attachments) {
     files.push(await createFile(file));
@@ -108,6 +109,7 @@ ${relevantKnowledge}`,
  *
  */
 export const getPost = async (identifier: string, depth = 0) => {
+  const db = await getDB();
   const id = new StringRecordId(identifier);
   const post = await db.select(id);
   post.children = [];
@@ -136,6 +138,7 @@ export const getPost = async (identifier: string, depth = 0) => {
 };
 
 export const getTopLevelPosts = async (hydrateUser = true) => {
+  const db = await getDB();
   const [posts] = await db.query(
     "SELECT * FROM type::table($table) WHERE parent_id = $parent_id",
     {
