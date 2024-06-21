@@ -27,17 +27,20 @@ export const searchMemes = async (
   page: number,
   size: number
 ) => {
+  console.log("search", search, "page", page, "size", size);
   const embedded = await embed(search);
-  const memes = await query()`
-    SELECT * FROM type::table(${TABLE_MEME})
-    WHERE embedding LIKE ${embedded}
-    LIMIT ${size} OFFSET ${(page - 1) * size}
-  `;
-  const numpages = await query()`
-    SELECT COUNT(*) FROM type::table(${TABLE_MEME})
-    WHERE embedding LIKE ${embedded}
-  `;
-  return { memes, numpages };
+  const db = await getDB();
+  const [memes, [{ count }]] = await db.query(
+    `SELECT id, content, vector::similarity::cosine(embedding, $embedded) AS dist, count() FROM type::table($table) WHERE embedding <|2|> $embedded ORDER BY dist DESC LIMIT $size START $start;SELECT count() FROM type::table($table) WHERE embedding <|2|> $embedded GROUP ALL`,
+    {
+      table: TABLE_MEME,
+      embedded: embedded,
+      size: size,
+      start: page * size,
+    }
+  );
+  console.log({ memes, count });
+  return { memes: memes.map(parse), count };
 };
 
 export const getMeme = async (identifier: string) => {

@@ -8,6 +8,7 @@ export type File = {
 
 export type Post = {
   id: string;
+  embedding: number[];
   timestamp: string;
   user_id: string;
   parent_id: string;
@@ -22,6 +23,7 @@ export type Agent = {
   id: string;
   timestamp: string;
   name: string;
+  embedding: number[];
   systemPrompt: string;
   description: string;
   combinedQualities: string;

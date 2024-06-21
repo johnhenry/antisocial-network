@@ -1,10 +1,6 @@
-import { useEffect, useState } from "react";
-import {
-  useRouter,
-  usePathname,
-  useSearchParams,
-  useCallback,
-} from "next/navigation";
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { searchMemes } from "@/lib/actions.meme";
 
 const Pagination = ({
@@ -80,16 +76,20 @@ const Page = () => {
     router.push(`${pathname}?${createQueryString("term", term)}`);
   };
   useEffect(() => {
-    const findMemes = () => {
-      const { page = 0, size = DEFAULT_PAGE_SIZE, term = "" } = searchParams;
+    const findMemes = async () => {
+      // const { page = 0, size = DEFAULT_PAGE_SIZE, term = "" } = searchParams;
+      const page = searchParams.get("page") || 0;
+      const size = searchParams.get("size") || DEFAULT_PAGE_SIZE;
+      const term = searchParams.get("term") || "";
+      console.log({ page, size, term });
       if (term) {
-        const { memes, numpages } = searchMemes(
+        const { memes, count } = await searchMemes(
           term,
           Number(page),
           Number(size)
         );
         setMemes(memes);
-        setNumpages(numpages);
+        setNumpages(count);
       }
     };
     findMemes();
@@ -101,7 +101,13 @@ const Page = () => {
   return (
     <section>
       <h2>Memes</h2>
-      <input title="meme" name="search" type="search" placeholder="search" />
+      <input
+        title="meme"
+        name="search"
+        type="search"
+        placeholder="search"
+        defaultValue={searchParams.get("term") || ""}
+      />
       <button type="button" onClick={search}>
         🔍
       </button>
@@ -110,7 +116,9 @@ const Page = () => {
           <ul>
             {memes.map((meme) => (
               <li key={meme.id}>
-                <a href={`/meme/${meme.id}`}>{meme.title}</a>
+                <a href={`/meme/${meme.id}`}>
+                  {meme.dist}:{meme.content}
+                </a>
               </li>
             ))}
           </ul>

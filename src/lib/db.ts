@@ -8,15 +8,37 @@ import {
 } from "@/settings";
 import { RecordId } from "surrealdb.js";
 
-import { TABLE_AGENT, TABLE_MEME, SIZE_EMBEDDING_VECTOR } from "@/settings";
+import {
+  TABLE_AGENT,
+  TABLE_MEME,
+  TABLE_POST,
+  SIZE_EMBEDDING_VECTOR,
+} from "@/settings";
 
-export const initIndices = async (db?: Surreal) => {
-  await query(
-    db
-  )`DEFINE INDEX IF NOT EXISTS search ON type::table(${TABLE_AGENT}) FIELDS items.embedding MTREE DIMENSION ${SIZE_EMBEDDING_VECTOR} TYPE F32 DIST COSINE`;
-  await query(
-    db
-  )`DEFINE INDEX IF NOT EXISTS search ON type::table(${TABLE_MEME}) FIELDS items.embedding MTREE DIMENSION ${SIZE_EMBEDDING_VECTOR} TYPE F32 DIST COSINE`;
+const INDEXED = [TABLE_AGENT, TABLE_MEME, TABLE_POST];
+
+import { replaceNumber as rn } from "@/util/replace-char";
+
+export const defineVectorSearchIndex = async (db: Surreal, table: string) => {
+  // TODO: Investigate and fix
+  // DEFINE queries seem to fail sanitization
+  // Temporary Solution: use raw DEFINE queries
+  const queries = [
+    `DEFINE TABLE IF NOT EXISTS ${table} SCHEMALESS`,
+    `DEFINE FIELD IF NOT EXISTS embedding ON TABLE ${table} TYPE array<number>`,
+    `DEFINE INDEX IF NOT EXISTS search ON ${table} FIELDS embedding MTREE DIMENSION ${SIZE_EMBEDDING_VECTOR} DIST COSINE`,
+    `INFO FOR TABLE ${table}`,
+  ];
+  try {
+    const results = await db.query(queries.join(";"));
+    // console.log("INFO", results[3]);
+  } catch (error: any) {
+    if (error.message.includes("already exists")) {
+      console.log(`table ${table} alreay defined`);
+    } else {
+      throw error;
+    }
+  }
 };
 
 export const getDB = async ({
@@ -45,7 +67,9 @@ export const getDB = async ({
     username: dbUsername,
     password: dbPassword,
   });
-  await initIndices(db);
+  for (const table of INDEXED) {
+    await defineVectorSearchIndex(db, table);
+  }
   return db;
 };
 
@@ -56,18 +80,19 @@ type QueryTagTemplateFunction<T = unknown> = (
   ...values: any[]
 ) => Promise<T>;
 
+const QUERY_VAR_PREFIX = "";
+
 export const query = (recycledDB?: Surreal): QueryTagTemplateFunction => {
   return async (strings: string[], ...values: any[]) => {
     const db = recycledDB ? recycledDB : await getDB();
-    const x = db.query;
 
     const vals: Record<string, any> = {};
     for (let i = 0; i < values.length; i++) {
-      vals[`$${i}`] = values[i];
+      vals[`${QUERY_VAR_PREFIX}${rn(i)}`] = values[i];
     }
     const str = [strings[0]];
     for (let i = 1; i < strings.length; i++) {
-      str.push(`$${i - 1}`, strings[i]);
+      str.push(`$${QUERY_VAR_PREFIX}${rn(i - 1)}`, strings[i]);
     }
     const string = str.join("");
     return db.query(string, vals);
