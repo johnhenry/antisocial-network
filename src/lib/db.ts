@@ -6,16 +6,16 @@ import {
   DB_NAMESPACE,
   DB_DATABASE,
 } from "@/settings";
-import { RecordId } from "surrealdb.js";
+import { RecordId, StringRecordId } from "surrealdb.js";
 
 import {
   TABLE_AGENT,
   TABLE_MEME,
-  TABLE_POST,
+  TABLE_FILE,
   SIZE_EMBEDDING_VECTOR,
 } from "@/settings";
 
-const INDEXED = [TABLE_AGENT, TABLE_MEME, TABLE_POST];
+const INDEXED = [TABLE_AGENT, TABLE_MEME, TABLE_FILE];
 
 import { replaceNumber as rn } from "@/util/replace-char";
 
@@ -105,12 +105,13 @@ export const getAll = async (table: string) => {
 };
 
 export const relate = async (
-  inn: RecordId,
+  inn: RecordId | StringRecordId,
   relationship: string,
-  out: RecordId
+  out: RecordId | StringRecordId,
+  data?: Record<string, any>
 ) => {
   const db = await getDB();
-  return await db.relate(inn, relationship, out);
+  return await db.relate(inn, relationship, out, data);
 };
 
 export const unrelate = async (
