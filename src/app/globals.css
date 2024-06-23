@@ -162,10 +162,7 @@ h2 {
     }
   }
 }
-.form-update {
-  display: flex;
-  flex-direction: column;
-}
+
 label:has(> .and-button) {
   display: flex;
   justify-content: center;
@@ -344,12 +341,38 @@ button.and-button {
   }
 }
 .section-file {
-  > form,
-  > form > details {
+  > h2 {
+    input {
+      width: 100%;
+    }
+  }
+  > main {
     display: flex;
-    flex-direction: column;
+    gap: var(--size-gap);
+    > header {
+      flex: 1;
+      input {
+        padding: 0 var(--size-gap-inner);
+      }
+    }
+    > footer {
+      flex: 1;
+      font-size: 0.75rem;
+    }
+  }
+  iframe {
+    /*https://stackoverflow.com/questions/819416/adjust-width-and-height-of-iframe-to-fit-with-content-in-it*/
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1/1;
+    border: none;
+    /* overflow: hidden; */
   }
 }
+/* .form-update {
+  display: flex;
+  flex-direction: column;
+} */
 
 .section-agent {
   display: flex;

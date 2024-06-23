@@ -8,7 +8,7 @@ import truncate from "@/util/truncate-string";
 
 const MiniMeme = ({ meme }: any) => <>{truncate(meme.content, 128)}</>;
 const MiniFile = ({ file }: any) => <>{truncate(file.content, 128)}</>;
-const MiniAgent = ({ agent }: any) => <>{truncate(agent.systemPrompt, 128)}</>;
+const MiniAgent = ({ agent }: any) => <>{truncate(agent.content, 128)}</>;
 
 export default function Home() {
   // Search Results

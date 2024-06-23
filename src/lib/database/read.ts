@@ -1,11 +1,12 @@
 "use server";
+import type { Agent } from "@/types/types";
 import { StringRecordId, RecordId } from "surrealdb.js";
 import { getDB } from "@/lib/db";
 import {
   TABLE_AGENT,
-  TABLE_INSERTED,
+  REL_INSERTED,
   TABLE_MEME,
-  TABLE_PROCEEDS,
+  REL_PRECEDES,
 } from "@/settings";
 
 import { assessAgents } from "@/tools";
@@ -22,6 +23,8 @@ export const getEntity = async (identifier: string | RecordId) => {
 };
 export const getFile = getEntity;
 
+type Relationship = { table: string; relationship: string; results: any[] };
+
 export const getEntityWithReplationships = async (
   identifier: string | RecordId,
   {
@@ -29,7 +32,11 @@ export const getEntityWithReplationships = async (
     out = [],
   }: { inn?: Record<any, any>[]; out?: Record<any, any>[] } = {}
 ) => {
-  const output = { default: null, inn: [], out: [] };
+  const output: { default: any; inn: Relationship[]; out: Relationship[] } = {
+    default: null,
+    inn: [],
+    out: [],
+  };
   const db = await getDB();
   const id: RecordId =
     typeof identifier === "string"
@@ -38,7 +45,7 @@ export const getEntityWithReplationships = async (
   output.default = await db.select(id);
 
   for (const { table, relationship } of inn) {
-    const [results] = await db.query(
+    const [results]: [any[]] = await db.query(
       `SELECT * OMIT embeddings, data FROM ${table} where <-${relationship}<-(meme where id = $meme)`,
       {
         meme: id,
@@ -47,7 +54,7 @@ export const getEntityWithReplationships = async (
     output.inn.push({ table, relationship, results });
   }
   for (const { table, relationship } of out) {
-    const [results] = await db.query(
+    const [results]: [any[]] = await db.query(
       `SELECT * OMIT embeddings, data FROM ${table} where ->${relationship}->(meme where id = $meme)`,
       {
         meme: id,
@@ -77,23 +84,22 @@ Here are some key points to consider:
   - Agents with knowdedge of or interest in a topic should be scored higher.
 `;
 
-const createAgentPrompt = ({
-  id,
-  systemPrompt,
-}: Record<string, string>) => `id:${id}
+const createAgentPrompt = ({ id, content }: Record<string, string>) => `id:${id}
 prompt:
-  ${systemPrompt}
+  ${content}
 `;
+
+type Messages = [string, string][];
 
 export const generateMemeWithHistory = async (
   meme: any
 ): Promise<[string, string][]> => {
   const db = await getDB();
   let currentMeme = meme;
-  const messages: [string, string][] = [];
+  const messages: Messages = [];
   while (currentMeme) {
-    const [[agent]] = await db.query(
-      `SELECT * FROM ${TABLE_AGENT} where ->${TABLE_INSERTED}->(meme where id = $meme)`,
+    const [[agent]]: [Agent[]] = await db.query(
+      `SELECT * FROM ${TABLE_AGENT} where ->${REL_INSERTED}->(meme where id = $meme)`,
       {
         meme: meme.id,
       }
@@ -101,7 +107,7 @@ export const generateMemeWithHistory = async (
     messages.unshift([agent ? "assistant" : "user", meme.content]);
     console.log("AGENT", agent);
     [[currentMeme]] = await db.query(
-      `SELECT * FROM ${TABLE_MEME} where ->${TABLE_PROCEEDS}->(meme where id = $meme)`,
+      `SELECT * FROM ${TABLE_MEME} where ->${REL_PRECEDES}->(meme where id = $meme)`,
       {
         meme: meme.id,
       }
@@ -111,20 +117,23 @@ export const generateMemeWithHistory = async (
   return messages;
 };
 
-export const getAppropriateAgents = async (meme: any): Promise<any[]> => {
+type Scores = { agent: string; score: number }[];
+
+export const getAppropriateAgents = async (
+  meme: any
+): Promise<{ scores: Scores; messages: Messages }> => {
   const db = await getDB();
-  let currentMeme = meme;
   //
   const messages = await generateMemeWithHistory(meme);
   const [agents]: [any[]] = await db.query(
-    `SELECT id, systemPrompt FROM ${TABLE_AGENT}`
+    `SELECT id, content FROM ${TABLE_AGENT}`
   );
   for (const agent of agents) {
     messages.unshift([
       "system",
       createAgentPrompt({
         id: agent.id.toString(),
-        systemPrompt: agent.systemPrompt,
+        content: agent.content,
       }),
     ]);
   }
@@ -134,7 +143,7 @@ export const getAppropriateAgents = async (meme: any): Promise<any[]> => {
       name: "assessAgents",
     },
   };
-  const { scores } = (await respond(
+  const { scores }: { scores: Scores } = (await respond(
     [["system", SYSTEM_PROMPT], ...messages, ["user", USER_PROMPT]],
     {},
     functions

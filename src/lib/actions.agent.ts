@@ -1,5 +1,5 @@
 "use server";
-import type { Agent } from "@/types/post_client";
+import type { Agent } from "@/types/types";
 import { getDB } from "@/lib/db";
 import { TABLE_AGENT } from "@/settings";
 import { parse } from "@/lib/quick-parse";
@@ -48,21 +48,21 @@ export const createAgent = async ({
   const combinedQualities = qualities
     .map(([name, description]) => `- ${name}\n  - ${description}`)
     .join("\n");
-  const { content: systemPrompt } = (await generateSystemPrompt(
+  const { content } = (await generateSystemPrompt(
     combinedQualities,
     description
   )) as GeneratedPrompt;
 
-  const indexed = [name, systemPrompt, description, combinedQualities]
+  const indexed = [name, content, description, combinedQualities]
     .filter(Boolean)
     .join("\n ------------------ \n");
 
-  const embedding = embed(systemPrompt);
+  const embedding = embed(content);
 
   const [agent] = await db.create(TABLE_AGENT, {
     timestamp: new Date().toISOString(),
     name,
-    systemPrompt,
+    content,
     combinedQualities,
     model,
     description,
@@ -107,19 +107,19 @@ export const updateAgent = async (
   const combinedQualities = qualities
     .map(([name, description]) => `- ${name}\n  - ${description}`)
     .join("\n");
-  // retenerate systemPrompt if qualities or description have changed
+  // retenerate content if qualities or description have changed
   if (
     agent.combinedQualities !== combinedQualities ||
     agent.description !== description
   ) {
     // update system prompt, description and combinedQualities
     let _;
-    const { content: systemPrompt } = (await generateSystemPrompt(
+    const { content } = (await generateSystemPrompt(
       combinedQualities,
       description || ""
     )) as GeneratedPrompt;
-    agent.systemPrompt = systemPrompt;
-    agent.embedding = embed(systemPrompt);
+    agent.content = content;
+    agent.embedding = embed(content);
     agent.qualities = qualities;
     agent.description = description;
     agent.combinedQualities = combinedQualities;
@@ -129,7 +129,7 @@ export const updateAgent = async (
   }
   agent.indexed = [
     agent.name,
-    agent.systemPrompt,
+    agent.content,
     agent.description,
     agent.combinedQualities,
   ]

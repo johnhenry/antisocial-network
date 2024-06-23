@@ -1,12 +1,8 @@
 "use server";
-import type { Agent } from "@/types/post_client";
 import { getDB } from "@/lib/db";
-import { TABLE_AGENT } from "@/settings";
-import { parse } from "@/lib/quick-parse";
 import { StringRecordId } from "surrealdb.js";
 import generateSystemPrompt from "@/lib/gen-system-prompt";
 import { embed } from "@/lib/ai";
-import nameGenerator from "@/util/random-name-generator";
 import { nameExists } from "@/lib/database/create";
 
 export const updateAgent = async (
@@ -24,7 +20,7 @@ export const updateAgent = async (
     qualities?: [string, string][];
     image?: string | null;
   } = {}
-) => {
+): Promise<string> => {
   const db = await getDB();
   const id = new StringRecordId(identifier);
   // get agent
@@ -42,19 +38,19 @@ export const updateAgent = async (
   const combinedQualities = qualities
     .map(([name, description]) => `- ${name}\n  - ${description}`)
     .join("\n");
-  // retenerate systemPrompt if qualities or description have changed
+  // retenerate content if qualities or description have changed
   if (
     agent.combinedQualities !== combinedQualities ||
     agent.description !== description
   ) {
     // update system prompt, description and combinedQualities
     let _;
-    const { content: systemPrompt } = await generateSystemPrompt(
+    const { content } = await generateSystemPrompt(
       combinedQualities,
       description || ""
     );
-    agent.systemPrompt = systemPrompt;
-    agent.embedding = embed(systemPrompt as string);
+    agent.content = content;
+    agent.embedding = embed(content as string);
     agent.qualities = qualities;
     agent.description = description;
     agent.combinedQualities = combinedQualities;
@@ -64,13 +60,39 @@ export const updateAgent = async (
   }
   agent.indexed = [
     agent.name,
-    agent.systemPrompt,
+    agent.content,
     agent.description,
     agent.combinedQualities,
   ]
     .filter(Boolean)
     .join("\n ------------------ \n");
 
-  const updatedAgent = await db.update(id, agent);
-  return updatedAgent.id.toString();
+  await db.update(id, agent);
+  return identifier;
+};
+
+export const updateFile = async (
+  identifier: string,
+  {
+    name = null,
+    author = null,
+    publisher = null,
+    publishDate = null,
+  }: {
+    name?: string | null;
+    author?: string | null;
+    publisher?: string | null;
+    publishDate?: string | null;
+  } = {}
+): Promise<string> => {
+  const db = await getDB();
+  const id = new StringRecordId(identifier);
+  // get agent
+  const doc = await db.select(id);
+  doc.name = name;
+  doc.author = author;
+  doc.publisher = publisher;
+  doc.publishDate = publishDate;
+  await db.update(id, doc);
+  return identifier;
 };

@@ -1,6 +1,6 @@
 "use client";
 import type { FC } from "react";
-import type { Meme, File } from "@/types/post_client";
+import type { Meme, File } from "@/types/types";
 import { useState, useEffect } from "react";
 import { getEntityWithReplationships } from "@/lib/database/read";
 import OmniForm from "@/components/omniform";
@@ -8,10 +8,10 @@ import { useRouter } from "next/navigation";
 import truncate from "@/util/truncate-string";
 
 import {
-  TABLE_CONTAINS,
-  TABLE_INSERTED,
-  TABLE_PROCEEDS,
-  TABLE_ELICITS,
+  REL_CONTAINS,
+  REL_INSERTED,
+  REL_PRECEDES,
+  REL_ELICITS,
 } from "@/settings";
 
 type Params = {
@@ -53,29 +53,29 @@ const Page: FC<Params> = ({ params }) => {
         inn: [
           {
             table: "meme",
-            relationship: TABLE_PROCEEDS,
+            relationship: REL_PRECEDES,
           },
           {
             table: "meme",
-            relationship: TABLE_ELICITS,
+            relationship: REL_ELICITS,
           },
         ],
         out: [
           {
             table: "meme",
-            relationship: TABLE_PROCEEDS,
+            relationship: REL_PRECEDES,
           },
           {
             table: "file",
-            relationship: TABLE_CONTAINS,
+            relationship: REL_CONTAINS,
           },
           {
             table: "agent",
-            relationship: TABLE_INSERTED,
+            relationship: REL_INSERTED,
           },
           {
             table: "meme",
-            relationship: TABLE_ELICITS,
+            relationship: REL_ELICITS,
           },
         ],
       });
@@ -90,12 +90,12 @@ const Page: FC<Params> = ({ params }) => {
             ship.table === table && ship.relationship === relationship
         )?.results || [];
 
-      const before = getRelationship(out, "meme", TABLE_PROCEEDS)[0] || null;
-      const after = getRelationship(inn, "meme", TABLE_PROCEEDS)[0] || null;
-      const contains = getRelationship(out, "file", TABLE_CONTAINS)[0] || null;
-      const elicits = getRelationship(inn, "meme", TABLE_ELICITS);
-      const inserted = getRelationship(out, "agent", TABLE_INSERTED)[0] || null;
-      const responds = getRelationship(out, "meme", TABLE_ELICITS)[0] || null;
+      const before = getRelationship(out, "meme", REL_PRECEDES)[0] || null;
+      const after = getRelationship(inn, "meme", REL_PRECEDES)[0] || null;
+      const contains = getRelationship(out, "file", REL_CONTAINS)[0] || null;
+      const elicits = getRelationship(inn, "meme", REL_ELICITS);
+      const inserted = getRelationship(out, "agent", REL_INSERTED)[0] || null;
+      const responds = getRelationship(out, "meme", REL_ELICITS)[0] || null;
 
       setBefore(before);
       setAfter(after);

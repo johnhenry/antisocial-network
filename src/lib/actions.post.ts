@@ -1,5 +1,5 @@
 "use server";
-import type { Agent } from "@/types/post_client";
+import type { Agent } from "@/types/types";
 import { getDB } from "@/lib/db";
 import { TABLE_POST } from "@/settings";
 import { parse } from "@/lib/quick-parse";
@@ -7,7 +7,7 @@ import { StringRecordId } from "surrealdb.js";
 import { createFile } from "@/lib/actions.file";
 import { embed } from "@/lib/ai";
 import { getAgent } from "@/lib/actions.agent";
-import { Post } from "@/types/post_client";
+import { Post } from "@/types/types";
 import { respond } from "@/lib/ai";
 import hash from "@/util/hash";
 // TODO: parse and embed mentions, links and other entities within the post content at creation time. This way @mentions can always point to the correct agent.
@@ -92,16 +92,18 @@ ${relevantKnowledge}`,
     ]);
   }
   // get system prompt from agent
-  const { systemPrompt, name } = (await getAgent(user_id)) as unknown as Agent;
-  messages.unshift(["system", systemPrompt]);
+  const { content, name } = (await getAgent(user_id)) as unknown as Agent;
+  messages.unshift(["system", content]);
   messages.unshift([
     "system",
     `messages mentioning "@${name} are directed at you specifically."`,
   ]);
   // add relevant knowledge to messages
-  const { content } = await respond(messages, { relevantKnowledge });
+  const { content: returnContent } = await respond(messages, {
+    relevantKnowledge,
+  });
 
-  return createPost(content, { user_id, parent_id });
+  return createPost(returnContent, { user_id, parent_id });
 };
 
 /**

@@ -1,5 +1,5 @@
 "use server";
-import type { Doc } from "@/types/post_client";
+import type { Doc } from "@/types/types";
 import { getDB } from "@/lib/db";
 import { TABLE_DOC } from "@/settings";
 import { parse } from "@/lib/quick-parse";
@@ -8,7 +8,7 @@ import { StringRecordId } from "surrealdb.js";
 import semanticChunker from "@/lib/chunkers/semantic";
 import { createMeme } from "@/lib/actions.meme";
 import { relate } from "@/lib/db";
-import { TABLE_CONTAINS, TABLE_PROCEEDS } from "@/settings";
+import { REL_CONTAINS, REL_PRECEDES } from "@/settings";
 
 import hash from "@/util/hash";
 
@@ -45,9 +45,9 @@ export const createDoc = async ({
   for await (const { chunk, embedding } of semanticChunker(text)) {
     const meme = await createMeme(chunk, embedding);
     const id = new StringRecordId(meme.id) as unknown as RecordId;
-    await relate(doc.id, TABLE_CONTAINS, id);
+    await relate(doc.id, REL_CONTAINS, id);
     if (previousMemeId) {
-      await relate(previousMemeId, TABLE_PROCEEDS, id);
+      await relate(previousMemeId, REL_PRECEDES, id);
     }
     previousMemeId = id;
   }

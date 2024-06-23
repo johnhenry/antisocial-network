@@ -1,6 +1,6 @@
 "use server";
 import { getDB, query } from "@/lib/db";
-import type { Doc } from "@/types/post_client";
+import type { Doc } from "@/types/types";
 import { TABLE_MEME } from "@/settings";
 import { parse } from "@/lib/quick-parse";
 import { StringRecordId } from "surrealdb.js";

@@ -1,6 +1,6 @@
 "use client";
 import type { ChangeEventHandler, FC } from "react";
-import type { Post } from "@/types/post_client";
+import type { Post } from "@/types/types";
 import { useState } from "react";
 import obfo from "obfo";
 import { createPost } from "@/lib/actions.post";

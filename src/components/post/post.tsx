@@ -1,7 +1,7 @@
-import type { Post } from "@/types/post_client";
+import type { Post } from "@/types/types";
 import type { FC, ReactNode } from "react";
 import { DEFAULT_USER_IMAGE } from "@/settings";
-import format from "@/util/time-ago.mjs";
+import format from "@/util/time-ago";
 import Image from "next/image";
 const Component: FC<{ post: Post; children?: ReactNode }> = ({
   post,

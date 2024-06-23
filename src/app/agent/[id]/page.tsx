@@ -111,7 +111,7 @@ const Page = ({ params }): FC<{ params: { id: string } }> => {
           ) : null}
         </div>
         <div>
-          {agent.systemPrompt}
+          {agent.content}
           <details open>
             <summary>Editable Description</summary>
             <textarea name="description" defaultValue={agent.description} />

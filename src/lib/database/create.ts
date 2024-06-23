@@ -1,15 +1,15 @@
 "use server";
 import "server-only";
-import type { Agent, File, Meme } from "@/types/post_client";
+import type { Agent, File, Meme } from "@/types/types";
 import { getDB, relate } from "@/lib/db";
 import {
   TABLE_MEME,
   TABLE_FILE,
-  TABLE_INSERTED,
-  TABLE_BOOKMARKS,
-  TABLE_CONTAINS,
-  TABLE_PROCEEDS,
-  TABLE_ELICITS,
+  REL_INSERTED,
+  REL_BOOKMARKS,
+  REL_CONTAINS,
+  REL_PRECEDES,
+  REL_ELICITS,
   TABLE_AGENT,
 } from "@/settings";
 import { embed, summarize, describe } from "@/lib/ai";
@@ -79,9 +79,9 @@ const createFile = async (
           for await (const { chunk, embedding } of semanticChunker(text)) {
             const meme_id = await createMeme({ content: chunk, embedding });
             const id = new StringRecordId(meme_id) as unknown as RecordId;
-            await relate(file.id, TABLE_CONTAINS, id);
+            await relate(file.id, REL_CONTAINS, id);
             if (previousMemeId) {
-              await relate(previousMemeId, TABLE_PROCEEDS, id, {
+              await relate(previousMemeId, REL_PRECEDES, id, {
                 within: file.id,
               });
             }
@@ -155,8 +155,8 @@ const createFile = async (
     });
   }
   if (agent) {
-    await relate(agent, TABLE_INSERTED, file!.id);
-    await relate(agent, TABLE_BOOKMARKS, file!.id);
+    await relate(agent, REL_INSERTED, file!.id);
+    await relate(agent, REL_BOOKMARKS, file!.id);
   }
   return file!.id.toString(); // TODO: Error: Cannot read properties of undefined (reading 'id')
 };
@@ -209,15 +209,17 @@ ${relevantKnowledge}`,
     ]);
   }
   // get system prompt from agent
-  const { systemPrompt, name } = agent;
-  messages.unshift(["system", systemPrompt]);
+  const { content, name } = agent;
+  messages.unshift(["system", content]);
   messages.unshift([
     "system",
     `messages mentioning "@${name} are directed at you specifically."`,
   ]);
   // add relevant knowledge to messages
-  const { content } = await respond(messages, { relevantKnowledge });
-  return content;
+  const { content: returnContent } = await respond(messages, {
+    relevantKnowledge,
+  });
+  return returnContent;
 };
 
 export const createMeme = async (
@@ -245,11 +247,11 @@ export const createMeme = async (
     embedding: emb,
   });
   if (target) {
-    await relate(new StringRecordId(target), TABLE_ELICITS, meme.id);
+    await relate(new StringRecordId(target), REL_ELICITS, meme.id);
   }
   await createFiles({ files }, { agent });
   if (agent) {
-    await relate(agent, TABLE_INSERTED, meme.id);
+    await relate(agent, REL_INSERTED, meme.id);
   }
   const newTarget = meme.id.toString();
   if (response) {
@@ -311,21 +313,21 @@ export const createAgent = async ({
   const combinedQualities = qualities
     .map(([name, description]) => `- ${name}\n  - ${description}`)
     .join("\n");
-  const { content: systemPrompt } = await generateSystemPrompt(
+  const { content } = await generateSystemPrompt(
     combinedQualities,
     description
   );
 
-  const indexed = [name, systemPrompt, description, combinedQualities]
+  const indexed = [name, content, description, combinedQualities]
     .filter(Boolean)
     .join("\n ------------------ \n");
 
-  const embedding = await embed(systemPrompt as string);
+  const embedding = await embed(content as string);
 
   const [agent] = await db.create(TABLE_AGENT, {
     timestamp: new Date().toISOString(),
     name,
-    systemPrompt,
+    content,
     combinedQualities,
     model,
     description,
@@ -334,6 +336,6 @@ export const createAgent = async ({
     embedding,
     indexed,
   });
-  await createFiles({ files }, { agent });
+  await createFiles({ files }, { agent: agent.id });
   return agent.id.toString();
 };

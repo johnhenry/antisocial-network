@@ -1,6 +1,6 @@
 "use client";
 import type { ChangeEventHandler, FC } from "react";
-import type { Post } from "@/types/post_client";
+import type { Post } from "@/types/types";
 import { useEffect, useState } from "react";
 import obfo from "obfo";
 import { createPost, createPostAI } from "@/lib/actions.post";
@@ -72,7 +72,7 @@ const Component: FC<{
               </button>
             </header>
             <main>
-              <p>{agent.systemPrompt}</p>
+              <p>{agent.content}</p>
             </main>
             <button
               className="close"

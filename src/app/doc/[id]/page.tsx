@@ -1,6 +1,6 @@
 "use client";
 import type { FC } from "react";
-import type { Doc } from "@/types/post_client";
+import type { Doc } from "@/types/types";
 import { useState, useEffect } from "react";
 import { getDoc } from "@/lib/actions.doc";
 import obfo from "obfo";

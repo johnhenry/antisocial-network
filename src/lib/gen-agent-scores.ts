@@ -1,5 +1,5 @@
 "use server";
-import type { Agent } from "@/types/post_client";
+import type { Agent } from "@/types/types";
 import { respond } from "@/lib/ai";
 import { assessAgents, subtraction } from "@/tools/index";
 import { getPost } from "@/lib/actions.post";
