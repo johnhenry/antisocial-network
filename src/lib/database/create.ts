@@ -90,7 +90,7 @@ const createFile = async (
           // Chunk PDF
           break;
         } catch (error: any) {
-          console.error(error.message);
+          console.error("<ERROR>", error.message);
         }
       default:
         // Probably text
@@ -111,7 +111,7 @@ const createFile = async (
           });
           break;
         } catch (error: any) {
-          console.error(error.message);
+          console.error("<ERROR>2", error.message);
         }
     }
   } else if (supertype === "image") {
@@ -158,7 +158,7 @@ const createFile = async (
     await relate(agent, TABLE_INSERTED, file!.id);
     await relate(agent, TABLE_BOOKMARKS, file!.id);
   }
-  return file!.id.toString();
+  return file!.id.toString(); // TODO: Error: Cannot read properties of undefined (reading 'id')
 };
 
 export const createFiles = async (
@@ -230,7 +230,11 @@ export const createMeme = async (
     embedding?: number[];
     files?: ProtoFile[];
   } = {},
-  { agent, response }: { agent?: RecordId; response?: boolean } = {}
+  {
+    agent,
+    response,
+    target,
+  }: { agent?: RecordId | string; response?: boolean; target?: string } = {}
 ): Promise<string> => {
   const db = await getDB();
   const emb = embedding ? embedding : await embed(content);
@@ -240,24 +244,29 @@ export const createMeme = async (
     content,
     embedding: emb,
   });
+  if (target) {
+    await relate(new StringRecordId(target), TABLE_ELICITS, meme.id);
+  }
   await createFiles({ files }, { agent });
   if (agent) {
     await relate(agent, TABLE_INSERTED, meme.id);
   }
-  const memeID = meme.id.toString();
+  const newTarget = meme.id.toString();
   if (response) {
     const { agent, messages }: any = await getMostAppropriateAgent(meme);
     const content: string = (await generateResponseContent({
       messages,
       agent: await getEntity(agent),
     })) as any;
-    const id = await createMeme(
+    await createMeme(
       { content },
-      { agent: new StringRecordId(agent) as unknown as RecordId }
+      {
+        agent: new StringRecordId(agent) as unknown as RecordId,
+        target: newTarget,
+      }
     );
-    await relate(meme.id, TABLE_ELICITS, new StringRecordId(id));
   }
-  return memeID;
+  return newTarget;
 };
 
 ////

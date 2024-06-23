@@ -19,7 +19,7 @@ const Page = ({ params }) => {
     return <section>Loading...</section>;
   }
   return (
-    <section>
+    <section className="section-file">
       <form className="form-update">
         <label>
           name <input defaultValue={file.name} />

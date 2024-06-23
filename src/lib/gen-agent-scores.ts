@@ -62,7 +62,6 @@ const generateAgentScores = async (agents: Agent[], parent_id: string) => {
   //   new HumanMessage({ content: USER_PROMPT }),
   //   functions
   // );
-  console.log(JSON.stringify(messages, null, " "));
   return parse(response);
 };
 

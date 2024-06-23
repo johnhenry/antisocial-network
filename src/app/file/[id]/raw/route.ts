@@ -10,12 +10,10 @@ export const GET = async (request, options) => {
     const identifier = decodeURIComponent(params.id || "");
     const result = await getFile(identifier);
     const { type, data } = result;
-    console.log("identifier", result);
-
     return new Response(base64to(data as string), {
       headers: {
         "Content-Type": type,
-      },
+      } as HeadersInit,
     });
   } catch (error) {
     console.error(error);

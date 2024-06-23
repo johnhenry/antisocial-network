@@ -9,7 +9,6 @@ const Page = () => {
     if (!file) {
       return;
     }
-    console.log(file);
     const reader = new FileReader();
     reader.onload = async (evt) => {
       const response = await fetch(
@@ -23,7 +22,6 @@ const Page = () => {
         })
       );
       const data = await response.json();
-      console.log(data);
       router.push(`/doc/${data.id}`);
     };
     reader.readAsArrayBuffer(file);

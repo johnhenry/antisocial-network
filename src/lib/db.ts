@@ -8,38 +8,7 @@ import {
 } from "@/settings";
 import { RecordId, StringRecordId } from "surrealdb.js";
 
-import {
-  TABLE_AGENT,
-  TABLE_MEME,
-  TABLE_FILE,
-  SIZE_EMBEDDING_VECTOR,
-} from "@/settings";
-
-const INDEXED = [TABLE_AGENT, TABLE_MEME, TABLE_FILE];
-
 import { replaceNumber as rn } from "@/util/replace-char";
-
-export const defineVectorSearchIndex = async (db: Surreal, table: string) => {
-  // TODO: Investigate and fix
-  // DEFINE queries seem to fail sanitization
-  // Temporary Solution: use raw DEFINE queries
-  const queries = [
-    `DEFINE TABLE IF NOT EXISTS ${table} SCHEMALESS`,
-    `DEFINE FIELD IF NOT EXISTS embedding ON TABLE ${table} TYPE array<number>`,
-    `DEFINE INDEX IF NOT EXISTS search ON ${table} FIELDS embedding MTREE DIMENSION ${SIZE_EMBEDDING_VECTOR} DIST COSINE`,
-    `INFO FOR TABLE ${table}`,
-  ];
-  try {
-    const results = await db.query(queries.join(";"));
-    // console.log("INFO", results[3]);
-  } catch (error: any) {
-    if (error.message.includes("already exists")) {
-      console.log(`table ${table} alreay defined`);
-    } else {
-      throw error;
-    }
-  }
-};
 
 export const getDB = async ({
   dbPath = DB_PATH,
@@ -67,9 +36,6 @@ export const getDB = async ({
     username: dbUsername,
     password: dbPassword,
   });
-  for (const table of INDEXED) {
-    await defineVectorSearchIndex(db, table);
-  }
   return db;
 };
 

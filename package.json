@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "surreal": "surreal start memory -A --auth --user root --pass root"
+    "surreal": "surreal start memory -A --auth --user root --pass root",
+    "surreal:init": "deno run --importmap=import_map.json --unstable-sloppy-imports --allow-net src/script/auto-init-db.ts"
   },
   "dependencies": {
     "@langchain/community": "^0.2.11",

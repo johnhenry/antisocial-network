@@ -1,10 +1,18 @@
 "use client";
 import type { FC } from "react";
-import type { Meme } from "@/types/post_client";
+import type { Meme, File } from "@/types/post_client";
 import { useState, useEffect } from "react";
-import { getMeme } from "@/lib/actions.meme";
-import obfo from "obfo";
-import { updateMeme } from "@/lib/actions.meme";
+import { getEntityWithReplationships } from "@/lib/database/read";
+import OmniForm from "@/components/omniform";
+import { useRouter } from "next/navigation";
+import truncate from "@/util/truncate-string";
+
+import {
+  TABLE_CONTAINS,
+  TABLE_INSERTED,
+  TABLE_PROCEEDS,
+  TABLE_ELICITS,
+} from "@/settings";
 
 type Params = {
   params: {
@@ -12,12 +20,89 @@ type Params = {
   };
 };
 
+type Relationship = {
+  table: string;
+  relationship: string;
+  results: any[];
+};
+
 const Page: FC<Params> = ({ params }) => {
   const identifier = decodeURIComponent(params.id || "");
   const [meme, setMeme] = useState<Meme | null>(null);
+  const [before, setBefore] = useState<Meme | null>(null);
+  const [after, setAfter] = useState<Meme | null>(null);
+  const [contains, setContains] = useState<File | null>(null);
+  const [responds, setResponds] = useState<Meme[]>([]);
+  const [elicits, setElicits] = useState<Meme[]>([]);
+  const [inserted, setInserted] = useState<Meme[]>([]);
+  const [text, setText] = useState("");
+
+  const router = useRouter();
+
   useEffect(() => {
     const loadMeme = async () => {
-      const meme = await getMeme(identifier);
+      const {
+        default: meme,
+        inn,
+        out,
+      }: {
+        default: any;
+        inn: Relationship[];
+        out: Relationship[];
+      } = await getEntityWithReplationships(identifier, {
+        inn: [
+          {
+            table: "meme",
+            relationship: TABLE_PROCEEDS,
+          },
+          {
+            table: "meme",
+            relationship: TABLE_ELICITS,
+          },
+        ],
+        out: [
+          {
+            table: "meme",
+            relationship: TABLE_PROCEEDS,
+          },
+          {
+            table: "file",
+            relationship: TABLE_CONTAINS,
+          },
+          {
+            table: "agent",
+            relationship: TABLE_INSERTED,
+          },
+          {
+            table: "meme",
+            relationship: TABLE_ELICITS,
+          },
+        ],
+      });
+
+      const getRelationship = (
+        arr: Relationship[],
+        table: string,
+        relationship: string
+      ) =>
+        arr.find(
+          (ship: Relationship) =>
+            ship.table === table && ship.relationship === relationship
+        )?.results || [];
+
+      const before = getRelationship(out, "meme", TABLE_PROCEEDS)[0] || null;
+      const after = getRelationship(inn, "meme", TABLE_PROCEEDS)[0] || null;
+      const contains = getRelationship(out, "file", TABLE_CONTAINS)[0] || null;
+      const elicits = getRelationship(inn, "meme", TABLE_ELICITS);
+      const inserted = getRelationship(out, "agent", TABLE_INSERTED)[0] || null;
+      const responds = getRelationship(out, "meme", TABLE_ELICITS)[0] || null;
+
+      setBefore(before);
+      setAfter(after);
+      setContains(contains);
+      setElicits(elicits);
+      setInserted(inserted);
+      setResponds(responds);
       setMeme(meme);
     };
     loadMeme();
@@ -33,16 +118,74 @@ const Page: FC<Params> = ({ params }) => {
       </section>
     );
   }
+  const memeCreated = (id: string) => {
+    alert("meme created: " + id);
+    router.push(`/meme/${id}`);
+  };
+  const filesCreated = (ids: string[]) => {
+    alert("files created: " + ids.join(", "));
+    router.push(`/file/${ids[0]}`);
+  };
+  const agentCreated = (id: string) => {
+    alert("agent created: " + id);
+    router.push(`/agent/${id}`);
+  };
 
   return (
     <section className="section-meme">
-      <h2>Meme</h2>
-      <div>
-        <p>Hash: {meme.hash}</p>
-        <p>{meme.timestamp}</p>
-        <pre>{meme.content}</pre>
-      </div>
-      <h2>Agents</h2>
+      {responds ? (
+        <a href={`/meme/${responds.id}`}>
+          ⇪ "{truncate(responds.content, 128)}"{" "}
+        </a>
+      ) : null}
+      <main title={`hash: ${meme.hash}`}>
+        <a href={before ? `/meme/${before.id}` : null}>
+          <span>“</span>
+        </a>
+        <p>{meme.content}</p>
+        <a href={after ? `/meme/${after.id}` : null}>
+          <span>”</span>
+        </a>
+      </main>
+      <aside>
+        {contains ? (
+          <a href={`/file/${contains.id}`} className="source">
+            Found in: {contains.name}
+          </a>
+        ) : null}
+        {inserted ? (
+          <a href={`/agent/${inserted.id}`} className="source">
+            Posted by @{inserted.name}
+          </a>
+        ) : null}
+        <p className="date" title={meme.timestamp}>
+          {new Date(Date.parse(meme.timestamp)).toLocaleDateString()}
+        </p>
+      </aside>
+      <OmniForm
+        memeCreated={memeCreated}
+        filesCreated={filesCreated}
+        agentCreated={agentCreated}
+        text={text}
+        target={identifier}
+        setText={setText}
+        allowNakedFiles={false}
+        allowCreateAgent={false}
+      />
+      <ul className="memes">
+        {elicits.map((meme) => (
+          <li key={meme.id}>
+            <a
+              className="meme"
+              href={`/meme/${meme.id}`}
+              key={meme.id}
+              title={meme.timestamp}
+            >
+              {meme.content}
+            </a>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 };

@@ -39,7 +39,6 @@ export const searchMemes = async (
       start: page * size,
     }
   );
-  console.log({ memes, count });
   return { memes: memes.map(parse), count };
 };
 

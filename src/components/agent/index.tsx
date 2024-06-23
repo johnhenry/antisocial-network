@@ -3,7 +3,7 @@ import Image from "next/image";
 import truncate from "@/util/truncate-string";
 
 const AgentRenderer = ({ agent }: { agent: any }) => {
-  const truncatedPrompt = truncate(agent.systemPrompt, 16);
+  const truncatedPrompt = truncate(agent.systemPrompt, 80);
   return (
     <>
       <header>

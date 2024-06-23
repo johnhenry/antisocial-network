@@ -131,7 +131,6 @@ export const getPost = async (identifier: string, depth = 0) => {
     }
   }
   if (post.user_id) {
-    console.log("U", post.user_id);
     post.agent = await getAgent(post.user_id as string);
   }
   return parse(post);

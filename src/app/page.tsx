@@ -1,175 +1,125 @@
 "use client";
-import type { Post } from "@/types/post_client";
-import type { ChangeEventHandler, FC } from "react";
-
-import { useState, useEffect } from "react";
-import { getTopLevelPosts } from "@/lib/actions.post";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import sortOnTimestamp from "@/util/sort-on-timestamp";
-import ComponentPost from "@/components/post/post";
-import ComponentPostCreate from "@/components/post/create";
-import obfo from "obfo";
+import useDebouncedEffect from "@/lib/hooks/use-debounce";
+import { searchMemes } from "@/lib/database/search";
+import OmniForm from "@/components/omniform";
+import truncate from "@/util/truncate-string";
 
-import { createMeme, createFiles, createAgent } from "@/lib/database/create";
-
-import Image from "next/image";
-
-import fileToBase64 from "@/util/to-base64";
+const MiniMeme = ({ meme }: any) => <>{truncate(meme.content, 128)}</>;
+const MiniFile = ({ file }: any) => <>{truncate(file.content, 128)}</>;
+const MiniAgent = ({ agent }: any) => <>{truncate(agent.systemPrompt, 128)}</>;
 
 export default function Home() {
-  // const [posts, setPosts] = useState<any[]>([]);
-  // const router = useRouter();
-  // const newPostCreated = async (post) => {
-  //   router.push(`post/${post.id}`);
-  // };
-  // useEffect(() => {
-  //   const getPosts = async () => {
-  //     const posts: any[] = await getTopLevelPosts();
-  //     // sort by timestamp
-  //     setPosts(sortOnTimestamp(posts));
-  //   };
-  //   getPosts();
-  //   return () => {
-  //     // cleanup
-  //   };
-  // }, []);
-
-  // Creation
-  const [files, setFiles] = useState<any[]>([]);
-  const addFile = (file: any) => setFiles((files) => [...files, file]);
-  const removeFile = (index: number) =>
-    setFiles(files.filter((_, i) => i !== index));
-  const [text, setText] = useState("");
   // Search Results
-  const [foundMemes, setFoundMemes] = useState([]);
-  const [foundDocs, setFoundDocs] = useState([]);
-  const [foundAgents, setFoundAgents] = useState([]);
-  const makeFilesOrMemes = async (response = false) => {
-    if (!text) {
-      if (files.length) {
-        alert("creating files ...");
-        // return console.log({ files });
-        const ids = await createFiles({ files });
-        alert("File created: " + ids.join(", "));
-        // create files;
-      }
-      return;
-    }
-    // create meme
-    alert("creating meme" + (response ? " with response..." : "..."));
-    // return console.log({ text, files, response });
-    const id = await createMeme({ content: text, files }, { response });
+  const [foundMemes, setFoundMemes] = useState<any[]>([]);
+  const [foundFiles, setFoundFiles] = useState<any[]>([]);
+  const [foundAgents, setFoundAgents] = useState<any[]>([]);
+  const [text, setText] = useState<string>("");
+  const router = useRouter();
+  const memeCreated = (id: string) => {
     alert("meme created: " + id);
+    router.push(`/meme/${id}`);
   };
-  const search: ChangeEventHandler = async (event) => {
-    const text = (event.target as HTMLInputElement).value.trim();
-    setText(text);
+  const filesCreated = (ids: string[]) => {
+    alert("File created: " + ids.join(", "));
+    // create files;
+    router.push(`/file/${ids[0]}`);
   };
-  const makeAgent = async () => {
-    alert("creating agent...");
-    // return console.log({ text, files });
-    const id = await createAgent({ description: text, files });
+  const agentCreated = (id: string) => {
     alert("agent created: " + id);
+    router.push(`/agent/${id}`);
   };
-  const attach: ChangeEventHandler = async (event) => {
-    const form = document.querySelector("[title=files]");
-    const data = obfo(form);
-    const files = data.files;
-    if (!files || !files.length) {
-      return;
-    }
-    for (const file of files) {
-      const content = await fileToBase64(file);
-      const { name, type } = file;
-      addFile({ name, type, content });
-    }
-    (event.target as HTMLInputElement).value = "";
-  };
+  useDebouncedEffect(
+    () => {
+      const search = async () => {
+        if (text.trim().length > 3) {
+          const [memes, agents, files]: any[][] = await searchMemes(text);
+          setFoundMemes(memes);
+          setFoundAgents(agents);
+          setFoundFiles(files);
+        } else {
+          setFoundMemes([]);
+          setFoundAgents([]);
+          setFoundFiles([]);
+        }
+      };
+      search();
+      return () => {
+        // cleanup
+      };
+    },
+    [text],
+    500
+  );
+
   return (
     <section>
       {/* <ComponentPostCreate newPostCreated={newPostCreated} /> */}
-      <form className="form-create">
-        <textarea
-          title="text"
-          name="text"
-          placeholder="Create meme, create agent, or just upload docs"
-          onChange={search}
-        ></textarea>
-        <footer>
-          <label title="files" data-obfo-container="{}">
-            File{" "}
-            <input
-              name="files"
-              type="file"
-              data-obfo-cast="files"
-              onChange={attach}
-            />{" "}
-          </label>
-          {files.map((file, index) => (
-            // file shoud have a button to remove it from list
-            <div
-              key={Math.random()}
-              data-obfo-container="{}"
-              className="attached-file"
-              title={`${file.path}:\n${file.type}`}
-            >
-              <button type="button" onClick={() => removeFile(index)}>
-                x
-              </button>
-              <input type="hidden" name="name" value={file.name} />
-              <input type="hidden" name="type" value={file.type} />
-              <input type="hidden" name="content" value={file.content} />
-              <Image
-                alt={file.name}
-                src={
-                  file.type.startsWith("image/")
-                    ? file.content
-                    : "/static/attachment.png"
-                }
-                width={32}
-                height={32}
-              />
-            </div>
-          ))}
-        </footer>
-      </form>
-      {!text ? (
-        <form className="form-create-buttons">
-          <button type="button" onClick={() => makeFilesOrMemes()}>
-            Just upload docs
-          </button>
-        </form>
-      ) : (
-        <form className="form-create-buttons">
-          <label className="button-with-secondary">
-            <button type="button" onClick={() => makeFilesOrMemes()}>
-              Create meme
-            </button>
-            <button
-              type="button"
-              className="and-button"
-              onClick={() => makeFilesOrMemes(true)}
-            >
-              Get response
-            </button>
-          </label>
-          <button type="button" onClick={() => makeAgent()}>
-            Create agent
-          </button>
-        </form>
-      )}
-      <div className="memes">
-        {foundMemes.map((meme: Post) => (
-          <a
-            className="meme"
-            href={`/meme/${meme.id}`}
-            key={meme.id}
-            title={meme.timestamp}
-          >
-            {/* <ComponentPost post={post}></ComponentPost> */}
-          </a>
-        ))}
-      </div>
+      <OmniForm
+        memeCreated={memeCreated}
+        filesCreated={filesCreated}
+        agentCreated={agentCreated}
+        text={text}
+        setText={setText}
+      />
+      {foundMemes.length ? (
+        <>
+          <h2>Memes</h2>
+          <ul className="memes">
+            {foundMemes.map((meme) => (
+              <li key={meme.id}>
+                <a
+                  className="meme"
+                  href={`/meme/${meme.id}`}
+                  key={meme.id}
+                  title={meme.timestamp}
+                >
+                  <MiniMeme meme={meme} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      {foundFiles.length ? (
+        <>
+          <h2>Files</h2>
+          <ul className="memes">
+            {foundFiles.map((file) => (
+              <li key={file.id}>
+                <a
+                  className="file"
+                  href={`/file/${file.id}`}
+                  key={file.id}
+                  title={file.timestamp}
+                >
+                  <MiniFile file={file} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      {foundAgents.length ? (
+        <>
+          <h2>Agents</h2>
+          <ul className="memes">
+            {foundAgents.map((agent) => (
+              <li key={agent.id}>
+                <a
+                  className="meme"
+                  href={`/agent/${agent.id}`}
+                  key={agent.id}
+                  title={agent.timestamp}
+                >
+                  <MiniAgent agent={agent} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </section>
   );
 }

@@ -1,3 +1,4 @@
+"use server";
 import { StringRecordId, RecordId } from "surrealdb.js";
 import { getDB } from "@/lib/db";
 import {
@@ -17,10 +18,45 @@ export const getEntity = async (identifier: string | RecordId) => {
     typeof identifier === "string"
       ? (new StringRecordId(identifier) as unknown as RecordId)
       : identifier;
-  const entity = db.select(id);
-  return entity;
+  return db.select(id);
 };
 export const getFile = getEntity;
+
+export const getEntityWithReplationships = async (
+  identifier: string | RecordId,
+  {
+    inn = [],
+    out = [],
+  }: { inn?: Record<any, any>[]; out?: Record<any, any>[] } = {}
+) => {
+  const output = { default: null, inn: [], out: [] };
+  const db = await getDB();
+  const id: RecordId =
+    typeof identifier === "string"
+      ? (new StringRecordId(identifier) as unknown as RecordId)
+      : identifier;
+  output.default = await db.select(id);
+
+  for (const { table, relationship } of inn) {
+    const [results] = await db.query(
+      `SELECT * OMIT embeddings, data FROM ${table} where <-${relationship}<-(meme where id = $meme)`,
+      {
+        meme: id,
+      }
+    );
+    output.inn.push({ table, relationship, results });
+  }
+  for (const { table, relationship } of out) {
+    const [results] = await db.query(
+      `SELECT * OMIT embeddings, data FROM ${table} where ->${relationship}->(meme where id = $meme)`,
+      {
+        meme: id,
+      }
+    );
+    output.out.push({ table, relationship, results });
+  }
+  return output;
+};
 
 const SYSTEM_PROMPT = `You have a list of summaries of ai agents in the form:
 ---
