@@ -29,7 +29,8 @@ type FunctionsForOllama = {
 export const respond = async (
   messages: [string, string][],
   invocation: Record<string, any> = {},
-  functions?: FunctionsForOllama
+  functions?: FunctionsForOllama,
+  parameters?: Record<string, any>
 ) => {
   const model = functions
     ? new OllamaFunctions({
@@ -38,8 +39,9 @@ export const respond = async (
         model: MODEL_FUNCTIONS,
       }).bind(functions)
     : new ChatOllama({
+        temperature: parameters?.temperature ?? 0.1,
         baseUrl: OLLAMA_LOCATION,
-        model: MODEL_BASIC,
+        model: parameters?.model || MODEL_BASIC,
       });
   const prompt = ChatPromptTemplate.fromMessages(messages);
   let chain = prompt.pipe(model);

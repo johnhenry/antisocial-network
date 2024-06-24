@@ -1,12 +1,12 @@
 "use server";
 import { getDB } from "@/lib/db";
-import { TABLE_MEME, TABLE_AGENT, TABLE_FILE } from "@/settings";
+import { TABLE_MEME, TABLE_AGENT, TABLE_FILE, SIZE_KNN } from "@/settings";
 import { embed } from "@/lib/ai";
 
 export const searchMemes = async (
   search: string,
   {
-    knn = 5,
+    knn = SIZE_KNN,
     tables = [TABLE_MEME, TABLE_AGENT, TABLE_FILE],
   }: { knn?: number; tables?: string[] } = {}
 ): Promise<any[][]> => {

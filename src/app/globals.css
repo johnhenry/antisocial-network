@@ -369,65 +369,76 @@ button.and-button {
     /* overflow: hidden; */
   }
 }
-/* .form-update {
-  display: flex;
-  flex-direction: column;
-} */
-
 .section-agent {
-  display: flex;
-  gap: var(--size-gap-inner);
-  > header {
-    flex: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--size-gap-inner);
-    > img {
-      min-width: 256px;
-      aspect-ratio: 1;
+  > h2 {
+    display: inline;
+    input {
+      /* width: 100%; */
+      display: inline;
+      padding: var(--size-gap);
     }
-    > .agent-qualities {
-      display: flex;
-      flex-direction: column;
-      gap: var(--size-gap-inner);
-      .quality {
-        position: relative;
-        input,
-        textarea {
-          border: 1px solid var(--color-text);
-          padding: var(--size-gap-inner);
-          width: 100%;
-        }
-        > button.close {
-          --size: 1.5rem;
-          width: var(--size);
-          aspect-ratio: 1;
-          /* border-radius: 50%; */
-          padding: 0;
-          /* display: none; */
-          position: absolute;
-          font-size: 0.75rem;
-          top: 0;
-          right: 0;
-          :hover > & {
-            display: block;
+    &::before {
+      content: "@";
+    }
+  }
+  > main {
+    display: flex;
+    gap: var(--size-gap);
+    > header {
+      flex: 1;
+      > input {
+        padding: 0 var(--size-gap-inner);
+      }
+      > img {
+        width: 16rem;
+      }
+      > form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--size-gap-inner);
+      }
+    }
+    > footer {
+      flex: 1;
+      > .agent-qualities {
+        display: flex;
+        flex-direction: column;
+        gap: var(--size-gap-inner);
+        .quality {
+          position: relative;
+          input,
+          textarea {
+            border: 1px solid var(--color-text);
+            padding: var(--size-gap-inner);
+            width: 100%;
+          }
+          > button.close {
+            --size: 1.5rem;
+            width: var(--size);
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border-top-right-radius: 0;
+            border-top-left-radius: 0;
+            border-bottom-right-radius: 0;
+            padding-top: 0;
+            padding-right: 0;
+            padding: 0;
+            display: none;
+            position: absolute;
+            font-size: 0.75rem;
+            top: 0;
+            right: 0;
+            :hover > & {
+              display: block;
+            }
           }
         }
       }
     }
   }
-  > main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--size-gap-inner);
-    > img {
-      border-radius: 50%;
-    }
-    textarea {
-      border: 1px solid var(--color-text);
-      width: 100%;
-      padding: var(--size-gap-inner);
-    }
+  textarea {
+    border: 1px solid var(--color-text);
+    width: 100%;
+    padding: var(--size-gap-inner);
   }
 }

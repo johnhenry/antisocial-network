@@ -5,12 +5,13 @@ import { getDB, relate } from "@/lib/db";
 import {
   TABLE_MEME,
   TABLE_FILE,
+  TABLE_AGENT,
   REL_INSERTED,
   REL_BOOKMARKS,
   REL_CONTAINS,
   REL_PRECEDES,
   REL_ELICITS,
-  TABLE_AGENT,
+  REL_INCLUDES,
 } from "@/settings";
 import { embed, summarize, describe } from "@/lib/ai";
 import hashData from "@/util/hash";
@@ -44,7 +45,7 @@ const createFile = async (
     publisher = null,
     publishDate = null,
   }: ProtoFile = {},
-  { agent }: { agent?: RecordId } = {}
+  { agent, meme }: { agent?: RecordId; meme?: RecordId } = {}
 ): Promise<string> => {
   const [supertype, subtype] = type.split("/");
   const db = await getDB();
@@ -154,16 +155,22 @@ const createFile = async (
       publishDate,
     });
   }
+  if (!file) {
+    return "";
+  }
   if (agent) {
     await relate(agent, REL_INSERTED, file!.id);
     await relate(agent, REL_BOOKMARKS, file!.id);
+  }
+  if (meme) {
+    await relate(meme, REL_INCLUDES, file!.id);
   }
   return file!.id.toString(); // TODO: Error: Cannot read properties of undefined (reading 'id')
 };
 
 export const createFiles = async (
   { files = [] }: { files?: ProtoFile[] } = {},
-  { agent }: { agent?: RecordId } = {}
+  { agent, meme }: { agent?: RecordId; meme?: RecordId } = {}
 ): Promise<string[]> => {
   const ids = [];
   for (const { name, type, content } of files) {
@@ -174,7 +181,7 @@ export const createFiles = async (
           type,
           content,
         },
-        { agent }
+        { agent, meme }
       )
     );
   }
@@ -209,7 +216,7 @@ ${relevantKnowledge}`,
     ]);
   }
   // get system prompt from agent
-  const { content, name } = agent;
+  const { content, name, model } = agent;
   messages.unshift(["system", content]);
   messages.unshift([
     "system",

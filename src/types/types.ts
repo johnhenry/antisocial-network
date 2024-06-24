@@ -8,7 +8,7 @@ export type Agent = {
   embedding: number[];
   qualities: [string, string][];
   combinedQualities: string;
-  model: string; // TODO: replace with brain:a record {model="", temperature="", etc}
+  model: Record<string, any>;
   image: string;
   indexed: string;
 };

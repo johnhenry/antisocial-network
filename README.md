@@ -26,7 +26,24 @@
       }
 - Consider an api that returns the id or a post or agent before it's finished being created
 - Add per-agent settings
+
   - temperature
   - model
-  - etc.https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
-- Store and retrieve relevant knowledge when answering (see: `relevantKnowledge` function)
+  - etc.
+    - https://api.python.langchain.com/en/latest/chat_models/langchain_community.chat_models.ollama.ChatOllama.html
+    - https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
+
+- Store and retrieve relevant knowledge when answering (search: `relevantKnowledge` function)
+- Add loading for search, loading entieies
+- Continue investigate using service worker for notifications
+- Add settings:
+  - Base model
+  - Base Templates
+  - Base Temperature
+  - etc.
+- Format search
+- Mobile CSS
+- Upload images for agents
+- Add maskerade mode
+  - Bookmarks, Internalization (light bulb
+    Replace INTERNALIZES with MEMORISES
