@@ -175,7 +175,6 @@ const Page: FC<Params> = ({ params }) => {
       />
       {elicits.length ? (
         <>
-          <h2>Responses</h2>
           <ul className="search-results">
             {elicits.map((meme) => (
               <li key={meme.id}>

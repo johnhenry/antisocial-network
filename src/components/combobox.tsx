@@ -1,6 +1,6 @@
 import type { ChangeEventHandler, FC, ReactNode } from "react";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 type Props = {
   children: ReactNode;
@@ -21,7 +21,6 @@ const ComboBox: FC<Props> = ({
   className,
   onClick,
 }) => {
-  const selectRef = useRef<HTMLSelectElement>(null);
   const [label, setLabel] = useState(defaultValue);
   const [title, setTitle] = useState(defaultValue);
   const selectChange: ChangeEventHandler<HTMLSelectElement> = (event) => {
@@ -40,7 +39,6 @@ const ComboBox: FC<Props> = ({
         defaultValue={defaultValue}
         placeholder=""
         noResultsText=""
-        ref={selectRef}
         title={title}
       >
         {children}

@@ -154,13 +154,44 @@ h2 {
   display: flex;
   padding: 0 1rem;
   justify-content: end;
-  &:has(:nth-child(2)) {
-    & > :nth-child(1) {
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
+  .combobox {
+    width: fit-content;
+    border-radius: 0.5rem;
+    background-color: var(--color-text);
+    color: var(--color-background);
+    overflow: hidden;
+    > select {
+      text-align: center;
+      height: fit-content;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      height: 100%;
+      padding: var(--size-gap-inner);
+      padding-right: var(--size-gap-smallest);
+      &:focus,
+      &:active {
+        outline: none;
+      }
+      cursor: pointer;
+      &:hover {
+        filter: brightness(0.9);
+      }
+      &:has(~ button:hover) {
+        filter: brightness(0.9);
+      }
     }
-    & > :nth-child(2) {
-      margin-left: auto;
+    > button {
+      border-radius: 0;
+      padding-left: var(--size-gap-smallest);
+      height: 100%;
+      &:focus,
+      &:active {
+        outline: none;
+      }
+    }
+    &:focus-within {
+      outline: 5px auto -webkit-focus-ring-color;
     }
   }
 }
@@ -176,30 +207,6 @@ label:has(> .and-button) {
 .with-files {
   &::after {
     content: " with files";
-  }
-}
-
-button:has(~ button.and-button:hover) {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  padding-right: 0.25rem;
-  filter: brightness(0.9);
-  transition: all var(--and-button-transition-time);
-  &::after {
-    content: "";
-  }
-}
-button.and-button {
-  transition: all var(--and-button-transition-time);
-  &:hover {
-    margin-left: calc(var(--and-button-gap) / -1);
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    padding-left: 0;
-    text-transform: lowercase;
-    &:before {
-      content: "and ";
-    }
   }
 }
 
@@ -371,13 +378,13 @@ pre {
       }
       .remembers & {
         &::after {
-          content: " 🧠";
+          content: " remembers this";
           display: inline;
         }
       }
       .bookmarks & {
         &::after {
-          content: " 📖";
+          content: " bookmarks this";
           display: inline;
         }
       }
@@ -489,41 +496,5 @@ pre {
     border: 1px solid var(--color-text);
     width: 100%;
     padding: var(--size-gap-inner);
-  }
-}
-
-.combobox {
-  width: fit-content;
-  border-radius: 0.25rem;
-  background-color: var(--color-text);
-  color: var(--color-background);
-  overflow: hidden;
-  > button {
-    border-radius: 0;
-    height: 100%;
-    &:focus,
-    &:active {
-      outline: none;
-    }
-  }
-  > select {
-    text-align: center;
-    height: fit-content;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    height: 100%;
-    padding: var(--size-gap-inner);
-    &:focus,
-    &:active {
-      outline: none;
-    }
-    cursor: pointer;
-    &:hover {
-      filter: brightness(0.9);
-    }
-  }
-  &:focus-within {
-    /* outline: 5px auto -webkit-focus-ring-color; */
   }
 }
