@@ -66,7 +66,7 @@ export default function Home() {
       {foundMemes.length ? (
         <>
           <h2>Memes</h2>
-          <ul className="memes">
+          <ul className="search-results">
             {foundMemes.map((meme) => (
               <li key={meme.id}>
                 <a
@@ -85,7 +85,7 @@ export default function Home() {
       {foundFiles.length ? (
         <>
           <h2>Files</h2>
-          <ul className="memes">
+          <ul className="search-results">
             {foundFiles.map((file) => (
               <li key={file.id}>
                 <a
@@ -104,7 +104,7 @@ export default function Home() {
       {foundAgents.length ? (
         <>
           <h2>Agents</h2>
-          <ul className="memes">
+          <ul className="search-results">
             {foundAgents.map((agent) => (
               <li key={agent.id}>
                 <a

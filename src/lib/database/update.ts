@@ -50,7 +50,7 @@ export const updateAgent = async (
       description || ""
     );
     agent.content = content;
-    agent.embedding = embed(content as string);
+    agent.embedding = await embed(content as string);
     agent.qualities = qualities;
     agent.description = description;
     agent.combinedQualities = combinedQualities;

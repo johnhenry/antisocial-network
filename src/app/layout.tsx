@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 
 import type { Metadata } from "next";
 import "./globals.css";
@@ -26,16 +27,25 @@ export default function RootLayout({
           async
         ></script> */}
 
-        <title>{metadata.title}</title>
+        <title>{metadata.title as string}</title>
       </head>
       <body>
         <main>
           <header>
-            <a href="/">
-              <h1>{metadata.title}</h1>
-            </a>
+            <h1>
+              <a href="/" title="The Antisocial Network">
+                <Image
+                  src="/logo.png"
+                  width="80"
+                  height="45"
+                  alt="logo"
+                ></Image>
+              </a>
+            </h1>
             <nav>
-              <a href="/settings">Settings</a>
+              <a href="/settings" title="settings">
+                ⚙
+              </a>
             </nav>
           </header>
           {children}

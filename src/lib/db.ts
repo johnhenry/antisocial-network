@@ -1,3 +1,4 @@
+"use server";
 import { Surreal } from "surrealdb.js";
 import {
   DB_PATH,
@@ -69,6 +70,12 @@ export const getAll = async (table: string) => {
   const db = await getDB();
   return await db.select(table);
 };
+const ensureRecordId = (id: RecordId | StringRecordId | String) => {
+  if (typeof id === "string") {
+    return new StringRecordId(id);
+  }
+  return id;
+};
 
 export const relate = async (
   inn: RecordId | StringRecordId,
@@ -77,21 +84,34 @@ export const relate = async (
   data?: Record<string, any>
 ) => {
   const db = await getDB();
-  return await db.relate(inn, relationship, out, data);
+
+  const result = await db.relate(
+    ensureRecordId(inn),
+    relationship,
+    ensureRecordId(out),
+    data
+  );
+
+  console.log("RESULT", JSON.stringify(result, null, 2));
+  return result;
 };
 
 export const unrelate = async (
-  inn: RecordId,
+  inn: RecordId | StringRecordId | string,
   relationship: string,
-  out: RecordId
+  out: RecordId | StringRecordId | string
 ): Promise<boolean> => {
   const db = await getDB();
-  const [relationsip] = await query(
-    db
-  )`SELECT * FROM type::table(${relationship}) WHERE in = ${inn} AND out = ${out}`;
-  if (!relationship) {
+  const [[rel]] = await db.query(
+    `SELECT * FROM type::table($relationship) WHERE in = ${inn} AND out = ${out}`,
+    {
+      relationship,
+    }
+  );
+  console.log({ rel });
+  if (!rel) {
     return false;
   }
-  await db.delete(relationsip.id);
+  await db.delete(rel.id);
   return true;
 };

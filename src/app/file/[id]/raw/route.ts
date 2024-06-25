@@ -4,7 +4,7 @@ import { getFile } from "@/lib/database/read";
 
 import base64to from "@/util/base64-to";
 
-export const GET = async (request, options) => {
+export const GET = async (_, options) => {
   try {
     const { params } = options;
     const identifier = decodeURIComponent(params.id || "");

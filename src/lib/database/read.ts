@@ -46,7 +46,7 @@ export const getEntityWithReplationships = async (
 
   for (const { table, relationship } of inn) {
     const [results]: [any[]] = await db.query(
-      `SELECT * OMIT embeddings, data FROM ${table} where <-${relationship}<-(meme where id = $meme)`,
+      `SELECT * OMIT embedding, data FROM ${table} where <-${relationship}<-(meme where id = $meme)`,
       {
         meme: id,
       }
@@ -55,7 +55,7 @@ export const getEntityWithReplationships = async (
   }
   for (const { table, relationship } of out) {
     const [results]: [any[]] = await db.query(
-      `SELECT * OMIT embeddings, data FROM ${table} where ->${relationship}->(meme where id = $meme)`,
+      `SELECT * OMIT embedding, data FROM ${table} where ->${relationship}->(meme where id = $meme)`,
       {
         meme: id,
       }
@@ -91,7 +91,7 @@ prompt:
 
 type Messages = [string, string][];
 
-export const generateMemeWithHistory = async (
+export const getMemeWithHistory = async (
   meme: any
 ): Promise<[string, string][]> => {
   const db = await getDB();
@@ -105,14 +105,12 @@ export const generateMemeWithHistory = async (
       }
     );
     messages.unshift([agent ? "assistant" : "user", meme.content]);
-    console.log("AGENT", agent);
     [[currentMeme]] = await db.query(
       `SELECT * FROM ${TABLE_MEME} where ->${REL_PRECEDES}->(meme where id = $meme)`,
       {
         meme: meme.id,
       }
     );
-    console.log("AGENT", currentMeme);
   }
   return messages;
 };
@@ -124,7 +122,7 @@ export const getAppropriateAgents = async (
 ): Promise<{ scores: Scores; messages: Messages }> => {
   const db = await getDB();
   //
-  const messages = await generateMemeWithHistory(meme);
+  const messages = await getMemeWithHistory(meme);
   const [agents]: [any[]] = await db.query(
     `SELECT id, content FROM ${TABLE_AGENT}`
   );
@@ -163,4 +161,9 @@ export const getRelevantKnowlede = async (meme: any, agent: any) => {
   // TODO: Retrieve relevant knowledge from user's posts/memories
   // TODO: Retrieve relevant knodledge from user's docs
   return "";
+};
+
+export const getAllAgents = async (): Promise<Agent[]> => {
+  const db = await getDB();
+  return (await db.query(`SELECT * OMIT embedding FROM ${TABLE_AGENT}`))[0];
 };

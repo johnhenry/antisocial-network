@@ -22,6 +22,7 @@
   /* colors */
   color-scheme: light dark;
   --color-primary: brown;
+  --color-primary: #a52a2a;
   --color-secondary: #f5f5f5;
   --color-background: light-dark(var(--color-secondary), var(--color-primary));
   --color-text: light-dark(var(--color-primary), var(--color-secondary));
@@ -29,7 +30,7 @@
   --size-gap: 1rem;
   --size-gap-inner: 0.5rem;
   --size-gap-smallest: 0.25rem;
-  --size-header: 6rem;
+  --size-header: 4rem;
 
   --size-radius: 0.5rem;
   --size-radius-inner: 0.25rem;
@@ -59,6 +60,7 @@ html {
         height: var(--size-header);
         gap: var(--size-gap);
         nav {
+          font-size: 2.5rem;
           margin-left: auto;
           display: flex;
           gap: var(--size-gap-inner);
@@ -281,6 +283,11 @@ button.and-button {
   }
 }
 
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 .attached-file {
   position: relative;
   font-size: 0.75rem;
@@ -340,6 +347,42 @@ button.and-button {
     }
   }
 }
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-left: 4rem;
+  > * {
+    cursor: pointer;
+    border-bottom: 1px dashed var(--color-text);
+    &:hover {
+      border-style: solid;
+    }
+  }
+}
+
+.search-results {
+  .agent {
+    .name {
+      &::before {
+        content: "@";
+        display: inline;
+      }
+      .remembers & {
+        &::after {
+          content: " 🧠";
+          display: inline;
+        }
+      }
+    }
+  }
+}
+
+.thought-icons::before {
+  content: "🧠📂🔍✨📖📝💭🗃️";
+}
+
 .section-file {
   > h2 {
     input {

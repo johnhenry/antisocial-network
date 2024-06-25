@@ -2,11 +2,14 @@
 
 const Page = () => {
   const initializeDababase = async () => {
-    const response = await fetch("/settings/init", { method: "POST" });
+    const response = await fetch("/settings/initialize-database", {
+      method: "POST",
+    });
+    const text = await response.text();
     if (response.ok) {
-      alert("db initialized!");
+      alert(`${text}`);
     } else {
-      alert(`db failed to initialize: ${await response.text()}`);
+      alert(`Database failed to initialize: ${text}`);
     }
   };
   return (

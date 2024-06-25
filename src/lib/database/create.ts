@@ -24,6 +24,13 @@ import generateSystemPrompt from "@/lib/gen-system-prompt";
 import nameGenerator from "@/util/random-name-generator";
 import { respond } from "@/lib/ai";
 
+import {
+  getMostAppropriateAgent,
+  getRelevantKnowlede,
+  getEntity,
+  getMemeWithHistory,
+} from "@/lib/database/read";
+
 ////
 // File
 ////
@@ -192,12 +199,6 @@ export const createFiles = async (
 // Meme
 ////
 
-import {
-  getMostAppropriateAgent,
-  getRelevantKnowlede,
-  getEntity,
-} from "@/lib/database/read";
-
 export const generateResponseContent = async ({
   agent,
   messages = [],
@@ -241,9 +242,13 @@ export const createMeme = async (
   } = {},
   {
     agent,
-    response,
+    response = false,
     target,
-  }: { agent?: RecordId | string; response?: boolean; target?: string } = {}
+  }: {
+    agent?: RecordId | string;
+    response?: boolean | string;
+    target?: string;
+  } = {}
 ): Promise<string> => {
   const db = await getDB();
   const emb = embedding ? embedding : await embed(content);
@@ -262,7 +267,13 @@ export const createMeme = async (
   }
   const newTarget = meme.id.toString();
   if (response) {
-    const { agent, messages }: any = await getMostAppropriateAgent(meme);
+    let agent, messages;
+    if (response === true) {
+      ({ agent, messages } = (await getMostAppropriateAgent(meme)) as any);
+    } else {
+      agent = response;
+      messages = await getMemeWithHistory(meme);
+    }
     const content: string = (await generateResponseContent({
       messages,
       agent: await getEntity(agent),

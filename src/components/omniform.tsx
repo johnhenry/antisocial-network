@@ -30,7 +30,7 @@ const OmniForm: FC<Props> = ({
   agentCreated,
   text,
   agent,
-  placeholder = "Type to search. Create meme, agent, or upload files...",
+  placeholder = "Start typing to create an agent, a meme, or search.",
   allowNakedFiles = true,
   allowCreateAgent = true,
   target,
@@ -97,7 +97,7 @@ const OmniForm: FC<Props> = ({
         ></textarea>
         <footer>
           <label title="files" data-obfo-container="{}">
-            File{" "}
+            📎{" "}
             <input
               name="files"
               type="file"

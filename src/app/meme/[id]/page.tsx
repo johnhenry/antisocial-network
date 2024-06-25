@@ -1,18 +1,20 @@
 "use client";
 import type { FC } from "react";
-import type { Meme, File } from "@/types/types";
+import type { Meme, File, Agent } from "@/types/types";
 import { useState, useEffect } from "react";
-import { getEntityWithReplationships } from "@/lib/database/read";
-import OmniForm from "@/components/omniform";
-import { useRouter } from "next/navigation";
-import truncate from "@/util/truncate-string";
-
 import {
   REL_CONTAINS,
   REL_INSERTED,
   REL_PRECEDES,
   REL_ELICITS,
+  REL_REMEMBERS,
 } from "@/settings";
+import { getEntityWithReplationships, getAllAgents } from "@/lib/database/read";
+import OmniForm from "@/components/omniform";
+import { useRouter } from "next/navigation";
+import truncate from "@/util/truncate-string";
+
+import RelationshipToggler from "@/components/relationship-toggler";
 
 type Params = {
   params: {
@@ -28,17 +30,18 @@ type Relationship = {
 
 const Page: FC<Params> = ({ params }) => {
   const identifier = decodeURIComponent(params.id || "");
+  const router = useRouter();
+  const [text, setText] = useState("");
   const [meme, setMeme] = useState<Meme | null>(null);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  // relationships
   const [before, setBefore] = useState<Meme | null>(null);
   const [after, setAfter] = useState<Meme | null>(null);
   const [contains, setContains] = useState<File | null>(null);
   const [responds, setResponds] = useState<Meme[]>([]);
   const [elicits, setElicits] = useState<Meme[]>([]);
   const [inserted, setInserted] = useState<Meme[]>([]);
-  const [text, setText] = useState("");
-
-  const router = useRouter();
-
+  const [remembers, setRemembers] = useState<string[]>([]);
   useEffect(() => {
     const loadMeme = async () => {
       const {
@@ -53,14 +56,18 @@ const Page: FC<Params> = ({ params }) => {
         inn: [
           {
             table: "meme",
-            relationship: REL_PRECEDES,
+            relationship: REL_ELICITS,
           },
           {
-            table: "meme",
+            table: "agent",
             relationship: REL_ELICITS,
           },
         ],
         out: [
+          {
+            table: "agent",
+            relationship: REL_REMEMBERS,
+          },
           {
             table: "meme",
             relationship: REL_PRECEDES,
@@ -97,13 +104,21 @@ const Page: FC<Params> = ({ params }) => {
       const inserted = getRelationship(out, "agent", REL_INSERTED)[0] || null;
       const responds = getRelationship(out, "meme", REL_ELICITS)[0] || null;
 
+      const remembers = getRelationship(out, "agent", REL_REMEMBERS).map(
+        (x) => x.id
+      );
+
       setBefore(before);
       setAfter(after);
       setContains(contains);
       setElicits(elicits);
       setInserted(inserted);
       setResponds(responds);
+      setRemembers(remembers);
       setMeme(meme);
+      const agents = await getAllAgents();
+      setAgents(agents);
+      console.log({ agents, remembers });
     };
     loadMeme();
     return () => {
@@ -142,7 +157,7 @@ const Page: FC<Params> = ({ params }) => {
         <a href={before ? `/meme/${before.id}` : null}>
           <span>“</span>
         </a>
-        <p>{meme.content}</p>
+        <pre>{meme.content}</pre>
         <a href={after ? `/meme/${after.id}` : null}>
           <span>”</span>
         </a>
@@ -172,18 +187,40 @@ const Page: FC<Params> = ({ params }) => {
         allowNakedFiles={false}
         allowCreateAgent={false}
       />
-      <ul className="memes">
-        {elicits.map((meme) => (
-          <li key={meme.id}>
-            <a
-              className="meme"
-              href={`/meme/${meme.id}`}
-              key={meme.id}
-              title={meme.timestamp}
-            >
-              {meme.content}
-            </a>
-          </li>
+      {elicits.length ? (
+        <>
+          <h2>Responses</h2>
+          <ul className="search-results">
+            {elicits.map((meme) => (
+              <li key={meme.id}>
+                <a
+                  className="meme"
+                  href={`/meme/${meme.id}`}
+                  key={meme.id}
+                  title={meme.timestamp}
+                >
+                  <pre>{meme.content}</pre>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      <h2>Remembers</h2>
+      <ul className="search-results">
+        {agents.map((agent: any) => (
+          <RelationshipToggler
+            inn={agent.id}
+            relationship={REL_REMEMBERS}
+            out={meme.id}
+            collection={remembers}
+            className="agent"
+            Wrapper="li"
+            key={agent.id}
+          >
+            <p className="name">{agent.name}</p>
+            <p>{truncate(agent.content, 80)}</p>
+          </RelationshipToggler>
         ))}
       </ul>
     </section>
