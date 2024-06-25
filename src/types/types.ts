@@ -31,3 +31,9 @@ export type File = {
   publishDate: string | null;
   name: string | null;
 };
+
+export type Relationship = {
+  table: string;
+  relationship: string;
+  results: any[];
+};

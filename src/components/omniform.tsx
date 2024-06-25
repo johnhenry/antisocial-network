@@ -11,6 +11,7 @@ import obfo from "obfo";
 import { createMeme, createFiles, createAgent } from "@/lib/database/create";
 import Image from "next/image";
 import fileToBase64 from "@/util/to-base64";
+import ComboBox from "@/components/combobox";
 type Props = {
   setText: Dispatch<SetStateAction<string>>;
   memeCreated: Function;
@@ -59,6 +60,7 @@ const OmniForm: FC<Props> = ({
         if (!confirm("Create files?")) {
           return;
         }
+        cleanInput();
         const ids = await createFiles({ files });
         filesCreated(ids);
       }
@@ -69,6 +71,7 @@ const OmniForm: FC<Props> = ({
       return;
     }
     // return console.log({ text, files, response });
+    cleanInput();
     const id = await createMeme(
       { content: text, files },
       { response, agent, target }
@@ -80,8 +83,25 @@ const OmniForm: FC<Props> = ({
       return;
     }
     // return console.log({ text, files });
+    cleanInput();
     const id = await createAgent({ description: text, files });
     agentCreated(id);
+  };
+  const cleanInput = () => {
+    setTimeout(() => {
+      setText("");
+      setFiles([]);
+    });
+  };
+  const onEnter = (event: KeyboardEvent) => {
+    if (event.key === "Enter") {
+      if (event.metaKey) {
+        makeFilesOrMemes(event.altKey);
+      }
+      if (event.ctrlKey) {
+        makeAgent();
+      }
+    }
   };
 
   return (
@@ -94,6 +114,7 @@ const OmniForm: FC<Props> = ({
           onChange={(event: ChangeEvent) =>
             setText((event.target as HTMLInputElement).value.trim())
           }
+          onKeyDown={onEnter}
         ></textarea>
         <footer>
           <label title="files" data-obfo-container="{}">

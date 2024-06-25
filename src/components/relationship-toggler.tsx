@@ -26,6 +26,8 @@ const RelationshipToggler: FC<RelationshipTogglerProps> = ({
 }) => {
   const [col, setCol] = useState<string[]>(collection);
   const toggleRelates = async (id: string) => {
+    console.log("TOGGLING RELATIONSHIP", relationship, inn, out);
+
     if (col.includes(id)) {
       setCol(col.filter((r) => r !== id));
       await unrelate(id, relationship, out);

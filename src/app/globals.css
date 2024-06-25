@@ -375,6 +375,12 @@ pre {
           display: inline;
         }
       }
+      .bookmarks & {
+        &::after {
+          content: " 📖";
+          display: inline;
+        }
+      }
     }
   }
 }
@@ -483,5 +489,41 @@ pre {
     border: 1px solid var(--color-text);
     width: 100%;
     padding: var(--size-gap-inner);
+  }
+}
+
+.combobox {
+  width: fit-content;
+  border-radius: 0.25rem;
+  background-color: var(--color-text);
+  color: var(--color-background);
+  overflow: hidden;
+  > button {
+    border-radius: 0;
+    height: 100%;
+    &:focus,
+    &:active {
+      outline: none;
+    }
+  }
+  > select {
+    text-align: center;
+    height: fit-content;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    height: 100%;
+    padding: var(--size-gap-inner);
+    &:focus,
+    &:active {
+      outline: none;
+    }
+    cursor: pointer;
+    &:hover {
+      filter: brightness(0.9);
+    }
+  }
+  &:focus-within {
+    /* outline: 5px auto -webkit-focus-ring-color; */
   }
 }

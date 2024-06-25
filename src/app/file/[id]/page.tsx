@@ -1,19 +1,51 @@
 "use client";
+import type { FC } from "react";
+import type { Agent, File, Relationship } from "@/types/types";
 import { useEffect, useState } from "react";
-import { getEntity } from "@/lib/database/read";
+import { getEntityWithReplationships, getAllAgents } from "@/lib/database/read";
+import truncate from "@/util/truncate-string";
+
 import { updateFile } from "@/lib/database/update";
+import { parseRelationship } from "@/util/parse-relationships";
 
 import obfo from "obfo";
+import { REL_BOOKMARKS } from "@/settings";
+import RelationshipToggler from "@/components/relationship-toggler";
 
-const Page = ({ params }) => {
-  const [file, setFile] = useState(null);
+type Props = {
+  params: {
+    id: string;
+  };
+};
+const Page: FC<Props> = ({ params }) => {
+  const [file, setFile] = useState<File | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [bookmarks, setBookmarks] = useState<string[]>([]);
+
   const taint = () => setDirty(true);
   const indetifier = decodeURIComponent(params.id || "");
   useEffect(() => {
     const fetchFile = async () => {
-      const file = await getEntity(indetifier);
+      // const file = await getEntity(indetifier);
+      const {
+        default: file,
+        out,
+        inn,
+      } = await getEntityWithReplationships(indetifier, {
+        source: "file",
+        out: [{ table: "agent", relationship: REL_BOOKMARKS }],
+      });
+      console.log({ out, inn });
       setFile(file);
+      const bookmarks = parseRelationship(out, "agent", REL_BOOKMARKS).map(
+        (x) => x.id
+      );
+      setBookmarks(bookmarks);
+
+      const agents = await getAllAgents();
+      setAgents(agents);
+      console.log({ agents, bookmarks });
     };
     fetchFile();
   }, [indetifier]);
@@ -69,21 +101,37 @@ const Page = ({ params }) => {
         </header>
         <footer>
           <p className="hash">{file.hash}</p>
-          <p className="type">Type {file.type}</p>
-          <iframe
-            src={`/file/${file.id}/raw`}
-            onload='javascript:(function(o){o.style.height=o.contentWindow.document.body.scrollHeight+"px";}(this));'
-            width="256"
-            height="256"
-          ></iframe>
+          <p className="type">{file.type}</p>
           <a href={`/file/${file.id}/raw`} download={file.name}>
             download
           </a>{" "}
           <a href={`/file/${file.id}/raw`} target="_blank">
             open
           </a>
+          {file.type.startsWith("image/") ? (
+            <img src={`/file/${file.id}/raw`} width="256"></img>
+          ) : (
+            <iframe src={`/file/${file.id}/raw`} width="256"></iframe>
+          )}
         </footer>
       </main>
+      <h2>Bookmarks</h2>
+      <ul className="search-results">
+        {agents.map((agent: any) => (
+          <RelationshipToggler
+            inn={agent.id}
+            relationship={REL_BOOKMARKS}
+            out={file.id}
+            collection={bookmarks}
+            className="agent"
+            Wrapper="li"
+            key={agent.id}
+          >
+            <p className="name">{agent.name}</p>
+            <p>{truncate(agent.content, 80)}</p>
+          </RelationshipToggler>
+        ))}
+      </ul>
     </section>
   );
 };

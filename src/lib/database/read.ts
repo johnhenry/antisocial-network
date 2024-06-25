@@ -23,14 +23,23 @@ export const getEntity = async (identifier: string | RecordId) => {
 };
 export const getFile = getEntity;
 
-type Relationship = { table: string; relationship: string; results: any[] };
+export type Relationship = {
+  table: string;
+  relationship: string;
+  results: any[];
+};
 
 export const getEntityWithReplationships = async (
   identifier: string | RecordId,
   {
+    source = "meme",
     inn = [],
     out = [],
-  }: { inn?: Record<any, any>[]; out?: Record<any, any>[] } = {}
+  }: {
+    source?: string;
+    inn?: Record<any, any>[];
+    out?: Record<any, any>[];
+  } = {}
 ) => {
   const output: { default: any; inn: Relationship[]; out: Relationship[] } = {
     default: null,
@@ -46,7 +55,7 @@ export const getEntityWithReplationships = async (
 
   for (const { table, relationship } of inn) {
     const [results]: [any[]] = await db.query(
-      `SELECT * OMIT embedding, data FROM ${table} where <-${relationship}<-(meme where id = $meme)`,
+      `SELECT * OMIT embedding, data FROM ${table} where <-${relationship}<-(${source} where id = $meme)`,
       {
         meme: id,
       }
@@ -55,7 +64,7 @@ export const getEntityWithReplationships = async (
   }
   for (const { table, relationship } of out) {
     const [results]: [any[]] = await db.query(
-      `SELECT * OMIT embedding, data FROM ${table} where ->${relationship}->(meme where id = $meme)`,
+      `SELECT * OMIT embedding, data FROM ${table} where ->${relationship}->(${source} where id = $meme)`,
       {
         meme: id,
       }

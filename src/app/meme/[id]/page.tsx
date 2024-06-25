@@ -1,6 +1,6 @@
 "use client";
 import type { FC } from "react";
-import type { Meme, File, Agent } from "@/types/types";
+import type { Meme, File, Agent, Relationship } from "@/types/types";
 import { useState, useEffect } from "react";
 import {
   REL_CONTAINS,
@@ -14,18 +14,14 @@ import OmniForm from "@/components/omniform";
 import { useRouter } from "next/navigation";
 import truncate from "@/util/truncate-string";
 
+import { parseRelationship } from "@/util/parse-relationships";
+
 import RelationshipToggler from "@/components/relationship-toggler";
 
 type Params = {
   params: {
     id: string;
   };
-};
-
-type Relationship = {
-  table: string;
-  relationship: string;
-  results: any[];
 };
 
 const Page: FC<Params> = ({ params }) => {
@@ -53,6 +49,7 @@ const Page: FC<Params> = ({ params }) => {
         inn: Relationship[];
         out: Relationship[];
       } = await getEntityWithReplationships(identifier, {
+        source: "meme",
         inn: [
           {
             table: "meme",
@@ -87,24 +84,14 @@ const Page: FC<Params> = ({ params }) => {
         ],
       });
 
-      const getRelationship = (
-        arr: Relationship[],
-        table: string,
-        relationship: string
-      ) =>
-        arr.find(
-          (ship: Relationship) =>
-            ship.table === table && ship.relationship === relationship
-        )?.results || [];
+      const before = parseRelationship(out, "meme", REL_PRECEDES)[0] || null;
+      const after = parseRelationship(inn, "meme", REL_PRECEDES)[0] || null;
+      const contains = parseRelationship(out, "file", REL_CONTAINS)[0] || null;
+      const elicits = parseRelationship(inn, "meme", REL_ELICITS);
+      const inserted = parseRelationship(out, "agent", REL_INSERTED)[0] || null;
+      const responds = parseRelationship(out, "meme", REL_ELICITS)[0] || null;
 
-      const before = getRelationship(out, "meme", REL_PRECEDES)[0] || null;
-      const after = getRelationship(inn, "meme", REL_PRECEDES)[0] || null;
-      const contains = getRelationship(out, "file", REL_CONTAINS)[0] || null;
-      const elicits = getRelationship(inn, "meme", REL_ELICITS);
-      const inserted = getRelationship(out, "agent", REL_INSERTED)[0] || null;
-      const responds = getRelationship(out, "meme", REL_ELICITS)[0] || null;
-
-      const remembers = getRelationship(out, "agent", REL_REMEMBERS).map(
+      const remembers = parseRelationship(out, "agent", REL_REMEMBERS).map(
         (x) => x.id
       );
 
@@ -118,7 +105,6 @@ const Page: FC<Params> = ({ params }) => {
       setMeme(meme);
       const agents = await getAllAgents();
       setAgents(agents);
-      console.log({ agents, remembers });
     };
     loadMeme();
     return () => {
