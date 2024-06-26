@@ -47,30 +47,6 @@ type QueryTagTemplateFunction<T = unknown> = (
   ...values: any[]
 ) => Promise<T>;
 
-const QUERY_VAR_PREFIX = "";
-
-export const query = (recycledDB?: Surreal): QueryTagTemplateFunction => {
-  return async (strings: string[], ...values: any[]) => {
-    const db = recycledDB ? recycledDB : await getDB();
-    try {
-      const vals: Record<string, any> = {};
-      for (let i = 0; i < values.length; i++) {
-        vals[`${QUERY_VAR_PREFIX}${rn(i)}`] = values[i];
-      }
-      const str = [strings[0]];
-      for (let i = 1; i < strings.length; i++) {
-        str.push(`$${QUERY_VAR_PREFIX}${rn(i - 1)}`, strings[i]);
-      }
-      const string = str.join("");
-      return db.query(string, vals);
-    } finally {
-      if (!recycledDB) {
-        await db.close();
-      }
-    }
-  };
-};
-
 export const getAll = async (table: string) => {
   const db = await getDB();
   try {
@@ -130,4 +106,43 @@ export const unrelate = async (
   } finally {
     await db.close();
   }
+};
+
+//////
+// EXPERIMENTAL
+//////
+const QUERY_VAR_PREFIX = "";
+export const query = (recycledDB?: Surreal): QueryTagTemplateFunction => {
+  return async (strings: string[], ...values: any[]) => {
+    const db = recycledDB ? recycledDB : await getDB();
+    try {
+      const vals: Record<string, any> = {};
+      for (let i = 0; i < values.length; i++) {
+        vals[`${QUERY_VAR_PREFIX}${rn(i)}`] = values[i];
+      }
+      const str = [strings[0]];
+      for (let i = 1; i < strings.length; i++) {
+        str.push(`$${QUERY_VAR_PREFIX}${rn(i - 1)}`, strings[i]);
+      }
+      const string = str.join("");
+      return db.query(string, vals);
+    } finally {
+      if (!recycledDB) {
+        await db.close();
+      }
+    }
+  };
+};
+// Usage: db.query(...q`SELECT * FROM ${TABLE_AGENT} WHERE id = ${id}`);
+export const q = (strings: string[], ...values: any[]) => {
+  const vals: Record<string, any> = {};
+  for (let i = 0; i < values.length; i++) {
+    vals[`${QUERY_VAR_PREFIX}${rn(i)}`] = values[i];
+  }
+  const str = [strings[0]];
+  for (let i = 1; i < strings.length; i++) {
+    str.push(`$${QUERY_VAR_PREFIX}${rn(i - 1)}`, strings[i]);
+  }
+  const string = str.join("");
+  return [string, vals];
 };
