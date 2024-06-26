@@ -55,124 +55,128 @@ const createFile = async (
   { agent, meme }: { agent?: RecordId; meme?: RecordId } = {}
 ): Promise<string> => {
   const db = await getDB();
-  const [supertype, subtype] = type.split("/");
-  let file;
-  const buff = base64to(content as unknown as string);
+  try {
+    const [supertype, subtype] = type.split("/");
+    let file;
+    const buff = base64to(content as unknown as string);
 
-  if (supertype === "application" || supertype === "text") {
-    switch (subtype) {
-      case "pdf":
-        try {
-          const data = buff.buffer as Buffer;
-          const { metadata, text } = await parsePDF(data);
-          const summary = await summarize(text);
-          const embedding = await embed(text);
-          const hash = hashData(text);
-          [file] = await db.create(TABLE_FILE, {
-            timestamp: new Date().toISOString(),
-            type,
-            name,
-            author,
-            hash,
-            content: summary,
-            embedding,
-            data: content,
-            metadata,
-            publisher,
-            publishDate,
-          });
+    if (supertype === "application" || supertype === "text") {
+      switch (subtype) {
+        case "pdf":
+          try {
+            const data = buff.buffer as Buffer;
+            const { metadata, text } = await parsePDF(data);
+            const summary = await summarize(text);
+            const embedding = await embed(text);
+            const hash = hashData(text);
+            [file] = await db.create(TABLE_FILE, {
+              timestamp: new Date().toISOString(),
+              type,
+              name,
+              author,
+              hash,
+              content: summary,
+              embedding,
+              data: content,
+              metadata,
+              publisher,
+              publishDate,
+            });
 
-          let previousMemeId = null;
-          // embed chunks
-          for await (const { chunk, embedding } of semanticChunker(text)) {
-            const meme_id = await createMeme({ content: chunk, embedding });
-            const id = new StringRecordId(meme_id) as unknown as RecordId;
-            await relate(file.id, REL_CONTAINS, id);
-            if (previousMemeId) {
-              await relate(previousMemeId, REL_PRECEDES, id, {
-                within: file.id,
-              });
+            let previousMemeId = null;
+            // embed chunks
+            for await (const { chunk, embedding } of semanticChunker(text)) {
+              const meme_id = await createMeme({ content: chunk, embedding });
+              const id = new StringRecordId(meme_id) as unknown as RecordId;
+              await relate(file.id, REL_CONTAINS, id);
+              if (previousMemeId) {
+                await relate(previousMemeId, REL_PRECEDES, id, {
+                  within: file.id,
+                });
+              }
+              previousMemeId = id;
             }
-            previousMemeId = id;
+            // Chunk PDF
+            break;
+          } catch (error: any) {
+            console.error("<ERROR>", error.message);
           }
-          // Chunk PDF
-          break;
-        } catch (error: any) {
-          console.error("<ERROR>", error.message);
-        }
-      default:
-        // Probably text
-        const data = buff;
-        const text = data.toString();
-        try {
-          [file] = await db.create(TABLE_FILE, {
-            timestamp: new Date().toISOString(),
-            type,
-            name,
-            author,
-            hash: hashData(text),
-            content: await summarize(text),
-            embedding: await embed(text),
-            data: content,
-            publisher,
-            publishDate,
-          });
-          break;
-        } catch (error: any) {
-          console.error("<ERROR>2", error.message);
-        }
+        default:
+          // Probably text
+          const data = buff;
+          const text = data.toString();
+          try {
+            [file] = await db.create(TABLE_FILE, {
+              timestamp: new Date().toISOString(),
+              type,
+              name,
+              author,
+              hash: hashData(text),
+              content: await summarize(text),
+              embedding: await embed(text),
+              data: content,
+              publisher,
+              publishDate,
+            });
+            break;
+          } catch (error: any) {
+            console.error("<ERROR>2", error.message);
+          }
+      }
+    } else if (supertype === "image") {
+      const data = buff.buffer as Buffer;
+      const hash = hashData(buff as Buffer);
+      const summary = await describe(content.replace(/^[^,]+,/, ""));
+      const embedding = await embed(data.toString());
+      const metadata = await exifr.parse(data);
+      [file] = await db.create(TABLE_FILE, {
+        timestamp: new Date().toISOString(),
+        type,
+        name,
+        author,
+        hash,
+        content: summary,
+        embedding,
+        data: content,
+        metadata,
+        publisher,
+        publishDate,
+      });
+      // TODO: Should I chunk/embed images?
+    } else {
+      const data = buff.buffer as Buffer;
+      const hash = hashData(data);
+      const summary = await describe(data.toString());
+      const embedding = await embed(data.toString());
+      const metadata = {};
+      [file] = await db.create(TABLE_FILE, {
+        timestamp: new Date().toISOString(),
+        type,
+        name,
+        author,
+        hash,
+        content: summary,
+        embedding,
+        data: content,
+        metadata,
+        publisher,
+        publishDate,
+      });
     }
-  } else if (supertype === "image") {
-    const data = buff.buffer as Buffer;
-    const hash = hashData(buff as Buffer);
-    const summary = await describe(content.replace(/^[^,]+,/, ""));
-    const embedding = await embed(data.toString());
-    const metadata = await exifr.parse(data);
-    [file] = await db.create(TABLE_FILE, {
-      timestamp: new Date().toISOString(),
-      type,
-      name,
-      author,
-      hash,
-      content: summary,
-      embedding,
-      data: content,
-      metadata,
-      publisher,
-      publishDate,
-    });
-    // TODO: Should I chunk/embed images?
-  } else {
-    const data = buff.buffer as Buffer;
-    const hash = hashData(data);
-    const summary = await describe(data.toString());
-    const embedding = await embed(data.toString());
-    const metadata = {};
-    [file] = await db.create(TABLE_FILE, {
-      timestamp: new Date().toISOString(),
-      type,
-      name,
-      author,
-      hash,
-      content: summary,
-      embedding,
-      data: content,
-      metadata,
-      publisher,
-      publishDate,
-    });
+    if (!file) {
+      return "";
+    }
+    if (agent) {
+      await relate(agent, REL_INSERTED, file!.id);
+      await relate(agent, REL_BOOKMARKS, file!.id);
+    }
+    if (meme) {
+      await relate(meme, REL_INCLUDES, file!.id);
+    }
+    return file!.id.toString(); // TODO: Error: Cannot read properties of undefined (reading 'id')
+  } finally {
+    await db.close();
   }
-  if (!file) {
-    return "";
-  }
-  if (agent) {
-    await relate(agent, REL_INSERTED, file!.id);
-    await relate(agent, REL_BOOKMARKS, file!.id);
-  }
-  if (meme) {
-    await relate(meme, REL_INCLUDES, file!.id);
-  }
-  return file!.id.toString(); // TODO: Error: Cannot read properties of undefined (reading 'id')
 };
 
 export const createFiles = async (
@@ -251,42 +255,46 @@ export const createMeme = async (
   } = {}
 ): Promise<string> => {
   const db = await getDB();
-  const emb = embedding ? embedding : await embed(content);
-  const [meme] = await db.create(TABLE_MEME, {
-    timestamp: new Date().toISOString(),
-    hash: hashData(content),
-    content,
-    embedding: emb,
-  });
-  if (target) {
-    await relate(new StringRecordId(target), REL_ELICITS, meme.id);
-  }
-  await createFiles({ files }, { agent });
-  if (agent) {
-    await relate(agent, REL_INSERTED, meme.id);
-  }
-  const newTarget = meme.id.toString();
-  if (response) {
-    let agent, messages;
-    if (response === true) {
-      ({ agent, messages } = (await getMostAppropriateAgent(meme)) as any);
-    } else {
-      agent = response;
-      messages = await getMemeWithHistory(meme);
+  try {
+    const emb = embedding ? embedding : await embed(content);
+    const [meme] = await db.create(TABLE_MEME, {
+      timestamp: new Date().toISOString(),
+      hash: hashData(content),
+      content,
+      embedding: emb,
+    });
+    if (target) {
+      await relate(new StringRecordId(target), REL_ELICITS, meme.id);
     }
-    const content: string = (await generateResponseContent({
-      messages,
-      agent: await getEntity(agent),
-    })) as any;
-    await createMeme(
-      { content },
-      {
-        agent: new StringRecordId(agent) as unknown as RecordId,
-        target: newTarget,
+    await createFiles({ files }, { agent });
+    if (agent) {
+      await relate(agent, REL_INSERTED, meme.id);
+    }
+    const newTarget = meme.id.toString();
+    if (response) {
+      let agent, messages;
+      if (response === true) {
+        ({ agent, messages } = (await getMostAppropriateAgent(meme)) as any);
+      } else {
+        agent = response;
+        messages = await getMemeWithHistory(meme);
       }
-    );
+      const content: string = (await generateResponseContent({
+        messages,
+        agent: await getEntity(agent),
+      })) as any;
+      await createMeme(
+        { content },
+        {
+          agent: new StringRecordId(agent) as unknown as RecordId,
+          target: newTarget,
+        }
+      );
+    }
+    return newTarget;
+  } finally {
+    await db.close();
   }
-  return newTarget;
 };
 
 ////
@@ -294,14 +302,18 @@ export const createMeme = async (
 ////
 export const nameExists = async (name: string): Promise<boolean> => {
   const db = await getDB();
-  const [agent]: [any] = await db.query(
-    "SELECT * FROM type::table($table) WHERE name = $name",
-    {
-      table: TABLE_AGENT,
-      name,
-    }
-  );
-  return !!agent[0];
+  try {
+    const [agent]: [any] = await db.query(
+      "SELECT * FROM type::table($table) WHERE name = $name",
+      {
+        table: TABLE_AGENT,
+        name,
+      }
+    );
+    return !!agent[0];
+  } finally {
+    await db.close();
+  }
 };
 
 const generateRandomName = async () => {
@@ -327,33 +339,37 @@ export const createAgent = async ({
   files?: ProtoFile[];
 } = {}) => {
   const db = await getDB();
-  const name = await generateRandomName();
-  const combinedQualities = qualities
-    .map(([name, description]) => `- ${name}\n  - ${description}`)
-    .join("\n");
-  const { content } = await generateSystemPrompt(
-    combinedQualities,
-    description
-  );
+  try {
+    const name = await generateRandomName();
+    const combinedQualities = qualities
+      .map(([name, description]) => `- ${name}\n  - ${description}`)
+      .join("\n");
+    const { content } = await generateSystemPrompt(
+      combinedQualities,
+      description
+    );
 
-  const indexed = [name, content, description, combinedQualities]
-    .filter(Boolean)
-    .join("\n ------------------ \n");
+    const indexed = [name, content, description, combinedQualities]
+      .filter(Boolean)
+      .join("\n ------------------ \n");
 
-  const embedding = await embed(content as string);
+    const embedding = await embed(content as string);
 
-  const [agent] = await db.create(TABLE_AGENT, {
-    timestamp: new Date().toISOString(),
-    name,
-    content,
-    combinedQualities,
-    model,
-    description,
-    qualities,
-    image,
-    embedding,
-    indexed,
-  });
-  await createFiles({ files }, { agent: agent.id });
-  return agent.id.toString();
+    const [agent] = await db.create(TABLE_AGENT, {
+      timestamp: new Date().toISOString(),
+      name,
+      content,
+      combinedQualities,
+      model,
+      description,
+      qualities,
+      image,
+      embedding,
+      indexed,
+    });
+    await createFiles({ files }, { agent: agent.id });
+    return agent.id.toString();
+  } finally {
+    await db.close();
+  }
 };

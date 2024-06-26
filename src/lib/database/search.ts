@@ -10,19 +10,22 @@ export const searchMemes = async (
     tables = [TABLE_MEME, TABLE_AGENT, TABLE_FILE],
   }: { knn?: number; tables?: string[] } = {}
 ): Promise<any[][]> => {
-  const embedded = await embed(search);
   const db = await getDB();
-  const query = `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM type::table($table) WHERE embedding <|${knn}|> $embedded ORDER BY dist DESC`;
+  try {
+    const embedded = await embed(search);
+    const query = `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM type::table($table) WHERE embedding <|${knn}|> $embedded ORDER BY dist DESC`;
 
-  const final = [];
-  for (const table of tables) {
-    const [results]: [any[]] = await db.query(query, {
-      table,
-      embedded,
-      knn,
-    });
-    final.push(results);
+    const final = [];
+    for (const table of tables) {
+      const [results]: [any[]] = await db.query(query, {
+        table,
+        embedded,
+        knn,
+      });
+      final.push(results);
+    }
+    return final;
+  } finally {
+    await db.close();
   }
-
-  return final;
 };

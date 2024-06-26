@@ -52,23 +52,32 @@ const QUERY_VAR_PREFIX = "";
 export const query = (recycledDB?: Surreal): QueryTagTemplateFunction => {
   return async (strings: string[], ...values: any[]) => {
     const db = recycledDB ? recycledDB : await getDB();
-
-    const vals: Record<string, any> = {};
-    for (let i = 0; i < values.length; i++) {
-      vals[`${QUERY_VAR_PREFIX}${rn(i)}`] = values[i];
+    try {
+      const vals: Record<string, any> = {};
+      for (let i = 0; i < values.length; i++) {
+        vals[`${QUERY_VAR_PREFIX}${rn(i)}`] = values[i];
+      }
+      const str = [strings[0]];
+      for (let i = 1; i < strings.length; i++) {
+        str.push(`$${QUERY_VAR_PREFIX}${rn(i - 1)}`, strings[i]);
+      }
+      const string = str.join("");
+      return db.query(string, vals);
+    } finally {
+      if (!recycledDB) {
+        await db.close();
+      }
     }
-    const str = [strings[0]];
-    for (let i = 1; i < strings.length; i++) {
-      str.push(`$${QUERY_VAR_PREFIX}${rn(i - 1)}`, strings[i]);
-    }
-    const string = str.join("");
-    return db.query(string, vals);
   };
 };
 
 export const getAll = async (table: string) => {
   const db = await getDB();
-  return await db.select(table);
+  try {
+    return await db.select(table);
+  } finally {
+    await db.close();
+  }
 };
 const ensureRecordId = (id: RecordId | StringRecordId | String) => {
   if (typeof id === "string") {
@@ -84,16 +93,19 @@ export const relate = async (
   data?: Record<string, any>
 ) => {
   const db = await getDB();
+  try {
+    const result = await db.relate(
+      ensureRecordId(inn),
+      relationship,
+      ensureRecordId(out),
+      data
+    );
 
-  const result = await db.relate(
-    ensureRecordId(inn),
-    relationship,
-    ensureRecordId(out),
-    data
-  );
-
-  console.log("RESULT", JSON.stringify(result, null, 2));
-  return result;
+    console.log("RESULT", JSON.stringify(result, null, 2));
+    return result;
+  } finally {
+    await db.close();
+  }
 };
 
 export const unrelate = async (
@@ -102,16 +114,20 @@ export const unrelate = async (
   out: RecordId | StringRecordId | string
 ): Promise<boolean> => {
   const db = await getDB();
-  const [[rel]] = await db.query(
-    `SELECT * FROM type::table($relationship) WHERE in = ${inn} AND out = ${out}`,
-    {
-      relationship,
+  try {
+    const [[rel]] = await db.query(
+      `SELECT * FROM type::table($relationship) WHERE in = ${inn} AND out = ${out}`,
+      {
+        relationship,
+      }
+    );
+    console.log({ rel });
+    if (!rel) {
+      return false;
     }
-  );
-  console.log({ rel });
-  if (!rel) {
-    return false;
+    await db.delete(rel.id);
+    return true;
+  } finally {
+    await db.close();
   }
-  await db.delete(rel.id);
-  return true;
 };

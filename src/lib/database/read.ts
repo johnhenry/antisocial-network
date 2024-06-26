@@ -15,11 +15,15 @@ import { respond } from "@/lib/ai";
 
 export const getEntity = async (identifier: string | RecordId) => {
   const db = await getDB();
-  const id: RecordId =
-    typeof identifier === "string"
-      ? (new StringRecordId(identifier) as unknown as RecordId)
-      : identifier;
-  return db.select(id);
+  try {
+    const id: RecordId =
+      typeof identifier === "string"
+        ? (new StringRecordId(identifier) as unknown as RecordId)
+        : identifier;
+    return db.select(id);
+  } finally {
+    await db.close();
+  }
 };
 export const getFile = getEntity;
 
@@ -41,37 +45,41 @@ export const getEntityWithReplationships = async (
     out?: Record<any, any>[];
   } = {}
 ) => {
-  const output: { default: any; inn: Relationship[]; out: Relationship[] } = {
-    default: null,
-    inn: [],
-    out: [],
-  };
   const db = await getDB();
-  const id: RecordId =
-    typeof identifier === "string"
-      ? (new StringRecordId(identifier) as unknown as RecordId)
-      : identifier;
-  output.default = await db.select(id);
+  try {
+    const output: { default: any; inn: Relationship[]; out: Relationship[] } = {
+      default: null,
+      inn: [],
+      out: [],
+    };
+    const id: RecordId =
+      typeof identifier === "string"
+        ? (new StringRecordId(identifier) as unknown as RecordId)
+        : identifier;
+    output.default = await db.select(id);
 
-  for (const { table, relationship } of inn) {
-    const [results]: [any[]] = await db.query(
-      `SELECT * OMIT embedding, data FROM ${table} where <-${relationship}<-(${source} where id = $meme)`,
-      {
-        meme: id,
-      }
-    );
-    output.inn.push({ table, relationship, results });
+    for (const { table, relationship } of inn) {
+      const [results]: [any[]] = await db.query(
+        `SELECT * OMIT embedding, data FROM ${table} where <-${relationship}<-(${source} where id = $meme)`,
+        {
+          meme: id,
+        }
+      );
+      output.inn.push({ table, relationship, results });
+    }
+    for (const { table, relationship } of out) {
+      const [results]: [any[]] = await db.query(
+        `SELECT * OMIT embedding, data FROM ${table} where ->${relationship}->(${source} where id = $meme)`,
+        {
+          meme: id,
+        }
+      );
+      output.out.push({ table, relationship, results });
+    }
+    return output;
+  } finally {
+    await db.close();
   }
-  for (const { table, relationship } of out) {
-    const [results]: [any[]] = await db.query(
-      `SELECT * OMIT embedding, data FROM ${table} where ->${relationship}->(${source} where id = $meme)`,
-      {
-        meme: id,
-      }
-    );
-    output.out.push({ table, relationship, results });
-  }
-  return output;
 };
 
 const SYSTEM_PROMPT = `You have a list of summaries of ai agents in the form:
@@ -104,24 +112,28 @@ export const getMemeWithHistory = async (
   meme: any
 ): Promise<[string, string][]> => {
   const db = await getDB();
-  let currentMeme = meme;
-  const messages: Messages = [];
-  while (currentMeme) {
-    const [[agent]]: [Agent[]] = await db.query(
-      `SELECT * FROM ${TABLE_AGENT} where ->${REL_INSERTED}->(meme where id = $meme)`,
-      {
-        meme: meme.id,
-      }
-    );
-    messages.unshift([agent ? "assistant" : "user", meme.content]);
-    [[currentMeme]] = await db.query(
-      `SELECT * FROM ${TABLE_MEME} where ->${REL_PRECEDES}->(meme where id = $meme)`,
-      {
-        meme: meme.id,
-      }
-    );
+  try {
+    let currentMeme = meme;
+    const messages: Messages = [];
+    while (currentMeme) {
+      const [[agent]]: [Agent[]] = await db.query(
+        `SELECT * FROM ${TABLE_AGENT} where ->${REL_INSERTED}->(meme where id = $meme)`,
+        {
+          meme: meme.id,
+        }
+      );
+      messages.unshift([agent ? "assistant" : "user", meme.content]);
+      [[currentMeme]] = await db.query(
+        `SELECT * FROM ${TABLE_MEME} where ->${REL_PRECEDES}->(meme where id = $meme)`,
+        {
+          meme: meme.id,
+        }
+      );
+    }
+    return messages;
+  } finally {
+    await db.close();
   }
-  return messages;
 };
 
 type Scores = { agent: string; score: number }[];
@@ -130,32 +142,36 @@ export const getAppropriateAgents = async (
   meme: any
 ): Promise<{ scores: Scores; messages: Messages }> => {
   const db = await getDB();
-  //
-  const messages = await getMemeWithHistory(meme);
-  const [agents]: [any[]] = await db.query(
-    `SELECT id, content FROM ${TABLE_AGENT}`
-  );
-  for (const agent of agents) {
-    messages.unshift([
-      "system",
-      createAgentPrompt({
-        id: agent.id.toString(),
-        content: agent.content,
-      }),
-    ]);
+  try {
+    //
+    const messages = await getMemeWithHistory(meme);
+    const [agents]: [any[]] = await db.query(
+      `SELECT id, content FROM ${TABLE_AGENT}`
+    );
+    for (const agent of agents) {
+      messages.unshift([
+        "system",
+        createAgentPrompt({
+          id: agent.id.toString(),
+          content: agent.content,
+        }),
+      ]);
+    }
+    const functions = {
+      functions: [assessAgents.descriptor],
+      function_call: {
+        name: "assessAgents",
+      },
+    };
+    const { scores }: { scores: Scores } = (await respond(
+      [["system", SYSTEM_PROMPT], ...messages, ["user", USER_PROMPT]],
+      {},
+      functions
+    )) as any;
+    return { scores, messages };
+  } finally {
+    await db.close();
   }
-  const functions = {
-    functions: [assessAgents.descriptor],
-    function_call: {
-      name: "assessAgents",
-    },
-  };
-  const { scores }: { scores: Scores } = (await respond(
-    [["system", SYSTEM_PROMPT], ...messages, ["user", USER_PROMPT]],
-    {},
-    functions
-  )) as any;
-  return { scores, messages };
 };
 
 export const getMostAppropriateAgent = async (meme: any) => {
@@ -174,5 +190,11 @@ export const getRelevantKnowlede = async (meme: any, agent: any) => {
 
 export const getAllAgents = async (): Promise<Agent[]> => {
   const db = await getDB();
-  return (await db.query(`SELECT * OMIT embedding FROM ${TABLE_AGENT}`))[0];
+  try {
+    return (
+      await db.query(`SELECT * OMIT embedding FROM ${TABLE_AGENT}`)
+    )[0] as Agent[];
+  } finally {
+    await db.close();
+  }
 };
