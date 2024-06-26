@@ -1,16 +1,23 @@
 "use client";
+import type { Agent } from "@/types/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
 import { searchMemes } from "@/lib/database/search";
 import OmniForm from "@/components/omniform";
 import truncate from "@/util/truncate-string";
-
+import { MASQUERADE_KEY } from "@/settings";
+import useLocalStorage from "@/lib/hooks/use-localstorage";
+import Masquerade from "@/components/masquerade";
 const MiniMeme = ({ meme }: any) => <>{truncate(meme.content, 128)}</>;
 const MiniFile = ({ file }: any) => <>{truncate(file.content, 128)}</>;
 const MiniAgent = ({ agent }: any) => <>{truncate(agent.content, 128)}</>;
 
 export default function Home() {
+  const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(
+    MASQUERADE_KEY,
+    null
+  );
   // Search Results
   const [foundMemes, setFoundMemes] = useState<any[]>([]);
   const [foundFiles, setFoundFiles] = useState<any[]>([]);
@@ -55,14 +62,20 @@ export default function Home() {
 
   return (
     <section>
-      {/* <ComponentPostCreate newPostCreated={newPostCreated} /> */}
+      <Masquerade
+        masquerade={masquerade}
+        setMasquerade={setMasquerade}
+        className="agent-masquerade"
+      />
       <OmniForm
         memeCreated={memeCreated}
         filesCreated={filesCreated}
         agentCreated={agentCreated}
         text={text}
+        agent={masquerade?.id}
         setText={setText}
       />
+
       {foundMemes.length ? (
         <>
           <h2>Memes</h2>

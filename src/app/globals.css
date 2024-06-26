@@ -320,6 +320,45 @@ pre {
   }
 }
 
+.agent-masquerade {
+  flex: 1;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  position: relative;
+  gap: var(--size-gap-inner);
+  place-content: center;
+  > p {
+    text-align: center;
+  }
+  > header {
+    gap: var(--size-gap-inner);
+    > * {
+      display: inline-block;
+      margin: var(--size-gap-inner);
+    }
+  }
+  > main {
+    overflow: scroll;
+  }
+
+  > button.close {
+    --size: 1.5rem;
+    width: var(--size);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    padding: 0;
+    /* display: none; */
+    position: absolute;
+    font-size: 0.75rem;
+    top: 0;
+    right: 0;
+    :hover > & {
+      display: block;
+    }
+  }
+}
+
 .section-meme {
   > main {
     width: 100%;

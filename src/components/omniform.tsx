@@ -202,7 +202,7 @@ const OmniForm: FC<Props> = ({
                 return null;
               }
               return (
-                <option title={option.title}>
+                <option title={option.title} key={index}>
                   {option.label + (files.length ? " with files" : "")}
                 </option>
               );

@@ -4,20 +4,24 @@ import type { Agent, File, Relationship } from "@/types/types";
 import { useEffect, useState } from "react";
 import { getEntityWithReplationships, getAllAgents } from "@/lib/database/read";
 import truncate from "@/util/truncate-string";
-
 import { updateFile } from "@/lib/database/update";
 import { parseRelationship } from "@/util/parse-relationships";
-
 import obfo from "obfo";
 import { REL_BOOKMARKS } from "@/settings";
 import RelationshipToggler from "@/components/relationship-toggler";
-
+import { MASQUERADE_KEY } from "@/settings";
+import useLocalStorage from "@/lib/hooks/use-localstorage";
+import Masquerade from "@/components/masquerade";
 type Props = {
   params: {
     id: string;
   };
 };
 const Page: FC<Props> = ({ params }) => {
+  const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(
+    MASQUERADE_KEY,
+    null
+  );
   const [file, setFile] = useState<File | null>(null);
   const [dirty, setDirty] = useState(false);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -62,6 +66,11 @@ const Page: FC<Props> = ({ params }) => {
   }
   return (
     <section className="section-file" data-obfo-container="{}">
+      <Masquerade
+        masquerade={masquerade}
+        setMasquerade={setMasquerade}
+        className="agent-masquerade"
+      />
       <h2>
         <input name="name" defaultValue={file.name} onChange={taint} />
       </h2>

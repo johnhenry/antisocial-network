@@ -13,11 +13,11 @@ import { getEntityWithReplationships, getAllAgents } from "@/lib/database/read";
 import OmniForm from "@/components/omniform";
 import { useRouter } from "next/navigation";
 import truncate from "@/util/truncate-string";
-
 import { parseRelationship } from "@/util/parse-relationships";
-
 import RelationshipToggler from "@/components/relationship-toggler";
-
+import { MASQUERADE_KEY } from "@/settings";
+import useLocalStorage from "@/lib/hooks/use-localstorage";
+import Masquerade from "@/components/masquerade";
 type Params = {
   params: {
     id: string;
@@ -25,6 +25,10 @@ type Params = {
 };
 
 const Page: FC<Params> = ({ params }) => {
+  const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(
+    MASQUERADE_KEY,
+    null
+  );
   const identifier = decodeURIComponent(params.id || "");
   const router = useRouter();
   const [text, setText] = useState("");
@@ -134,6 +138,11 @@ const Page: FC<Params> = ({ params }) => {
 
   return (
     <section className="section-meme">
+      <Masquerade
+        masquerade={masquerade}
+        setMasquerade={setMasquerade}
+        className="agent-masquerade"
+      />
       {responds ? (
         <a href={`/meme/${responds.id}`}>
           ⇪ "{truncate(responds.content, 128)}"{" "}
@@ -172,6 +181,7 @@ const Page: FC<Params> = ({ params }) => {
         setText={setText}
         allowNakedFiles={false}
         allowCreateAgent={false}
+        agent={masquerade?.id}
       />
       {elicits.length ? (
         <>

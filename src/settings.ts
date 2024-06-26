@@ -54,3 +54,5 @@ export const DEFAULT_USER_IMAGE = "/static/user.webp";
 export const SIZE_EMBEDDING_VECTOR = 768;
 
 export const SIZE_KNN = 3;
+
+export const MASQUERADE_KEY = "masquerade";

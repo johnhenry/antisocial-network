@@ -6,10 +6,16 @@ import { getEntity } from "@/lib/database/read";
 import obfo from "obfo";
 import { DEFAULT_USER_IMAGE, MODELS, MODEL_BASIC } from "@/settings";
 import { updateAgent } from "@/lib/database/update";
-
+import { MASQUERADE_KEY } from "@/settings";
+import useLocalStorage from "@/lib/hooks/use-localstorage";
+import Masquerade from "@/components/masquerade";
 export type Props = { params: { id: string } };
 
 const Page: FC<Props> = ({ params }) => {
+  const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(
+    MASQUERADE_KEY,
+    null
+  );
   const identifier = decodeURIComponent(params.id || "");
   const [agent, setAgent] = useState<Agent | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -61,6 +67,11 @@ const Page: FC<Props> = ({ params }) => {
   }
   return (
     <section data-obfo-container="{}" className="section-agent">
+      <Masquerade
+        masquerade={masquerade}
+        setMasquerade={setMasquerade}
+        className="agent-masquerade"
+      />
       <h2>
         <input
           title="name"

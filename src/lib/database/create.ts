@@ -54,8 +54,8 @@ const createFile = async (
   }: ProtoFile = {},
   { agent, meme }: { agent?: RecordId; meme?: RecordId } = {}
 ): Promise<string> => {
-  const [supertype, subtype] = type.split("/");
   const db = await getDB();
+  const [supertype, subtype] = type.split("/");
   let file;
   const buff = base64to(content as unknown as string);
 

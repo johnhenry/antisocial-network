@@ -31,16 +31,9 @@ const ComboBox: FC<Props> = ({
     const selectEvent = new SelectEvent("select", label);
     onClick(selectEvent);
   };
-  console.log({ title });
   return (
     <div className={className}>
-      <select
-        onChange={selectChange}
-        defaultValue={defaultValue}
-        placeholder=""
-        noResultsText=""
-        title={title}
-      >
+      <select onChange={selectChange} defaultValue={defaultValue} title={title}>
         {children}
       </select>
       <button type="button" onClick={sendSelected}>
