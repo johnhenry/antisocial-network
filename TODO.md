@@ -8,19 +8,30 @@
 
 ## In progress
 
+- [ ] Parse Content for memes
+  1. Content is save as "raw" in database
+  2. This is hashed and saved as "hash"
+  3. Parse @mentions, #tags replace with ids and put into mark down/html.
+     1. @<agent name> => @<agent id>
+     2. #<file name>=> #<file id>
+  4. Parse markdown/html into html
+  5. Sanitize HTML
+     1. This is saved as "content"
+     2. This is embedded and saved as "embedding"
+  6. When rendered, the content is set using dangerously set html
+     1. A call is made to the database to get the name of the agent or document
 - [ ] Add per-agent parameters
-  - temperature
-  - model
+  - [x] temperature
+  - [x] model
   - etc.
     - https://api.python.langchain.com/en/latest/chat_models/langchain_community.chat_models.ollama.ChatOllama.html
     - https://v02.api.js.lang
-  - note, this is currently set as "model", but should be "parameters"
-  - [ ] Rest API
+- note, this is currently set as "model", but should be "parameters"
+- [ ] Rest API
+- [ ] - [ ] https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
 
 ## Planned
 
-- [ ] Add API endpoints to interact programmatically
-  - [ ] https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
 - [ ] Store and retrieve relevant knowledge when answering (search: `relevantKnowledge` function)
 - [ ] Environment Variables
 - [ ] Masquerading
@@ -34,18 +45,7 @@
 - [ ] Mobile CSS
 - [ ] Upload images for agents
 - [ ] Use AI to create name for agents and documents
-- [ ] Parse Content
-  1. Content is save as "raw" in database
-  2. This is hashed and saved as "hash"
-  3. Parse @mentions, #tags replace with ids and put into mark down/html.
-     1. @<agent name> => @<agent id>
-     2. #<file name>=> #<file id>
-  4. Parse markdown/html into html
-  5. Sanitize HTML
-     1. This is saved as "content"
-     2. This is embedded and saved as "embedding"
-  6. When rendered, the content is set using dangerously set html
-     1. A call is made to the database to get the name of the agent or document
+
 - [ ] implement tools
   - https://dev.to/vyan/public-apis-for-web-development-projects-lhk
   - https://github.com/public-api-lists/public-api-lists

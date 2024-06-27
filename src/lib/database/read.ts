@@ -20,7 +20,7 @@ export const getEntity = async (identifier: string | RecordId) => {
       typeof identifier === "string"
         ? (new StringRecordId(identifier) as unknown as RecordId)
         : identifier;
-    return db.select(id);
+    return await db.select(id);
   } finally {
     await db.close();
   }
@@ -194,6 +194,40 @@ export const getAllAgents = async (): Promise<Agent[]> => {
     return (
       await db.query(`SELECT * OMIT embedding FROM ${TABLE_AGENT}`)
     )[0] as Agent[];
+  } finally {
+    await db.close();
+  }
+};
+
+export const replaceAgentNameWithId = async (
+  name: string
+): Promise<string | null> => {
+  const db = await getDB();
+  try {
+    const [[agent]]: [Agent | undefined] = await db.query(
+      `SELECT id FROM ${TABLE_AGENT} WHERE name = $name`,
+      {
+        name,
+      }
+    );
+    return agent ? agent.id.toString() : name;
+  } finally {
+    await db.close();
+  }
+};
+
+export const replaceAgentIdWithName = async (
+  id: string
+): Promise<string | null> => {
+  const db = await getDB();
+  try {
+    const [[agent]]: [Agent | undefined] = await db.query(
+      `SELECT name FROM ${TABLE_AGENT} WHERE id = $id`,
+      {
+        id,
+      }
+    );
+    return agent ? agent.name : id;
   } finally {
     await db.close();
   }

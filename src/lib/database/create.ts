@@ -1,6 +1,7 @@
 "use server";
-import "server-only";
 import type { Agent, File, Meme } from "@/types/types";
+import renderText from "@/util/render-text";
+import "server-only";
 import { getDB, relate } from "@/lib/db";
 import {
   TABLE_MEME,
@@ -29,6 +30,7 @@ import {
   getRelevantKnowlede,
   getEntity,
   getMemeWithHistory,
+  replaceAgentNameWithId,
 } from "@/lib/database/read";
 
 ////
@@ -234,13 +236,17 @@ ${relevantKnowledge}`,
   return returnContent;
 };
 
+const mentions = async (name) => `@${await replaceAgentNameWithId(name)}`;
+
 export const createMeme = async (
   {
     content = "",
+    rendered = "",
     embedding,
     files = [],
   }: {
     content?: string;
+    rendered?: string;
     embedding?: number[];
     files?: ProtoFile[];
   } = {},
@@ -256,11 +262,16 @@ export const createMeme = async (
 ): Promise<string> => {
   const db = await getDB();
   try {
-    const emb = embedding ? embedding : await embed(content);
+    const renderedContent = rendered
+      ? rendered
+      : await renderText(content, { mentions });
+
+    const emb = embedding ? embedding : await embed(renderedContent);
     const [meme] = await db.create(TABLE_MEME, {
       timestamp: new Date().toISOString(),
       hash: hashData(content),
-      content,
+      raw: content,
+      content: renderedContent,
       embedding: emb,
     });
     if (target) {

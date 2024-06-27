@@ -15,4 +15,31 @@ const truncate = (str: string, maxLength: number = Infinity): string => {
   return str;
 };
 
+/**
+ * Truncates a string while preserving HTML boundaries.
+ *
+ * @param htmtstr - The HTML string to truncate.
+ * @param suggesteLength - The suggested length of the truncated string.
+ * @returns The truncated string.
+ */
+export const truncateHTML = (htmtstr: string, suggesteLength: number) => {
+  let truncated = htmtstr;
+  let length = 0;
+  let inTag = false;
+  for (let i = 0; i < htmtstr.length; i++) {
+    if (htmtstr[i] === "<") {
+      inTag = true;
+    } else if (htmtstr[i] === ">") {
+      inTag = false;
+    } else if (!inTag) {
+      length++;
+    }
+    if (length > suggesteLength) {
+      truncated = htmtstr.slice(0, i);
+      break;
+    }
+  }
+  return truncated;
+};
+
 export default truncate;

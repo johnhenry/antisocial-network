@@ -12,7 +12,7 @@ import {
 import { getEntityWithReplationships, getAllAgents } from "@/lib/database/read";
 import OmniForm from "@/components/omniform";
 import { useRouter } from "next/navigation";
-import truncate from "@/util/truncate-string";
+import truncate, { truncateHTML } from "@/util/truncate-string";
 import { parseRelationship } from "@/util/parse-relationships";
 import RelationshipToggler from "@/components/relationship-toggler";
 import { MASQUERADE_KEY } from "@/settings";
@@ -144,15 +144,19 @@ const Page: FC<Params> = ({ params }) => {
         className="agent-masquerade"
       />
       {responds ? (
-        <a href={`/meme/${responds.id}`}>
-          ⇪ "{truncate(responds.content, 128)}"{" "}
-        </a>
+        <a
+          href={`/meme/${responds.id}`}
+          className="tamed-html"
+          dangerouslySetInnerHTML={{
+            __html: `⇪"${truncateHTML(responds.content, 64)}"`,
+          }}
+        ></a>
       ) : null}
       <main title={`hash: ${meme.hash}`}>
         <a href={before ? `/meme/${before.id}` : null}>
           <span>“</span>
         </a>
-        <pre>{meme.content}</pre>
+        <pre dangerouslySetInnerHTML={{ __html: meme.content }}></pre>
         <a href={after ? `/meme/${after.id}` : null}>
           <span>”</span>
         </a>
@@ -194,7 +198,10 @@ const Page: FC<Params> = ({ params }) => {
                   key={meme.id}
                   title={meme.timestamp}
                 >
-                  <pre>{meme.content}</pre>
+                  <pre
+                    dangerouslySetInnerHTML={{ __html: meme.content }}
+                    className="tamed-html"
+                  ></pre>
                 </a>
               </li>
             ))}

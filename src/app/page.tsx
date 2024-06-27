@@ -9,7 +9,6 @@ import truncate from "@/util/truncate-string";
 import { MASQUERADE_KEY } from "@/settings";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import Masquerade from "@/components/masquerade";
-const MiniMeme = ({ meme }: any) => <>{truncate(meme.content, 128)}</>;
 const MiniFile = ({ file }: any) => <>{truncate(file.content, 128)}</>;
 const MiniAgent = ({ agent }: any) => <>{truncate(agent.content, 128)}</>;
 
@@ -84,12 +83,12 @@ export default function Home() {
               <li key={meme.id}>
                 <a
                   className="meme"
+                  className="tamed-html"
                   href={`/meme/${meme.id}`}
                   key={meme.id}
                   title={meme.timestamp}
-                >
-                  <MiniMeme meme={meme} />
-                </a>
+                  dangerouslySetInnerHTML={{ __html: meme.content }}
+                ></a>
               </li>
             ))}
           </ul>
@@ -121,7 +120,7 @@ export default function Home() {
             {foundAgents.map((agent) => (
               <li key={agent.id}>
                 <a
-                  className="meme"
+                  className="agent"
                   href={`/agent/${agent.id}`}
                   key={agent.id}
                   title={agent.timestamp}

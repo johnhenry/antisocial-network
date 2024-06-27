@@ -76,8 +76,6 @@ export const relate = async (
       ensureRecordId(out),
       data
     );
-
-    console.log("RESULT", JSON.stringify(result, null, 2));
     return result;
   } finally {
     await db.close();
@@ -97,7 +95,6 @@ export const unrelate = async (
         relationship,
       }
     );
-    console.log({ rel });
     if (!rel) {
       return false;
     }

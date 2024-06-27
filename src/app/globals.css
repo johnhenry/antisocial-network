@@ -537,3 +537,9 @@ pre {
     padding: var(--size-gap-inner);
   }
 }
+.tamed-html {
+  * {
+    display: inline;
+    font-size: 1rem;
+  }
+}
