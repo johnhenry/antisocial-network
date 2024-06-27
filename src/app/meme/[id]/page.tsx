@@ -142,7 +142,19 @@ const Page: FC<Params> = ({ params }) => {
         masquerade={masquerade}
         setMasquerade={setMasquerade}
         className="agent-masquerade"
-      />
+      >
+        {" "}
+        <RelationshipToggler
+          inn={masquerade}
+          relationship={REL_REMEMBERS}
+          out={meme.id}
+          collection={remembers}
+          Wrapper="span"
+        >
+          <span className="icon">🧠</span>
+          <span className="check">✓</span>
+        </RelationshipToggler>
+      </Masquerade>
       {responds ? (
         <a
           href={`/meme/${responds.id}`}
@@ -208,23 +220,6 @@ const Page: FC<Params> = ({ params }) => {
           </ul>
         </>
       ) : null}
-      <h2>Remembers</h2>
-      <ul className="search-results">
-        {agents.map((agent: any) => (
-          <RelationshipToggler
-            inn={agent.id}
-            relationship={REL_REMEMBERS}
-            out={meme.id}
-            collection={remembers}
-            className="agent"
-            Wrapper="li"
-            key={agent.id}
-          >
-            <p className="name">{agent.name}</p>
-            <p>{truncate(agent.content, 80)}</p>
-          </RelationshipToggler>
-        ))}
-      </ul>
     </section>
   );
 };

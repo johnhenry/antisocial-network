@@ -39,7 +39,7 @@ export default function Home() {
   useDebouncedEffect(
     () => {
       const search = async () => {
-        if (text.trim().length > 3) {
+        if (text.trim().length) {
           const [memes, agents, files]: any[][] = await searchMemes(text);
           setFoundMemes(memes);
           setFoundAgents(agents);

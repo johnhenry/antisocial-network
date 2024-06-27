@@ -168,7 +168,9 @@ const createFile = async (
     if (!file) {
       return "";
     }
+    console.log(11111);
     if (agent) {
+      console.log(22222);
       await relate(agent, REL_INSERTED, file!.id);
       await relate(agent, REL_BOOKMARKS, file!.id);
     }
@@ -223,13 +225,12 @@ export const generateResponseContent = async ({
 
 Messages mentioning "@${id}" are directed at you specifically.${
       relevantKnowledge
-        ? `\n\nYou may inclue the following knowledge as part of your response: \n {relevantKnowledge}`
+        ? `\n\nUse the following knowledge to color and infrom your response:\n {relevantKnowledge}`
         : ""
     }
   `,
   ]);
-
-  console.log({ messages });
+  // old: "You may inclue the following knowledge as part of your response: "
 
   // add relevant knowledge to messages
   const { content: returnContent } = await respond(messages, {

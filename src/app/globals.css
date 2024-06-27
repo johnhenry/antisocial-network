@@ -127,10 +127,12 @@ h2 {
 
 .form-create {
   border: 1px dashed var(--color-text);
+
   border-radius: 0.5rem;
   overflow: hidden;
   display: flex;
   padding: 1rem;
+
   textarea {
     &:focus {
       outline: none;
@@ -139,6 +141,7 @@ h2 {
     height: 100%;
     width: 100%;
   }
+
   &:focus-within {
     border-size: 2px;
     border-style: solid;
@@ -324,39 +327,55 @@ pre {
   flex: 1;
   display: flex;
   height: 100%;
-  flex-direction: column;
-  position: relative;
   gap: var(--size-gap-inner);
   place-content: center;
+  justify-content: space-between;
+  background-color: var(--color-text);
+  color: var(--color-background);
+  border-radius: 1rem;
+  overflow: hidden;
+  padding: var(--size-gap-smallest);
+
   > p {
     text-align: center;
-  }
-  > header {
-    gap: var(--size-gap-inner);
-    > * {
-      display: inline-block;
-      margin: var(--size-gap-inner);
-    }
-  }
-  > main {
-    overflow: scroll;
+    flex: 1;
   }
 
   > button.close {
+    background-color: var(--color-background);
+    color: var(--color-text);
     --size: 1.5rem;
     width: var(--size);
     aspect-ratio: 1;
     border-radius: 50%;
     padding: 0;
-    /* display: none; */
-    position: absolute;
+    visibility: hidden;
     font-size: 0.75rem;
-    top: 0;
-    right: 0;
+
     :hover > & {
-      display: block;
+      visibility: visible;
     }
   }
+  .icon {
+    cursor: pointer;
+    padding-left: 0.5rem;
+    &::after {
+      content: "   ";
+      display: inline;
+    }
+    & ~ .check {
+      visibility: hidden;
+      .bookmarks & {
+        visibility: visible;
+      }
+      .remembers & {
+        visibility: visible;
+      }
+    }
+  }
+}
+.thought-icons::before {
+  content: "🧠📂🔍✨📖📝💭🗃️";
 }
 
 .section-meme {
@@ -429,10 +448,6 @@ pre {
       }
     }
   }
-}
-
-.thought-icons::before {
-  content: "🧠📂🔍✨📖📝💭🗃️";
 }
 
 .section-file {

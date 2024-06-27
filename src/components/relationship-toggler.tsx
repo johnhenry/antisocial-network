@@ -1,4 +1,5 @@
 "use client";
+import type { Agent } from "@/types/types";
 import type { FC, ReactNode } from "react";
 import { useState } from "react";
 
@@ -8,7 +9,7 @@ type RelationshipTogglerProps = {
   className?: string;
   relationship?: string;
   collection?: string[];
-  inn: string;
+  inn: Agent;
   out: string;
   Wrapper?: ReactNode | FC<any> | string;
   children?: ReactNode;
@@ -37,14 +38,14 @@ const RelationshipToggler: FC<RelationshipTogglerProps> = ({
   if (!Wrapper) {
     return null;
   }
-  return (
+  return inn ? (
     <Wrapper
-      onClick={() => toggleRelates(inn)}
-      className={`${className} ${col.includes(inn) ? relationship : ""}`}
+      onClick={() => toggleRelates(inn.id)}
+      className={`${className} ${col.includes(inn.id) ? relationship : ""}`}
       {...props}
     >
       {children}
     </Wrapper>
-  );
+  ) : null;
 };
 export default RelationshipToggler;

@@ -4,10 +4,20 @@ type Props = {
   masquerade: Agent | null;
   setMasquerade: (agent: Agent | null) => void;
 };
-const Masquerade: FC<Props> = ({ masquerade, setMasquerade, ...props }) => {
+const Masquerade: FC<Props> = ({
+  masquerade,
+  setMasquerade,
+  children,
+  ...props
+}) => {
   return masquerade ? (
     <div {...props}>
-      <p>Masquerading as {masquerade.name}</p>
+      {children}
+      <p>
+        <a href={`/agent/${masquerade.id}`}>
+          Masquerading as {masquerade.name}
+        </a>
+      </p>
       <button className="close" onClick={() => setMasquerade(null)}>
         x
       </button>

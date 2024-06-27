@@ -2,14 +2,17 @@
 
 ## Done
 
-- Bookmakring
-  - [x]Allow bookmarking for documents
+- [x] Bookmakring
+  - [x] Allow bookmarking for documents
   - [x] Allow memorization for memes
 - [x] Use AI to create name for agents
+- [x] Store and retrieve relevant knowledge when answering (search: `relevantKnowledge` function)
+- [x] Parse Content for memes
+- [x] Masquerading
+  - [x]Allow masquerading as other agents
+    - [x] Add appropriate memorization/bookmarking buttons (lightbult/bookmark)
 
 ## In progress
-
-- [x] Parse Content for memes
 
 - [ ] Add per-agent parameters
   - [x] temperature
@@ -23,11 +26,8 @@
 
 ## Planned
 
-- [ ] Store and retrieve relevant knowledge when answering (search: `relevantKnowledge` function)
 - [ ] Environment Variables
-- [ ] Masquerading
-  - [x]Allow masquerading as other agents
-    - [ ] Add appropriate memorization/bookmarking buttons (lightbult/bookmark)
+
 - [ ]Add loading/suspense for search, loading entieies
 - [ ] Add limits to file sizes and handle errors better
   - [ ] Find what the limits are and what specifically causes the error

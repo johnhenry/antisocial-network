@@ -70,7 +70,18 @@ const Page: FC<Props> = ({ params }) => {
         masquerade={masquerade}
         setMasquerade={setMasquerade}
         className="agent-masquerade"
-      />
+      >
+        <RelationshipToggler
+          inn={masquerade}
+          relationship={REL_BOOKMARKS}
+          out={file.id}
+          collection={bookmarks}
+          Wrapper="span"
+        >
+          <span className="icon">📖</span>
+          <span className="check">✓</span>
+        </RelationshipToggler>
+      </Masquerade>
       <h2>
         <input name="name" defaultValue={file.name} onChange={taint} />
       </h2>
@@ -124,23 +135,6 @@ const Page: FC<Props> = ({ params }) => {
           )}
         </footer>
       </main>
-      <h2>Bookmarks</h2>
-      <ul className="search-results">
-        {agents.map((agent: any) => (
-          <RelationshipToggler
-            inn={agent.id}
-            relationship={REL_BOOKMARKS}
-            out={file.id}
-            collection={bookmarks}
-            className="agent"
-            Wrapper="li"
-            key={agent.id}
-          >
-            <p className="name">{agent.name}</p>
-            <p>{truncate(agent.content, 80)}</p>
-          </RelationshipToggler>
-        ))}
-      </ul>
     </section>
   );
 };

@@ -12,7 +12,6 @@ import {
   OLLAMA_LOCATION,
 } from "@/settings";
 import { JsonOutputFunctionsParser } from "@langchain/core/output_parsers/openai_functions";
-import { LLM } from "@langchain/core/language_models/llms";
 
 type FunctionDescriptor = {
   name: string;
