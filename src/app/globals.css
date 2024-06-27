@@ -92,7 +92,9 @@ html {
   color: var(--color-background);
 } */
 button,
-label:has(> input[type="file"]) {
+label:has(> input[type="file"]:only-child),
+label:has(> input[type="checkbox"]:only-child),
+label:has(> input[type="radio"]:only-child) {
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: var(--size-radius);
@@ -103,15 +105,16 @@ label:has(> input[type="file"]) {
   background-color: var(--color-text);
   color: var(--color-background);
 }
-
-textarea {
-  /* &::-webkit-resizer {
-    display: none;
-  } */
+label:has(> input[type="checkbox"]:only-child:checked),
+label:has(> input[type="radio"]:only-child:checked) {
+  background-color: var(--color-primary);
+  color: var(--color-secondary);
 }
 
-label:has(> input[type="file"]) {
-  > input[type="file"] {
+label:has(> input[type="file"]:only-child),
+label:has(> input[type="checkbox"]:only-child),
+label:has(> input[type="radio"]:only-child) {
+  > input {
     display: none;
   }
 }
@@ -141,6 +144,11 @@ h2 {
     height: 100%;
     width: 100%;
   }
+  &.agent-mode {
+    background-color: var(--color-text);
+    color: var(--color-background);
+    border-color: var(--color-background);
+  }
 
   &:focus-within {
     border-size: 2px;
@@ -153,58 +161,24 @@ h2 {
     gap: var(--size-gap-inner);
   }
 }
+
 .form-create-buttons {
   display: flex;
-  padding: 0 1rem;
-  justify-content: end;
-  .combobox {
-    width: fit-content;
-    border-radius: 0.5rem;
+  gap: var(--size-gap-inner);
+  align-items: center;
+  justify-content: center;
+  > button {
+    padding: var(--size-gap-inner);
+    border-radius: var(--size-radius);
     background-color: var(--color-text);
     color: var(--color-background);
-    overflow: hidden;
-    > select {
-      text-align: center;
-      height: fit-content;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-      height: 100%;
-      padding: var(--size-gap-inner);
-      padding-right: var(--size-gap-smallest);
-      &:focus,
-      &:active {
-        outline: none;
-      }
-      cursor: pointer;
-      &:hover {
-        filter: brightness(0.9);
-      }
-      &:has(~ button:hover) {
-        filter: brightness(0.9);
-      }
-    }
-    > button {
-      border-radius: 0;
-      padding-left: var(--size-gap-smallest);
-      height: 100%;
-      &:focus,
-      &:active {
-        outline: none;
-      }
-    }
-    &:focus-within {
-      outline: 5px auto -webkit-focus-ring-color;
+    &:hover {
+      filter: brightness(0.9);
     }
   }
-}
-
-label:has(> .and-button) {
-  display: flex;
-  justify-content: center;
-  --and-button-gap: var(--size-gap-inner);
-  --and-button-transition-time: 0.25s;
-  gap: var(--and-button-gap);
+  > :last-child {
+    margin-left: auto;
+  }
 }
 
 .with-files {
@@ -364,6 +338,7 @@ pre {
       display: inline;
     }
     & ~ .check {
+      cursor: pointer;
       visibility: hidden;
       .bookmarks & {
         visibility: visible;
@@ -556,5 +531,31 @@ pre {
   * {
     display: inline;
     font-size: 1rem;
+  }
+}
+
+.split-button {
+  display: flex;
+  flex-direction: row;
+  > main {
+    position: relative;
+    select {
+      width: 100%;
+    }
+    button {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  }
+  > footer {
+    button {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
   }
 }

@@ -168,9 +168,7 @@ const createFile = async (
     if (!file) {
       return "";
     }
-    console.log(11111);
     if (agent) {
-      console.log(22222);
       await relate(agent, REL_INSERTED, file!.id);
       await relate(agent, REL_BOOKMARKS, file!.id);
     }
@@ -187,6 +185,7 @@ export const createFiles = async (
   { files = [] }: { files?: ProtoFile[] } = {},
   { agent, meme }: { agent?: RecordId; meme?: RecordId } = {}
 ): Promise<string[]> => {
+  console.log("FILE", agent);
   const ids = [];
   for (const { name, type, content } of files) {
     ids.push(

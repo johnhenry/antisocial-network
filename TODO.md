@@ -46,6 +46,12 @@
 - [ ] add generic agents
   - [ ] @GenEric agent:generic
   - [ ] @HelpfulHenry agent:helpfufhelry
+- [ ] Show in-meme attachment links
+- [ ] Con Jobs (maybe after API is done)
+
+## Bugs
+
+- files created with are not bookmarked
 
 ## Investigate/Consider
 

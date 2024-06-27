@@ -11,7 +11,8 @@ import obfo from "obfo";
 import { createMeme, createFiles, createAgent } from "@/lib/database/create";
 import Image from "next/image";
 import fileToBase64 from "@/util/to-base64";
-import ComboBox from "@/components/combobox";
+import SplitButton from "@/components/split-button";
+
 type Props = {
   setText: Dispatch<SetStateAction<string>>;
   memeCreated: Function;
@@ -28,7 +29,6 @@ type Props = {
 const COMBO_OPTIONS = [
   { title: "Command/Win + Enter", label: "Create meme" },
   { title: "Command/Win + Option + Enter", label: "Create meme, get response" },
-  { title: "Option + Enter", label: "Create agent" },
 ];
 
 const OmniForm: FC<Props> = ({
@@ -45,6 +45,12 @@ const OmniForm: FC<Props> = ({
 }) => {
   const textRef = useRef<HTMLSelectElement>(null);
   const [files, setFiles] = useState<any[]>([]);
+  const [agentMode, setAgentMode] = useState(false);
+  const toggleAgentMode: ChangeEventHandler = (event) => {
+    setAgentMode(
+      (event.target as HTMLInputElement).checked && allowCreateAgent
+    );
+  };
   const addFile = (file: any) => setFiles((files) => [...files, file]);
   const removeFile = (index: number) =>
     setFiles(files.filter((_, i) => i !== index));
@@ -74,11 +80,6 @@ const OmniForm: FC<Props> = ({
       }
       return;
     }
-    // create meme
-    // if (!confirm("creating meme" + (response ? " with response..." : "..."))) {
-    //   return;
-    // }
-    // return console.log({ text, files, response });
     cleanInput();
     const id = await createMeme(
       { content: text, files },
@@ -87,10 +88,6 @@ const OmniForm: FC<Props> = ({
     memeCreated(id);
   };
   const makeAgent = async () => {
-    // if (!confirm("creating agent...")) {
-    //   return;
-    // }
-    // return console.log({ text, files });
     cleanInput();
     const id = await createAgent({ description: text, files });
     agentCreated(id);
@@ -105,29 +102,29 @@ const OmniForm: FC<Props> = ({
   const onEnter: ChangeEventHandler = (event: KeyboardEvent) => {
     if (event.key === "Enter") {
       if (event.metaKey) {
-        makeFilesOrMemes(event.altKey);
-      } else if (event.altKey) {
-        makeAgent();
+        if (agentMode) {
+          makeAgent();
+        } else {
+          makeFilesOrMemes(event.altKey);
+        }
       }
     }
   };
-  const onCombo = (event: SelectEvent) => {
-    switch (event.selected) {
+
+  const onSplit = (event) => {
+    switch (event?.target.value) {
       case COMBO_OPTIONS[0].label:
         makeFilesOrMemes();
         break;
       case COMBO_OPTIONS[1].label:
         makeFilesOrMemes(true);
         break;
-      case COMBO_OPTIONS[2].label:
-        makeAgent();
-        break;
     }
   };
 
   return (
     <>
-      <form className="form-create">
+      <form className={`form-create${agentMode ? " agent-mode" : ""}`}>
         <textarea
           title="text"
           name="text"
@@ -137,10 +134,10 @@ const OmniForm: FC<Props> = ({
           }
           onKeyDown={onEnter}
           ref={textRef}
-        ></textarea>
+        />
         <footer>
           <label title="files" data-obfo-container="{}">
-            📎{" "}
+            📎
             <input
               name="files"
               type="file"
@@ -177,39 +174,36 @@ const OmniForm: FC<Props> = ({
           ))}
         </footer>
       </form>
-      {!text ? (
-        allowNakedFiles && files.length ? (
-          <form className="form-create-buttons">
-            <button
-              type="button"
-              onClick={() => makeFilesOrMemes()}
-              title={COMBO_OPTIONS[0].title}
-            >
-              Upload files
+      <form className="form-create-buttons">
+        {text ? (
+          agentMode ? (
+            <button type="button" onClick={makeAgent} title={"Create agent"}>
+              Create Agent
             </button>
-          </form>
-        ) : null
-      ) : (
-        <form className="form-create-buttons">
-          <ComboBox
-            defaultValue={COMBO_OPTIONS[0].label}
-            className={"combobox"}
-            onClick={onCombo}
-            text="[‹‹‹]"
-          >
-            {COMBO_OPTIONS.map((option, index) => {
-              if (index === 2 && !allowCreateAgent) {
-                return null;
-              }
-              return (
-                <option title={option.title} key={index}>
-                  {option.label + (files.length ? " with files" : "")}
-                </option>
-              );
-            })}
-          </ComboBox>
-        </form>
-      )}
+          ) : (
+            <div className="split-button">
+              <SplitButton onClick={onSplit} defaultValue={"Create meme"}>
+                {COMBO_OPTIONS.map((option, index) => {
+                  return (
+                    <option title={option.title} key={index}>
+                      {option.label + (files.length ? " with files" : "")}
+                    </option>
+                  );
+                })}
+              </SplitButton>
+            </div>
+          )
+        ) : files.length && allowNakedFiles && !agentMode ? (
+          <button type="button" onClick={() => makeFilesOrMemes()}>
+            Upload Files
+          </button>
+        ) : null}
+        {allowCreateAgent ? (
+          <label>
+            <input type="checkbox" onChange={toggleAgentMode} /> Agent Mode
+          </label>
+        ) : null}
+      </form>
     </>
   );
 };

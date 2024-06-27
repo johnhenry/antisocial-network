@@ -26,7 +26,7 @@ export default function RootLayout({
           src="/request-permission-notification.mjs"
           async
         ></script> */}
-
+        <link rel="stylesheet" href="/showpicker/style.css" />
         <title>{metadata.title as string}</title>
       </head>
       <body>
@@ -50,6 +50,7 @@ export default function RootLayout({
           </header>
           {children}
         </main>
+        <script src="/showpicker/script.mjs"></script>
       </body>
     </html>
   );

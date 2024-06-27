@@ -1,0 +1,40 @@
+.custom-picker {
+  position: absolute;
+  background-color: #333333ee;
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  z-index: 1000;
+  border-radius: 8px; /* Rounded corners */
+  border: 1px outset #999;
+  box-shadow: 0 4px 6px rgba(11, 4, 4, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px; /* Padding around the picker */
+  option,
+  .option {
+    padding: 4px 6px;
+    font-size: 0.9rem;
+    color: #fff; /* White text */
+    cursor: pointer;
+    display: flex;
+    align-items: center; /* Center the checkmark and text vertically */
+    border-radius: 4px; /* Rounded corners for options */
+    background-color: transparent;
+
+    &:hover {
+      background-color: #588ded; /* Blue background for selected option */
+    }
+
+    &.selected::before {
+      content: "✔"; /* Checkmark */
+      margin-right: 8px; /* Space between checkmark and text */
+      font-size: 14px;
+      font-weight: 50;
+    }
+
+    &:not(.selected)::before {
+      content: ""; /* No checkmark for non-selected options */
+      margin-right: 22px; /* Keep space consistent for alignment */
+    }
+  }
+}

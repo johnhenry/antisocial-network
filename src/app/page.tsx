@@ -10,7 +10,11 @@ import { MASQUERADE_KEY } from "@/settings";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import Masquerade from "@/components/masquerade";
 const MiniFile = ({ file }: any) => <>{truncate(file.content, 128)}</>;
-const MiniAgent = ({ agent }: any) => <>{truncate(agent.content, 128)}</>;
+const MiniAgent = ({ agent }: any) => (
+  <>
+    @{agent.name}:{truncate(agent.content, 128)}
+  </>
+);
 
 export default function Home() {
   const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(
@@ -56,7 +60,7 @@ export default function Home() {
       };
     },
     [text],
-    500
+    750
   );
 
   return (
