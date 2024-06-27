@@ -127,6 +127,7 @@ const Page: FC<Props> = ({ params }) => {
                 title="description"
                 name="description"
                 defaultValue={agent.description}
+                onChange={taint}
               />
             </details>
           </div>

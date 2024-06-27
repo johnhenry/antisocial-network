@@ -21,7 +21,7 @@ import parsePDF from "@/lib/parsers/pdf";
 import exifr from "exifr";
 import { RecordId, StringRecordId } from "surrealdb.js";
 import semanticChunker from "@/lib/chunkers/semantic";
-import generateSystemPrompt from "@/lib/gen-system-prompt";
+// import generateSystemPrompt from "@/lib/gen-system-prompt";
 import nameGenerator from "@/util/random-name-generator";
 import { respond } from "@/lib/ai";
 
@@ -215,20 +215,22 @@ export const generateResponseContent = async ({
   // get messages from post and all parents
   const relevantKnowledge = await getRelevantKnowlede(messages, agent);
   // add system prompt to messages
-  if (relevantKnowledge) {
-    messages.unshift([
-      "system",
-      `You will use the following relevant knowledge to respond to the user:
-${relevantKnowledge}`,
-    ]);
-  }
   // get system prompt from agent
-  const { content, name, model } = agent;
-  messages.unshift(["system", content]);
+  const { content, id, model } = agent;
   messages.unshift([
     "system",
-    `messages mentioning "@${name} are directed at you specifically."`,
+    `${content}
+
+Messages mentioning "@${id}" are directed at you specifically.${
+      relevantKnowledge
+        ? `\n\nYou may inclue the following knowledge as part of your response: \n {relevantKnowledge}`
+        : ""
+    }
+  `,
   ]);
+
+  console.log({ messages });
+
   // add relevant knowledge to messages
   const { content: returnContent } = await respond(messages, {
     relevantKnowledge,
@@ -285,7 +287,8 @@ export const createMeme = async (
     if (response) {
       let agent, messages;
       if (response === true) {
-        ({ agent, messages } = (await getMostAppropriateAgent(meme)) as any);
+        agent = (await getMostAppropriateAgent(meme)).id.toString();
+        messages = await getMemeWithHistory(meme);
       } else {
         agent = response;
         messages = await getMemeWithHistory(meme);
@@ -337,41 +340,49 @@ const generateRandomName = async () => {
 };
 
 export const createAgent = async ({
+  name = "",
   model = null,
-  description = null,
+  description = "",
   qualities = [],
   image = null,
   files = [],
 }: {
+  name?: string;
   model?: string | null;
-  description?: string | null;
+  description?: string;
   qualities?: [string, string][];
   image?: string | null;
   files?: ProtoFile[];
 } = {}) => {
   const db = await getDB();
   try {
-    const name = await generateRandomName();
-    const combinedQualities = qualities
-      .map(([name, description]) => `- ${name}\n  - ${description}`)
-      .join("\n");
-    const { content } = await generateSystemPrompt(
-      combinedQualities,
-      description
-    );
+    const combinedQualities = (
+      description.trim() +
+      "\n\n" +
+      qualities.map(([k, v]) => `- ${k}\n  - ${v}`).join("\n")
+    ).trim();
+    const content = combinedQualities
+      ? await summarize(combinedQualities, PROMPTS_SUMMARIZE.LLM_PROMPT)
+      : await summarize("", PROMPTS_SUMMARIZE.LLM_PROMPT_RANDOM);
 
-    const indexed = [name, content, description, combinedQualities]
+    const generatedName = name.trim()
+      ? name.trim()
+      : (await summarize(content, PROMPTS_SUMMARIZE.LLM_NAMES))
+          .split(",")
+          [Math.floor(Math.random() * 5)].trim();
+
+    const indexed = [description, content, combinedQualities]
       .filter(Boolean)
       .join("\n ------------------ \n");
 
     const embedding = await embed(content as string);
     const [agent] = await db.create(TABLE_AGENT, {
       timestamp: new Date().toISOString(),
-      name,
+      name: generatedName,
       content,
       combinedQualities,
       model,
-      description,
+      description: description.trim(),
       qualities,
       image,
       embedding,

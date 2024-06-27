@@ -2,7 +2,7 @@
 import { getDB } from "@/lib/db";
 import { StringRecordId } from "surrealdb.js";
 import generateSystemPrompt from "@/lib/gen-system-prompt";
-import { embed } from "@/lib/ai";
+import { embed, summarize, PROMPTS_SUMMARIZE } from "@/lib/ai";
 import { nameExists } from "@/lib/database/create";
 
 export const updateAgent = async (
@@ -36,24 +36,23 @@ export const updateAgent = async (
     if (agent.image !== image) {
       agent.image = image;
     }
-    const combinedQualities = qualities
-      .map(([name, description]) => `- ${name}\n  - ${description}`)
-      .join("\n");
-    // retenerate content if qualities or description have changed
-    if (
-      agent.combinedQualities !== combinedQualities ||
-      agent.description !== description
-    ) {
+
+    const combinedQualities = (
+      description +
+      "\n\n" +
+      qualities.map(([k, v]) => `- ${k}\n  - ${v}`).join("\n")
+    ).trim();
+
+    // regenerate content if qualities or description have changed
+    if (agent.combinedQualities !== combinedQualities) {
       // update system prompt, description and combinedQualities
-      let _;
-      const { content } = await generateSystemPrompt(
-        combinedQualities,
-        description || ""
-      );
+      const content = combinedQualities
+        ? await summarize(combinedQualities, PROMPTS_SUMMARIZE.LLM_PROMPT)
+        : await summarize("", PROMPTS_SUMMARIZE.LLM_PROMPT_RANDOM);
       agent.content = content;
       agent.embedding = await embed(content as string);
       agent.qualities = qualities;
-      agent.description = description;
+      agent.description = description?.trim();
       agent.combinedQualities = combinedQualities;
     }
     if (model !== agent.model) {

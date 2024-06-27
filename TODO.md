@@ -5,21 +5,12 @@
 - Bookmakring
   - [x]Allow bookmarking for documents
   - [x] Allow memorization for memes
+- [x] Use AI to create name for agents
 
 ## In progress
 
-- [ ] Parse Content for memes
-  1. Content is save as "raw" in database
-  2. This is hashed and saved as "hash"
-  3. Parse @mentions, #tags replace with ids and put into mark down/html.
-     1. @<agent name> => @<agent id>
-     2. #<file name>=> #<file id>
-  4. Parse markdown/html into html
-  5. Sanitize HTML
-     1. This is saved as "content"
-     2. This is embedded and saved as "embedding"
-  6. When rendered, the content is set using dangerously set html
-     1. A call is made to the database to get the name of the agent or document
+- [x] Parse Content for memes
+
 - [ ] Add per-agent parameters
   - [x] temperature
   - [x] model
@@ -44,7 +35,6 @@
 - [ ] Format responses
 - [ ] Mobile CSS
 - [ ] Upload images for agents
-- [ ] Use AI to create name for agents and documents
 
 - [ ] implement tools
   - https://dev.to/vyan/public-apis-for-web-development-projects-lhk
@@ -53,6 +43,9 @@
   - summaries of documents shoud be included in [initial] agent description
   - if name is empty, or 0 generate it from the document content
   - if name is 1, generate a random name
+- [ ] add generic agents
+  - [ ] @GenEric agent:generic
+  - [ ] @HelpfulHenry agent:helpfufhelry
 
 ## Investigate/Consider
 
