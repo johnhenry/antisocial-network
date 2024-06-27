@@ -14,7 +14,7 @@ import {
   REL_ELICITS,
   REL_INCLUDES,
 } from "@/settings";
-import { embed, summarize, describe } from "@/lib/ai";
+import { embed, summarize, describe, PROMPTS_SUMMARIZE } from "@/lib/ai";
 import hashData from "@/util/hash";
 import base64to from "@/util/base64-to";
 import parsePDF from "@/lib/parsers/pdf";
@@ -365,7 +365,6 @@ export const createAgent = async ({
       .join("\n ------------------ \n");
 
     const embedding = await embed(content as string);
-
     const [agent] = await db.create(TABLE_AGENT, {
       timestamp: new Date().toISOString(),
       name,
