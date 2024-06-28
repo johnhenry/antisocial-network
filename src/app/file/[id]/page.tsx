@@ -40,7 +40,6 @@ const Page: FC<Props> = ({ params }) => {
         source: "file",
         out: [{ table: "agent", relationship: REL_BOOKMARKS }],
       });
-      console.log({ out, inn });
       setFile(file);
       const bookmarks = parseRelationship(out, "agent", REL_BOOKMARKS).map(
         (x) => x.id
@@ -49,14 +48,12 @@ const Page: FC<Props> = ({ params }) => {
 
       const agents = await getAllAgents();
       setAgents(agents);
-      console.log({ agents, bookmarks });
     };
     fetchFile();
   }, [indetifier]);
   const update = async () => {
     alert("updating...");
     const data = obfo(document.querySelector(".section-file"));
-    // return console.log(data);
     await updateFile(indetifier, data);
     alert("updated!");
   };

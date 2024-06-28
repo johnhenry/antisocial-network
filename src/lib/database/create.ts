@@ -185,7 +185,6 @@ export const createFiles = async (
   { files = [] }: { files?: ProtoFile[] } = {},
   { agent, meme }: { agent?: RecordId; meme?: RecordId } = {}
 ): Promise<string[]> => {
-  console.log("FILE", agent);
   const ids = [];
   for (const { name, type, content } of files) {
     ids.push(
@@ -210,14 +209,14 @@ export const generateResponseContent = async ({
   agent,
   messages = [],
 }: {
-  agent?: any;
+  agent?: Agent;
   messages?: [string, string][];
 } = {}) => {
   // get messages from post and all parents
   const relevantKnowledge = await getRelevantKnowlede(messages, agent);
   // add system prompt to messages
   // get system prompt from agent
-  const { content, id, model } = agent;
+  const { content, id, parameters } = agent!;
   messages.unshift([
     "system",
     `${content}
@@ -232,9 +231,14 @@ Messages mentioning "@${id}" are directed at you specifically.${
   // old: "You may inclue the following knowledge as part of your response: "
 
   // add relevant knowledge to messages
-  const { content: returnContent } = await respond(messages, {
-    relevantKnowledge,
-  });
+  const { content: returnContent } = await respond(
+    messages,
+    {
+      relevantKnowledge,
+    },
+    undefined,
+    parameters
+  );
   return returnContent;
 };
 
@@ -341,14 +345,14 @@ const generateRandomName = async () => {
 
 export const createAgent = async ({
   name = "",
-  model = null,
+  parameters = null,
   description = "",
   qualities = [],
   image = null,
   files = [],
 }: {
   name?: string;
-  model?: string | null;
+  parameters?: string | null;
   description?: string;
   qualities?: [string, string][];
   image?: string | null;
@@ -381,7 +385,7 @@ export const createAgent = async ({
       name: generatedName,
       content,
       combinedQualities,
-      model,
+      parameters,
       description: description.trim(),
       qualities,
       image,

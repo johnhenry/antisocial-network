@@ -18,22 +18,19 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       const response = await fetch(event.request);
       const clonedResponse = response.clone();
-      console.log({ response });
-
       // Check if the original calling window is closed
       const clientList = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
       });
-      console.log("clientList", clientList);
 
-      if (clientList.length === 0) {
+      if (clientList.length === 0 && response.ok) {
+        const id = await response.text();
         self.registration.showNotification("Antisocial Network", {
-          body: "A process completed in the background.",
+          body: `A process completed in the background. ${id}`,
           icon: "/static/user.webp", // Add path to your icon
         });
       }
-
       return clonedResponse;
     })()
   );

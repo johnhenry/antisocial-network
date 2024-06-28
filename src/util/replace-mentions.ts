@@ -9,23 +9,21 @@
  * @example
  * ```javascript
  * const callback = (mention) => `<<${mention}>>`; // Example callback function
- * console.log(
  *  await replaceMentions("Hello @john, have you seen @jane's new post?", callback, "@")
- * ); // Output: Hello <<john>>, have you seen <<jane>>'s new post?
+ * // Output: Hello <<john>>, have you seen <<jane>>'s new post?
  * ```
  *
  * @example
  * ```javascript
- * console.log(
+
  *  await replaceMentions("Hello@john, have you seen @jane's new post?", callback, "@")
- * ); // Output: Hello@john, have you seen <<jane>>'s new post?
+ * // Output: Hello@john, have you seen <<jane>>'s new post?
  * ```
  *
  * @example
  * ```javascript
- * console.log(
  *  await replaceMentions("Hello #john, have you seen #jane's new post?", callback, "#")
- * ); // Output: Hello <<john>>, have you seen <<jane>>
+ *  // Output: Hello <<john>>, have you seen <<jane>>
  * ```
  */
 

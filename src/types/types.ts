@@ -8,7 +8,7 @@ export type Agent = {
   embedding: number[];
   qualities: [string, string][];
   combinedQualities: string;
-  model: Record<string, any>;
+  parameters: Record<string, any>;
   image: string;
   indexed: string;
 };

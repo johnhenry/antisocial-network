@@ -9,13 +9,13 @@ export const updateAgent = async (
   identifier: string,
   {
     name = null,
-    model = null,
+    parameters = null,
     description = null,
     qualities = [],
     image = null,
   }: {
     name?: string | null;
-    model?: string | null;
+    parameters?: string | null;
     description?: string | null;
     qualities?: [string, string][];
     image?: string | null;
@@ -55,15 +55,8 @@ export const updateAgent = async (
       agent.description = description?.trim();
       agent.combinedQualities = combinedQualities;
     }
-    if (model !== agent.model) {
-      agent.model = model;
-    }
-    agent.indexed = [
-      agent.name,
-      agent.content,
-      agent.description,
-      agent.combinedQualities,
-    ]
+    agent.parameters = parameters;
+    agent.indexed = [agent.description, agent.content, agent.combinedQualities]
       .filter(Boolean)
       .join("\n ------------------ \n");
 

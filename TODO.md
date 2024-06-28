@@ -11,6 +11,7 @@
 - [x] Masquerading
   - [x]Allow masquerading as other agents
     - [x] Add appropriate memorization/bookmarking buttons (lightbult/bookmark)
+- [x] Load Envirnment Variables
 
 ## In progress
 
@@ -19,14 +20,12 @@
   - [x] model
   - etc.
     - https://api.python.langchain.com/en/latest/chat_models/langchain_community.chat_models.ollama.ChatOllama.html
-    - https://v02.api.js.lang
+    - https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
 - note, this is currently set as "model", but should be "parameters"
 - [ ] Rest API
-- [ ] - [ ] https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
+- [ ] - [ ]
 
 ## Planned
-
-- [ ] Environment Variables
 
 - [ ]Add loading/suspense for search, loading entieies
 - [ ] Add limits to file sizes and handle errors better
@@ -35,7 +34,7 @@
 - [ ] Format responses
 - [ ] Mobile CSS
 - [ ] Upload images for agents
-
+- [ ] Settings page
 - [ ] implement tools
   - https://dev.to/vyan/public-apis-for-web-development-projects-lhk
   - https://github.com/public-api-lists/public-api-lists
@@ -48,6 +47,7 @@
   - [ ] @HelpfulHenry agent:helpfufhelry
 - [ ] Show in-meme attachment links
 - [ ] Con Jobs (maybe after API is done)
+- [] Update instruction for ollama
 
 ## Bugs
 

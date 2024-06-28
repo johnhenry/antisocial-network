@@ -14,8 +14,7 @@ const base64to = (base64String: string): Uint8Array => {
     }
     return new Uint8Array(byteNumbers);
   } catch (error) {
-    console.log(error);
-    return new Uint8Array();
+    throw error;
   }
 };
 

@@ -119,12 +119,10 @@ export const getMostAppropriateAgent = async (meme: any) => {
   try {
     const embedded = await embed(meme.content);
     const query = `SELECT id, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM type::table($table) WHERE embedding <|1|> $embedded ORDER BY dist DESC LIMIT 1`;
-
     const [[agent]]: [any[]] = await db.query(query, {
       table: TABLE_AGENT,
       embedded,
     });
-    console.log({ agent });
     return agent;
   } finally {
     await db.close();

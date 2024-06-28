@@ -88,7 +88,7 @@ const Page: FC<Props> = ({ params }) => {
       <main>
         <header>
           <img src={agent.image || DEFAULT_USER_IMAGE} alt={agent.id}></img>
-          <form data-obfo-container="{}" data-obfo-name="model">
+          <form data-obfo-container="{}" data-obfo-name="parameters">
             <label>
               Temperature{" "}
               <input
