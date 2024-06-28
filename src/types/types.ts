@@ -15,7 +15,7 @@ export type Agent = {
 
 export type AgentParameters = {
   embeddingOnly?: boolean;
-  f16KV?: boolean;
+  // f16KV?: boolean;
   frequencyPenalty?: number;
   headers?: Record<string, string>; // need time to plan this out
   keepAlive?: string | number; // need to plan this out more

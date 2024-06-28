@@ -140,7 +140,7 @@ const Page: FC<Props> = ({ params }) => {
                   defaultChecked={agent.parameters.embeddingOnly}
                 />
               </label>
-              <label>
+              {/* <label>
                 f16KV
                 <input
                   name="f16KV"
@@ -149,7 +149,7 @@ const Page: FC<Props> = ({ params }) => {
                   data-obfo-cast="checkbox"
                   defaultChecked={agent.parameters.f16KV}
                 />
-              </label>
+              </label> */}
               <label>
                 Logits All
                 <input

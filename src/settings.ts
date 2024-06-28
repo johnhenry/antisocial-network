@@ -78,7 +78,7 @@ export const SIZE_KNN = read("SIZE_KNN", {
 
 export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   embeddingOnly: false,
-  f16KV: false,
+  // f16KV: false,
   frequencyPenalty: 0,
   headers: {},
   keepAlive: undefined,
