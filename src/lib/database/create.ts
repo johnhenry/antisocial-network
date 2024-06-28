@@ -1,9 +1,10 @@
 "use server";
-import type { Agent, File, Meme } from "@/types/types";
+import type { Agent, AgentParameters, File, Meme } from "@/types/types";
 import renderText from "@/util/render-text";
 import "server-only";
 import { getDB, relate } from "@/lib/db";
 import {
+  MODEL_BASIC,
   TABLE_MEME,
   TABLE_FILE,
   TABLE_AGENT,
@@ -24,6 +25,8 @@ import semanticChunker from "@/lib/chunkers/semantic";
 // import generateSystemPrompt from "@/lib/gen-system-prompt";
 import nameGenerator from "@/util/random-name-generator";
 import { respond } from "@/lib/ai";
+import removeValuesFromObject from "@/util/removeValuesFromObject";
+import { DEFAULT_PARAMETERS_AGENT } from "@/settings";
 
 import {
   getMostAppropriateAgent,
@@ -32,6 +35,7 @@ import {
   getMemeWithHistory,
   replaceAgentNameWithId,
 } from "@/lib/database/read";
+import { urlToHttpOptions } from "url";
 
 ////
 // File
@@ -345,14 +349,14 @@ const generateRandomName = async () => {
 
 export const createAgent = async ({
   name = "",
-  parameters = null,
+  parameters = DEFAULT_PARAMETERS_AGENT,
   description = "",
   qualities = [],
   image = null,
   files = [],
 }: {
   name?: string;
-  parameters?: string | null;
+  parameters?: AgentParameters;
   description?: string;
   qualities?: [string, string][];
   image?: string | null;
@@ -373,7 +377,8 @@ export const createAgent = async ({
       ? name.trim()
       : (await summarize(content, PROMPTS_SUMMARIZE.LLM_NAMES))
           .split(",")
-          [Math.floor(Math.random() * 5)].trim();
+          [Math.floor(Math.random() * 5)].split(" ")
+          .join(""); // Split and Join to remove any spaces
 
     const indexed = [description, content, combinedQualities]
       .filter(Boolean)
@@ -385,7 +390,7 @@ export const createAgent = async ({
       name: generatedName,
       content,
       combinedQualities,
-      parameters,
+      parameters: removeValuesFromObject(parameters, undefined, ""),
       description: description.trim(),
       qualities,
       image,

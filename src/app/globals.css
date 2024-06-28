@@ -91,7 +91,27 @@ html {
   background-color: var(--color-text);
   color: var(--color-background);
 } */
+
 button,
+label:has(> input[type="file"]:only-child) {
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--size-radius);
+  padding: var(--size-gap-inner) var(--size-gap-inner);
+  &:hover {
+    filter: brightness(0.9);
+  }
+  background-color: var(--color-text);
+  color: var(--color-background);
+}
+
+label:has(> input[type="file"]:only-child) {
+  > input {
+    display: none;
+  }
+}
+
+/* button,
 label:has(> input[type="file"]:only-child),
 label:has(> input[type="checkbox"]:only-child),
 label:has(> input[type="radio"]:only-child) {
@@ -117,7 +137,7 @@ label:has(> input[type="radio"]:only-child) {
   > input {
     display: none;
   }
-}
+} */
 
 h1 {
   font-size: 3rem;
@@ -481,7 +501,18 @@ pre {
         display: flex;
         flex-direction: column;
         gap: var(--size-gap-inner);
+        > details {
+          display: flex;
+          flex-direction: column;
+          gap: var(--size-gap-inner);
+        }
       }
+    }
+    label {
+      display: flex;
+      flex-direction: row;
+      gap: var(--size-gap-inner);
+      padding: var(--size-gap-inner);
     }
     > footer {
       flex: 1;

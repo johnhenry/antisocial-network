@@ -12,18 +12,16 @@
   - [x]Allow masquerading as other agents
     - [x] Add appropriate memorization/bookmarking buttons (lightbult/bookmark)
 - [x] Load Envirnment Variables
-
-## In progress
-
-- [ ] Add per-agent parameters
+- [x] Add per-agent parameters
   - [x] temperature
   - [x] model
   - etc.
     - https://api.python.langchain.com/en/latest/chat_models/langchain_community.chat_models.ollama.ChatOllama.html
     - https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
-- note, this is currently set as "model", but should be "parameters"
+
+## In progress
+
 - [ ] Rest API
-- [ ] - [ ]
 
 ## Planned
 
@@ -47,7 +45,7 @@
   - [ ] @HelpfulHenry agent:helpfufhelry
 - [ ] Show in-meme attachment links
 - [ ] Con Jobs (maybe after API is done)
-- [] Update instruction for ollama
+- [ ] Update instruction for ollama
 
 ## Bugs
 

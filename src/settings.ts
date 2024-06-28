@@ -1,4 +1,5 @@
 // import "dotenv/config";
+import type { AgentParameters } from "@/types/types";
 import { read } from "@/util/getEnv";
 ////
 // Database
@@ -74,3 +75,42 @@ export const SIZE_KNN = read("SIZE_KNN", {
   defaultValue: 3,
   cast: parseInt,
 });
+
+export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
+  embeddingOnly: false,
+  f16KV: false,
+  frequencyPenalty: 0,
+  headers: {},
+  keepAlive: undefined,
+  logitsAll: undefined,
+  lowVram: undefined,
+  mainGpu: 0,
+  model: MODEL_BASIC,
+  baseUrl: undefined,
+  mirostat: 0,
+  mirostatEta: 0.1,
+  mirostatTau: 0.5,
+  numBatch: undefined,
+  numCtx: 2048,
+  numGpu: undefined,
+  numGqa: undefined,
+  numKeep: undefined,
+  numPredict: 128,
+  numThread: undefined,
+  penalizeNewline: false,
+  presencePenalty: undefined,
+  repeatLastN: undefined,
+  repeatPenalty: 1.1,
+  ropeFrequencyBase: undefined,
+  ropeFrequencyScale: undefined,
+  temperature: 0.1,
+  stop: undefined,
+  tfsZ: undefined,
+  topK: 40,
+  topP: 0.9,
+  typicalP: undefined,
+  useMLock: undefined,
+  useMMap: undefined,
+  vocabOnly: undefined,
+  format: undefined,
+};

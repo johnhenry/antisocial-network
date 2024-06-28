@@ -1,24 +1,27 @@
 "use server";
+import type { AgentParameters } from "@/types/types";
 import { getDB } from "@/lib/db";
 import { StringRecordId } from "surrealdb.js";
-import generateSystemPrompt from "@/lib/gen-system-prompt";
 import { embed, summarize, PROMPTS_SUMMARIZE } from "@/lib/ai";
 import { nameExists } from "@/lib/database/create";
+
+import removeValuesFromObject from "@/util/removeValuesFromObject";
+import { DEFAULT_PARAMETERS_AGENT } from "@/settings";
 
 export const updateAgent = async (
   identifier: string,
   {
     name = null,
-    parameters = null,
     description = null,
     qualities = [],
     image = null,
+    parameters = DEFAULT_PARAMETERS_AGENT,
   }: {
     name?: string | null;
-    parameters?: string | null;
     description?: string | null;
     qualities?: [string, string][];
     image?: string | null;
+    parameters?: AgentParameters;
   } = {}
 ): Promise<string> => {
   const db = await getDB();
@@ -55,7 +58,7 @@ export const updateAgent = async (
       agent.description = description?.trim();
       agent.combinedQualities = combinedQualities;
     }
-    agent.parameters = parameters;
+    agent.parameters = removeValuesFromObject(parameters, undefined, "");
     agent.indexed = [agent.description, agent.content, agent.combinedQualities]
       .filter(Boolean)
       .join("\n ------------------ \n");

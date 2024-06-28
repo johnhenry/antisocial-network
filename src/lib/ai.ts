@@ -34,14 +34,14 @@ export const respond = async (
 ) => {
   const model = functions
     ? new OllamaFunctions({
-        temperature: 0.1,
+        ...parameters,
         baseUrl: OLLAMA_LOCATION,
         model: MODEL_FUNCTIONS,
       }).bind(functions)
     : new ChatOllama({
-        temperature: parameters?.temperature ?? 0.1,
+        model: MODEL_BASIC,
+        ...parameters,
         baseUrl: OLLAMA_LOCATION,
-        model: parameters?.model || MODEL_BASIC,
       });
   const prompt = ChatPromptTemplate.fromMessages(messages);
   let chain = prompt.pipe(model);
