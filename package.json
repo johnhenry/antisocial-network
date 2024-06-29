@@ -9,7 +9,6 @@
     "lint": "next lint",
     "surreal": "surreal start memory -A --auth --user root --pass root",
     "deno:run": "deno run --importmap=import_map.json --unstable-sloppy-imports --allow-env --allow-read --allow-net",
-    "surreal:init": "npm run deno:run -s src/script/auto-init-db.ts",
     "env:vars": "npm run deno:run -s src/script/list-settings.ts"
   },
   "dependencies": {

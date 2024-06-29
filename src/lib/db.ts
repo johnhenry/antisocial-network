@@ -6,10 +6,49 @@ import {
   DB_PASSWORD,
   DB_NAMESPACE,
   DB_DATABASE,
+  TABLE_SETTINGS_ID_CURRENT,
+  TABLE_SETTINGS,
+  TABLE_AGENT,
+  TABLE_MEME,
+  TABLE_FILE,
+  ALL_TABLES,
+  SETTINGS_DEFAULT,
+  SIZE_EMBEDDING_VECTOR,
 } from "@/settings";
 import { RecordId, StringRecordId } from "surrealdb.js";
 
 import { replaceNumber as rn } from "@/util/replace-char";
+
+const initialize = async (db: Surreal): Promise<void> => {
+  // Define settings table
+  try {
+    await db.create(TABLE_SETTINGS, {
+      id: TABLE_SETTINGS_ID_CURRENT,
+      data: SETTINGS_DEFAULT,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    throw error;
+  }
+  // Define indexed tables
+  for (const table of [TABLE_AGENT, TABLE_MEME, TABLE_FILE]) {
+    const queries = [
+      `DEFINE TABLE IF NOT EXISTS ${table} SCHEMALESS`,
+      `DEFINE FIELD IF NOT EXISTS embedding ON TABLE ${table} TYPE array<number>`,
+      `DEFINE INDEX IF NOT EXISTS search ON ${table} FIELDS embedding MTREE DIMENSION ${SIZE_EMBEDDING_VECTOR} DIST COSINE`,
+    ];
+    try {
+      await db.query(queries.join(";"));
+    } catch (error: any) {
+      if (error.message.includes("already exists")) {
+        console.log(`Index already exists on ${table}`);
+      } else {
+        throw error;
+      }
+    }
+  }
+};
 
 export const getDB = async ({
   dbPath = DB_PATH,
@@ -37,6 +76,10 @@ export const getDB = async ({
     username: dbUsername,
     password: dbPassword,
   });
+
+  if (!(await db.select(new StringRecordId("settings:current")))) {
+    await initialize(db);
+  }
   return db;
 };
 
@@ -142,4 +185,15 @@ export const q = (strings: string[], ...values: any[]) => {
   }
   const string = str.join("");
   return [string, vals];
+};
+
+export const clearDB = async () => {
+  const db = await getDB();
+  try {
+    for (const table of ALL_TABLES) {
+      await db.delete(table);
+    }
+  } finally {
+    await db.close();
+  }
 };

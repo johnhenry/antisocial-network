@@ -1,5 +1,5 @@
 "use server";
-import type { Agent } from "@/types/types";
+import type { Agent, Setting } from "@/types/types";
 import { StringRecordId, RecordId } from "surrealdb.js";
 import { getDB } from "@/lib/db";
 import {
@@ -90,6 +90,9 @@ export const getMemeWithHistory = async (
   meme: any
 ): Promise<[string, string][]> => {
   const db = await getDB();
+  if (!meme) {
+    return [];
+  }
   try {
     let currentMeme = meme;
     const messages: Messages = [];
@@ -117,13 +120,21 @@ export const getMemeWithHistory = async (
 export const getMostAppropriateAgent = async (meme: any) => {
   const db = await getDB();
   try {
-    const embedded = await embed(meme.content);
-    const query = `SELECT id, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM type::table($table) WHERE embedding <|1|> $embedded ORDER BY dist DESC LIMIT 1`;
-    const [[agent]]: [any[]] = await db.query(query, {
-      table: TABLE_AGENT,
-      embedded,
-    });
-    return agent;
+    if (meme) {
+      const embedded = await embed(meme.content);
+      const query = `SELECT id, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM type::table($table) WHERE embedding <|1|> $embedded ORDER BY dist DESC LIMIT 1`;
+      const [[agent]]: [any[]] = await db.query(query, {
+        table: TABLE_AGENT,
+        embedded,
+      });
+      return agent;
+    } else {
+      const query = `SELECT id FROM type::table($table) ORDER BY RAND() LIMIT 1`;
+      const [[agent]]: [any[]] = await db.query(query, {
+        table: TABLE_AGENT,
+      });
+      return agent;
+    }
   } finally {
     await db.close();
   }
@@ -195,4 +206,32 @@ export const replaceAgentIdWithName = async (
   } finally {
     await db.close();
   }
+};
+export const getSettings = async (): Promise<Setting[]> => {
+  const db = await getDB();
+  try {
+    // Fetch current settings
+    const currentSettings = (await db.select(
+      new StringRecordId("settings:current")
+    )) as unknown as { data: Setting[] };
+    return currentSettings.data;
+  } catch (error) {
+    console.error("Error reading settings:", error);
+    return [];
+  } finally {
+    // Close the connection
+    db.close();
+  }
+};
+
+export const getSettingObject = async (): Promise<
+  Record<string, string | undefined>
+> => {
+  const protoSettings: Setting[] = await getSettings();
+  // transform into object with name:defaultValue
+  const settings = protoSettings.reduce((acc, setting) => {
+    acc[setting.name] = setting.defaultValue;
+    return acc;
+  }, {} as Record<string, string | undefined>);
+  return settings || {};
 };

@@ -77,3 +77,16 @@ export type Relationship = {
   relationship: string;
   results: any[];
 };
+
+export type Setting = {
+  name: string;
+  label: string;
+  type: string;
+  defaultValue?: string;
+  options?: string[];
+};
+
+export type Settings = {
+  id: string;
+  settings: Setting[];
+};

@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
-import "@/script/list-settings";
 import type { Metadata } from "next";
 import "./globals.css";
 

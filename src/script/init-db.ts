@@ -6,8 +6,10 @@ import {
   SIZE_EMBEDDING_VECTOR,
 } from "@/settings";
 import { getDB } from "@/lib/db";
+import { createSettings } from "@/lib/database/create";
 const initDB = async () => {
   const db = await getDB();
+
   try {
     // define indexes on tables
     for (const table of [TABLE_AGENT, TABLE_MEME, TABLE_FILE]) {
@@ -29,6 +31,7 @@ const initDB = async () => {
   } finally {
     db.close();
   }
+  // await createSettings();
 };
 
 export default initDB;

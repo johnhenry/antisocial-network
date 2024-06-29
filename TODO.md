@@ -18,6 +18,7 @@
   - etc.
     - https://api.python.langchain.com/en/latest/chat_models/langchain_community.chat_models.ollama.ChatOllama.html
     - https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
+- [x] Settings page
 
 ## In progress
 
@@ -32,7 +33,7 @@
 - [ ] Format responses
 - [ ] Mobile CSS
 - [ ] Upload images for agents
-- [ ] Settings page
+
 - [ ] implement tools
   - https://dev.to/vyan/public-apis-for-web-development-projects-lhk
   - https://github.com/public-api-lists/public-api-lists
@@ -44,7 +45,7 @@
   - [ ] @GenEric agent:generic
   - [ ] @HelpfulHenry agent:helpfufhelry
 - [ ] Show in-meme attachment links
-- [ ] Con Jobs (maybe after API is done)
+- [ ] Con Jobs (maybe after API/Tools is ready)
 - [ ] Update instruction for ollama
 
 ## Bugs
@@ -57,6 +58,9 @@
 - Consider an api that returns the id or a post or agent before it's finished being created
 - Disallow memorization for non-naked memes
 - Continue investigate using service worker for notifications
+- Settings page
+
+  - [ ] Which settings should I consider?
 
 - [Bulk] upload files, agents and memes
 

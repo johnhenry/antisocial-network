@@ -1,13 +1,21 @@
 "use server";
-import type { Agent, AgentParameters, File, Meme } from "@/types/types";
+import type {
+  Agent,
+  AgentParameters,
+  File,
+  Meme,
+  Setting,
+  Settings,
+} from "@/types/types";
 import renderText from "@/util/render-text";
 import "server-only";
 import { getDB, relate } from "@/lib/db";
 import {
-  MODEL_BASIC,
   TABLE_MEME,
   TABLE_FILE,
   TABLE_AGENT,
+  TABLE_SETTINGS,
+  TABLE_SETTINGS_ID_CURRENT,
   REL_INSERTED,
   REL_BOOKMARKS,
   REL_CONTAINS,
@@ -35,7 +43,6 @@ import {
   getMemeWithHistory,
   replaceAgentNameWithId,
 } from "@/lib/database/read";
-import { urlToHttpOptions } from "url";
 
 ////
 // File
@@ -49,7 +56,7 @@ type ProtoFile = {
   publishDate?: string | null;
 };
 
-const createFile = async (
+export const createFile = async (
   {
     name = "",
     author = "",
@@ -272,26 +279,28 @@ export const createMeme = async (
 ): Promise<string> => {
   const db = await getDB();
   try {
-    const renderedContent = rendered
-      ? rendered
-      : await renderText(content, { mentions });
+    let meme;
+    if (content) {
+      const renderedContent = rendered
+        ? rendered
+        : await renderText(content, { mentions });
 
-    const emb = embedding ? embedding : await embed(renderedContent);
-    const [meme] = await db.create(TABLE_MEME, {
-      timestamp: new Date().toISOString(),
-      hash: hashData(content),
-      raw: content,
-      content: renderedContent,
-      embedding: emb,
-    });
-    if (target) {
+      [meme] = await db.create(TABLE_MEME, {
+        timestamp: new Date().toISOString(),
+        hash: hashData(content),
+        raw: content,
+        content: renderedContent,
+        embedding: embedding ? embedding : await embed(renderedContent),
+      });
+    }
+    if (target && meme) {
       await relate(new StringRecordId(target), REL_ELICITS, meme.id);
     }
     await createFiles({ files }, { agent });
-    if (agent) {
+    if (agent && meme) {
       await relate(agent, REL_INSERTED, meme.id);
     }
-    const newTarget = meme.id.toString();
+    const newTarget = meme ? meme.id.toString() : undefined;
     if (response) {
       let agent, messages;
       if (response === true) {
@@ -305,13 +314,16 @@ export const createMeme = async (
         messages,
         agent: await getEntity(agent),
       })) as any;
-      await createMeme(
+      const res: Meme = await createMeme(
         { content },
         {
           agent: new StringRecordId(agent) as unknown as RecordId,
           target: newTarget,
         }
       );
+      if (!newTarget) {
+        return res.id.toString();
+      }
     }
     return newTarget;
   } finally {

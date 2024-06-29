@@ -1,5 +1,5 @@
 // import "dotenv/config";
-import type { AgentParameters } from "@/types/types";
+import type { AgentParameters, Setting } from "@/types/types";
 import { read } from "@/util/getEnv";
 ////
 // Database
@@ -13,10 +13,21 @@ export const DB_NAMESPACE = read("DB_NAMESPACE", { defaultValue: "test" });
 export const DB_USERNAME = read("DB_USERNAME", { defaultValue: "root" });
 export const DB_PASSWORD = read("DB_PASSWORD", { defaultValue: "root" });
 // Tables
+export const TABLE_SETTINGS = `settings`;
 export const TABLE_AGENT = `agent`;
 export const TABLE_FILE = `file`;
 export const TABLE_MEME = `meme`;
 export const TABLE_TOOL = `tool`;
+export const ALL_TABLES = [
+  TABLE_SETTINGS,
+  TABLE_AGENT,
+  TABLE_FILE,
+  TABLE_MEME,
+  TABLE_TOOL,
+];
+//
+export const TABLE_SETTINGS_ID_CURRENT = `current`;
+
 // Relationships
 export const REL_CONTAINS = `contains`; // a file contains a meme
 export const REL_INCLUDES = `include`; // a meme includes a file
@@ -28,8 +39,19 @@ export const REL_ELICITS = `elicits`;
 export const REL_INSERTED = `inserted`;
 // an agent inserted a file or a meme
 export const REL_BOOKMARKS = `bookmarks`;
+export const ALL_RELATIONSHIPS = [
+  REL_CONTAINS,
+  REL_INCLUDES,
+  REL_PRECEDES,
+  REL_REMEMBERS,
+  REL_ELICITS,
+  REL_INSERTED,
+  REL_BOOKMARKS,
+];
+
 //
 export const MASQUERADE_KEY = "masquerade";
+
 // an agent bookmarks a file
 ////
 // A.I.
@@ -114,3 +136,13 @@ export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   vocabOnly: undefined,
   format: undefined,
 };
+
+export const SETTINGS_DEFAULT: Setting[] = [
+  {
+    name: "model",
+    label: "Model",
+    type: "select",
+    options: MODELS,
+    defaultValue: MODEL_BASIC,
+  },
+];

@@ -1,12 +1,16 @@
 "use server";
-import type { AgentParameters } from "@/types/types";
+import type { AgentParameters, Setting, Settings } from "@/types/types";
 import { getDB } from "@/lib/db";
 import { StringRecordId } from "surrealdb.js";
 import { embed, summarize, PROMPTS_SUMMARIZE } from "@/lib/ai";
 import { nameExists } from "@/lib/database/create";
 
 import removeValuesFromObject from "@/util/removeValuesFromObject";
-import { DEFAULT_PARAMETERS_AGENT } from "@/settings";
+import {
+  DEFAULT_PARAMETERS_AGENT,
+  TABLE_SETTINGS,
+  TABLE_SETTINGS_ID_CURRENT,
+} from "@/settings";
 
 export const updateAgent = async (
   identifier: string,
@@ -97,5 +101,24 @@ export const updateFile = async (
     return identifier;
   } finally {
     await db.close();
+  }
+};
+export const updateSettings = async (
+  settings: Setting[]
+): Promise<Setting[]> => {
+  const db = await getDB();
+  try {
+    // Fetch current settings
+    await db.update(new StringRecordId("settings:current"), {
+      data: settings,
+      updated_at: new Date().toISOString(),
+    });
+    return settings;
+  } catch (error) {
+    console.error("Error updating settings:", error);
+    return [];
+  } finally {
+    // Close the connection
+    db.close();
   }
 };

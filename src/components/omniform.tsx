@@ -39,6 +39,7 @@ const OmniForm: FC<Props> = ({
   text,
   agent,
   placeholder = "Start typing to create an agent, a meme, or search.",
+  placeholderAgentMode = "Start typing to create an agent.",
   allowNakedFiles = true,
   allowCreateAgent = true,
   target,
@@ -128,7 +129,7 @@ const OmniForm: FC<Props> = ({
         <textarea
           title="text"
           name="text"
-          placeholder={placeholder}
+          placeholder={agentMode ? placeholderAgentMode : placeholder}
           onChange={(event: ChangeEvent) =>
             setText((event.target as HTMLInputElement).value.trim())
           }
@@ -200,7 +201,7 @@ const OmniForm: FC<Props> = ({
         ) : null}
         {allowCreateAgent ? (
           <label>
-            <input type="checkbox" onChange={toggleAgentMode} /> Agent Mode
+            <input type="checkbox" onChange={toggleAgentMode} /> Create Agent
           </label>
         ) : null}
       </form>
