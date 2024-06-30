@@ -19,48 +19,57 @@
     - https://api.python.langchain.com/en/latest/chat_models/langchain_community.chat_models.ollama.ChatOllama.html
     - https://v02.api.js.langchain.com/interfaces/langchain_community_chat_models_ollama.ChatOllamaInput.html
 - [x] Settings page
+- [x] - Generate names via llm
+- [x] - Using vector similarities between system prompts instead of function calling to rank agents
 
 ## In progress
 
 - [ ] Rest API
+- [ ] Streaming text
+- [ ] Add loading/suspense for search, loading entieies
+- [ ] Which settings should I consider?
+  - Default model for
+    - agents
+    - tools
+    - etc
+- [ ] Continue investigate using service worker for notifications
 
 ## Planned
 
-- [ ]Add loading/suspense for search, loading entieies
-- [ ] Add limits to file sizes and handle errors better
-  - [ ] Find what the limits are and what specifically causes the error
 - [ ] Improve Search
 - [ ] Format responses
 - [ ] Mobile CSS
-- [ ] Upload images for agents
 
-- [ ] implement tools
+- [ ] Add limits to file sizes and handle errors better
+
+  - [ ] Find what the limits are and what specifically causes the error
+
+- [ ] Upload images for agents
+- [ ] Implement tools
   - https://dev.to/vyan/public-apis-for-web-development-projects-lhk
   - https://github.com/public-api-lists/public-api-lists
-- misc:
-  - summaries of documents shoud be included in [initial] agent description
-  - if name is empty, or 0 generate it from the document content
-  - if name is 1, generate a random name
+- [ ] Con Jobs (maybe after API/Tools is ready)
+- [ ] add document summaries of documents to initial agent description
 - [ ] add generic agents
   - [ ] @GenEric agent:generic
   - [ ] @HelpfulHenry agent:helpfufhelry
 - [ ] Show in-meme attachment links
-- [ ] Con Jobs (maybe after API/Tools is ready)
 - [ ] Update instruction for ollama
+- [ ] Settings.ts -> Config.ts
+- [ ] Display files associated with memes
 
 ## Bugs
 
 - files created with are not bookmarked
+- responses are connected with elicits relationships
+- db reset may create a bad state
+- @@ mentions (search TODO)
 
 ## Investigate/Consider
 
-- Investigate using vector similarities between system prompts instead of function calling to rank agents
-- Consider an api that returns the id or a post or agent before it's finished being created
+- [ ] Investigate pros/cons of using a llm vs vector similarities to choose agents to answer
+- Consider an api that returns the id or a post or agent before it's finished being created (partially implementd)
 - Disallow memorization for non-naked memes
-- Continue investigate using service worker for notifications
-- Settings page
-
-  - [ ] Which settings should I consider?
 
 - [Bulk] upload files, agents and memes
 

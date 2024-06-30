@@ -1,5 +1,6 @@
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
+import type { BaseMessageChunk } from "@langchain/core/messages";
 
 import { Ollama } from "ollama";
 import { OllamaFunctions } from "@langchain/community/experimental/chat_models/ollama_functions";
@@ -30,8 +31,11 @@ export const respond = async (
   messages: [string, string][],
   invocation: Record<string, any> = {},
   functions?: FunctionsForOllama,
-  parameters?: Record<string, any>
-) => {
+  parameters?: Record<string, any>,
+  streaming?: boolean
+): Promise<
+  BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
+> => {
   const model = functions
     ? new OllamaFunctions({
         ...parameters,
@@ -47,6 +51,13 @@ export const respond = async (
   let chain = prompt.pipe(model);
   if (functions) {
     chain = chain.pipe(new JsonOutputFunctionsParser());
+  }
+  if (streaming) {
+    return chain.stream(invocation).then(async function* (textStream) {
+      for await (const text of textStream) {
+        yield text;
+      }
+    });
   }
   return chain.invoke(invocation);
 };

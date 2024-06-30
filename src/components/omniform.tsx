@@ -8,7 +8,9 @@ import type {
 } from "react";
 import { useState, useRef } from "react";
 import obfo from "obfo";
-import { createMeme, createFiles, createAgent } from "@/lib/database/create";
+import { createFiles, createAgent } from "@/lib/database/create";
+// import { createMeme } from "@/lib/database/create";
+import { createMeme } from "@/lib/bridge/create";
 import Image from "next/image";
 import fileToBase64 from "@/util/to-base64";
 import SplitButton from "@/components/split-button";
@@ -82,10 +84,19 @@ const OmniForm: FC<Props> = ({
       return;
     }
     cleanInput();
-    const id = await createMeme(
+    const streaming = true;
+    const [id, data] = await createMeme(
       { content: text, files },
-      { response, agent, target }
+      { response, agent, target, streaming }
     );
+    if (streaming) {
+      const dec = new TextDecoder("utf-8");
+      for await (const item of data) {
+        console.log(dec.decode(item));
+      }
+    } else {
+      console.log(data);
+    }
     memeCreated(id);
   };
   const makeAgent = async () => {

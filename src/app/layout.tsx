@@ -26,6 +26,7 @@ export default function RootLayout({
           async
         ></script> */}
         <link rel="stylesheet" href="/showpicker/style.css" />
+        <script src="/showpicker/script.mjs" async></script>
         <title>{metadata.title as string}</title>
       </head>
       <body>
@@ -49,7 +50,6 @@ export default function RootLayout({
           </header>
           {children}
         </main>
-        <script src="/showpicker/script.mjs"></script>
       </body>
     </html>
   );

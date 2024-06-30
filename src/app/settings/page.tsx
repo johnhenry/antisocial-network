@@ -11,12 +11,19 @@ import { updateSettings } from "@/lib/database/update";
 
 import obfo from "obfo";
 
-const SettingsForm = ({ settings, ref }: { settings: Setting[]; ref: any }) => {
+const SettingsForm = ({
+  settings,
+  ref,
+  className = "",
+}: {
+  settings: Setting[];
+  ref: any;
+  className: string;
+}) => {
   return (
-    <form data-obfo-container="{}" ref={ref}>
+    <form data-obfo-container="{}" ref={ref} className={className}>
       {settings.map((setting: Setting) => {
         const { type, name, label, options, defaultValue } = setting;
-
         if (type === "checkbox") {
           return (
             <div key={name}>
@@ -119,10 +126,7 @@ const Page = () => {
   return (
     <section>
       <h1>Settings</h1>
-      <h2>Reset Database</h2>
-      <button type="button" onClick={submitResetDatabase}>
-        ⚠️ Reset Database ⚠️
-      </button>
+
       <hr />
       <h2>Settings</h2>
       <SettingsForm settings={settings || []} ref={settingsFormRef} />
@@ -135,7 +139,7 @@ const Page = () => {
         {masquerade === null ? (
           agents.map((agent: any) => (
             <li
-              className="agent"
+              className=""
               key={agent.id}
               onClick={() => setMasquerade(agent)}
             >
@@ -145,15 +149,22 @@ const Page = () => {
           ))
         ) : (
           <li
-            className="agent"
+            className=""
             key={masquerade.id}
             onClick={() => setMasquerade(null)}
           >
-            Masquerading as: <p className="name">{masquerade.name}</p>
+            🎭 Masquerading as: <p className="name">{masquerade.name}</p>
             <p>{truncate(masquerade.content, 80)}</p>
           </li>
         )}
       </ul>
+      <hr />
+
+      <h2>Reset Database</h2>
+      <button type="button" onClick={submitResetDatabase}>
+        ⚠️ Reset Database ⚠️
+      </button>
+      <hr />
     </section>
   );
 };

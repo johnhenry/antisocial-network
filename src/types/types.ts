@@ -52,13 +52,15 @@ export type AgentParameters = {
   format?: "json";
 };
 
-export type Meme = {
-  id: string;
-  timestamp: string;
-  content: string;
-  hash: string;
-  embedding: number[];
-};
+export type Meme =
+  | {
+      id: string;
+      timestamp: string;
+      content: string;
+      hash: string;
+      embedding: number[];
+    }
+  | { id: string };
 export type File = {
   id: string;
   timestamp: string;
