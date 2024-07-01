@@ -1,28 +1,24 @@
 "use server";
-import type { Agent, Setting } from "@/types/types";
-import { StringRecordId, RecordId } from "surrealdb.js";
+import type { Agent, Meme, Setting } from "@/types/types";
+import { RecordId, StringRecordId } from "surrealdb.js";
 import { getDB } from "@/lib/db";
 import {
-  TABLE_AGENT,
-  REL_INSERTED,
-  TABLE_MEME,
-  REL_PRECEDES,
   REL_BOOKMARKS,
-  TABLE_FILE,
   REL_CONTAINS,
+  REL_INSERTED,
+  REL_PRECEDES,
   REL_REMEMBERS,
+  TABLE_AGENT,
+  TABLE_FILE,
+  TABLE_MEME,
 } from "@/settings";
 
 import { embed } from "@/lib/ai";
 
-export const getEntity = async (identifier: string | RecordId) => {
+export const getEntity = async <T>(id: string): Promise<T> => {
   const db = await getDB();
   try {
-    const id: RecordId =
-      typeof identifier === "string"
-        ? (new StringRecordId(identifier) as unknown as RecordId)
-        : identifier;
-    return await db.select(id);
+    return (await db.select(new StringRecordId(id))) as T;
   } finally {
     await db.close();
   }
@@ -36,7 +32,7 @@ export type Relationship = {
 };
 
 export const getEntityWithReplationships = async (
-  identifier: string | RecordId,
+  identifier: string,
   {
     source = "meme",
     inn = [],
@@ -45,7 +41,7 @@ export const getEntityWithReplationships = async (
     source?: string;
     inn?: Record<any, any>[];
     out?: Record<any, any>[];
-  } = {}
+  } = {},
 ) => {
   const db = await getDB();
   try {
@@ -54,29 +50,29 @@ export const getEntityWithReplationships = async (
       inn: [],
       out: [],
     };
-    const id: RecordId =
-      typeof identifier === "string"
-        ? (new StringRecordId(identifier) as unknown as RecordId)
-        : identifier;
+    const id = new StringRecordId(identifier);
     output.default = await db.select(id);
-
     for (const { table, relationship } of inn) {
       const [results]: [any[]] = await db.query(
         `SELECT * OMIT embedding, data FROM ${table} where <-${relationship}<-(${source} where id = $meme)`,
         {
           meme: id,
-        }
+        },
       );
-      output.inn.push({ table, relationship, results });
+      if (results.length) {
+        output.inn.push({ table, relationship, results });
+      }
     }
     for (const { table, relationship } of out) {
       const [results]: [any[]] = await db.query(
         `SELECT * OMIT embedding, data FROM ${table} where ->${relationship}->(${source} where id = $meme)`,
         {
           meme: id,
-        }
+        },
       );
-      output.out.push({ table, relationship, results });
+      if (results.length) {
+        output.out.push({ table, relationship, results });
+      }
     }
     return output;
   } finally {
@@ -87,7 +83,7 @@ export const getEntityWithReplationships = async (
 type Messages = [string, string][];
 
 export const getMemeWithHistory = async (
-  meme: any
+  meme: any,
 ): Promise<[string, string][]> => {
   const db = await getDB();
   if (!meme) {
@@ -101,14 +97,14 @@ export const getMemeWithHistory = async (
         `SELECT * FROM ${TABLE_AGENT} where ->${REL_INSERTED}->(meme where id = $meme)`,
         {
           meme: meme.id,
-        }
+        },
       );
       messages.unshift([agent ? "assistant" : "user", meme.content]);
       [[currentMeme]] = await db.query(
         `SELECT * FROM ${TABLE_MEME} where ->${REL_PRECEDES}->(meme where id = $meme)`,
         {
           meme: meme.id,
-        }
+        },
       );
     }
     return messages;
@@ -122,14 +118,16 @@ export const getMostAppropriateAgent = async (meme: any) => {
   try {
     if (meme) {
       const embedded = await embed(meme.content);
-      const query = `SELECT id, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM type::table($table) WHERE embedding <|1|> $embedded ORDER BY dist DESC LIMIT 1`;
+      const query =
+        `SELECT id, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM type::table($table) WHERE embedding <|1|> $embedded ORDER BY dist DESC LIMIT 1`;
       const [[agent]]: [any[]] = await db.query(query, {
         table: TABLE_AGENT,
         embedded,
       });
       return agent;
     } else {
-      const query = `SELECT id FROM type::table($table) ORDER BY RAND() LIMIT 1`;
+      const query =
+        `SELECT id FROM type::table($table) ORDER BY RAND() LIMIT 1`;
       const [[agent]]: [any[]] = await db.query(query, {
         table: TABLE_AGENT,
       });
@@ -140,20 +138,23 @@ export const getMostAppropriateAgent = async (meme: any) => {
   }
 };
 
-export const getRelevantKnowlede = async (messages: any[], agent: any) => {
+export const getRelevantKnowlede = async (
+  messages: [string, string][],
+  agent: string,
+) => {
   const flatMessages = messages
     .map(([user, message]) => `${user}:${message}`)
     .join("\n\n");
   const embedded = await embed(flatMessages);
   const db = await getDB();
   try {
-    const [bookmarked, remembered]: [Agent[]] = await db.query(
+    const [bookmarked, remembered]: Meme[][] = await db.query(
       `SELECT content, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM ${TABLE_MEME} WHERE <-${REL_CONTAINS}<-${TABLE_FILE}<-${REL_BOOKMARKS}<-(${TABLE_AGENT} WHERE id = $id) ORDER BY dist DESC LIMIT 3;
       SELECT content, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM ${TABLE_MEME} WHERE <-${REL_REMEMBERS}<-(${TABLE_AGENT} WHERE id = $id);`,
       {
-        id: agent.id,
+        id: new StringRecordId(agent), // TODO: I think this can this just be a string
         embedded,
-      }
+      },
     );
     return [...remembered, ...bookmarked]
       .map(({ content }) => content)
@@ -175,15 +176,15 @@ export const getAllAgents = async (): Promise<Agent[]> => {
 };
 
 export const replaceAgentNameWithId = async (
-  name: string
+  name: string,
 ): Promise<string | null> => {
   const db = await getDB();
   try {
-    const [[agent]]: [Agent | undefined] = await db.query(
+    const [[agent]]: Agent[][] = await db.query(
       `SELECT id FROM ${TABLE_AGENT} WHERE name = $name`,
       {
         name,
-      }
+      },
     );
     return agent ? agent.id.toString() : name;
   } finally {
@@ -192,15 +193,15 @@ export const replaceAgentNameWithId = async (
 };
 
 export const replaceAgentIdWithName = async (
-  id: string
+  id: string,
 ): Promise<string | null> => {
   const db = await getDB();
   try {
-    const [[agent]]: [Agent | undefined] = await db.query(
+    const [[agent]]: Agent[][] = await db.query(
       `SELECT name FROM ${TABLE_AGENT} WHERE id = $id`,
       {
         id,
-      }
+      },
     );
     return agent ? agent.name : id;
   } finally {
@@ -212,7 +213,7 @@ export const getSettings = async (): Promise<Setting[]> => {
   try {
     // Fetch current settings
     const currentSettings = (await db.select(
-      new StringRecordId("settings:current")
+      new StringRecordId("settings:current"),
     )) as unknown as { data: Setting[] };
     return currentSettings.data;
   } catch (error) {

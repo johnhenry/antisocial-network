@@ -3,6 +3,7 @@ import type {
   Agent,
   AgentParameters,
   File,
+  LangchainGenerator,
   Meme,
   Setting,
   Settings,
@@ -11,19 +12,19 @@ import renderText from "@/util/render-text";
 import "server-only";
 import { getDB, relate } from "@/lib/db";
 import {
-  TABLE_MEME,
-  TABLE_FILE,
-  TABLE_AGENT,
-  TABLE_SETTINGS,
-  TABLE_SETTINGS_ID_CURRENT,
-  REL_INSERTED,
   REL_BOOKMARKS,
   REL_CONTAINS,
-  REL_PRECEDES,
   REL_ELICITS,
   REL_INCLUDES,
+  REL_INSERTED,
+  REL_PRECEDES,
+  TABLE_AGENT,
+  TABLE_FILE,
+  TABLE_MEME,
+  TABLE_SETTINGS,
+  TABLE_SETTINGS_ID_CURRENT,
 } from "@/settings";
-import { embed, summarize, describe, PROMPTS_SUMMARIZE } from "@/lib/ai";
+import { describe, embed, PROMPTS_SUMMARIZE, summarize } from "@/lib/ai";
 import hashData from "@/util/hash";
 import base64to from "@/util/base64-to";
 import parsePDF from "@/lib/parsers/pdf";
@@ -37,13 +38,13 @@ import removeValuesFromObject from "@/util/removeValuesFromObject";
 import { DEFAULT_PARAMETERS_AGENT } from "@/settings";
 import forkAsyncIterator from "@/util/fork-async-iterator";
 import {
-  getMostAppropriateAgent,
-  getRelevantKnowlede,
   getEntity,
   getMemeWithHistory,
+  getMostAppropriateAgent,
+  getRelevantKnowlede,
   replaceAgentNameWithId,
 } from "@/lib/database/read";
-import { BaseMessageChunk } from "@langchain/core/messages";
+import type { BaseMessageChunk } from "@langchain/core/messages";
 ////
 // File
 ////
@@ -65,8 +66,8 @@ export const createFile = async (
     publisher = null,
     publishDate = null,
   }: ProtoFile = {},
-  { agent, meme }: { agent?: RecordId; meme?: RecordId } = {}
-): Promise<string> => {
+  { agent, meme }: { agent?: string; meme?: string } = {},
+): Promise<string[][]> => {
   const db = await getDB();
   try {
     const [supertype, subtype] = type.split("/");
@@ -99,9 +100,12 @@ export const createFile = async (
             let previousMemeId = null;
             // embed chunks
             for await (const { chunk, embedding } of semanticChunker(text)) {
-              const meme_id = await createMeme({ content: chunk, embedding });
-              const id = new StringRecordId(meme_id) as unknown as RecordId;
-              await relate(file.id, REL_CONTAINS, id);
+              const [[meme_id]] = await createMeme({
+                content: chunk,
+                embedding,
+              });
+              const id = meme_id;
+              await relate(file.id.toString(), REL_CONTAINS, id);
               if (previousMemeId) {
                 await relate(previousMemeId, REL_PRECEDES, id, {
                   within: file.id,
@@ -177,16 +181,16 @@ export const createFile = async (
       });
     }
     if (!file) {
-      return "";
+      return [];
     }
     if (agent) {
-      await relate(agent, REL_INSERTED, file!.id);
-      await relate(agent, REL_BOOKMARKS, file!.id);
+      await relate(agent, REL_INSERTED, file.id.toString());
+      await relate(agent, REL_BOOKMARKS, file.id.toString());
     }
     if (meme) {
-      await relate(meme, REL_INCLUDES, file!.id);
+      await relate(meme, REL_INCLUDES, file.id.toString());
     }
-    return file!.id.toString(); // TODO: Error: Cannot read properties of undefined (reading 'id')
+    return [[file.id.toString(), file.content as string]]; // TODO: Error: Cannot read properties of undefined (reading 'id')
   } finally {
     await db.close();
   }
@@ -194,22 +198,21 @@ export const createFile = async (
 
 export const createFiles = async (
   { files = [] }: { files?: ProtoFile[] } = {},
-  { agent, meme }: { agent?: RecordId; meme?: RecordId } = {}
-): Promise<string[]> => {
-  const ids = [];
+  { agent, meme }: { agent?: string; meme?: string } = {},
+): Promise<string[][]> => {
+  const output = [];
   for (const { name, type, content } of files) {
-    ids.push(
-      await createFile(
-        {
-          name,
-          type,
-          content,
-        },
-        { agent, meme }
-      )
+    const files = await createFile(
+      {
+        name,
+        type,
+        content,
+      },
+      { agent, meme },
     );
+    output.push(...files);
   }
-  return ids;
+  return output;
 };
 
 ////
@@ -221,15 +224,19 @@ export const generateResponseContent = async ({
   messages = [],
   streaming = false,
 }: {
-  agent?: Agent;
+  agent?: string;
   messages?: [string, string][];
   streaming?: boolean;
-} = {}) => {
+} = {}): Promise<LangchainGenerator | BaseMessageChunk> => {
+  if (!agent) {
+    throw new Error("Agent must be defined to generate content");
+  }
+  const foundAgent: Agent = await getEntity<Agent>(agent);
   // get messages from post and all parents
   const relevantKnowledge = await getRelevantKnowlede(messages, agent);
   // add system prompt to messages
   // get system prompt from agent
-  const { content, id, parameters } = agent!;
+  const { content, id, parameters } = foundAgent!;
   messages.unshift([
     "system",
     `${content}
@@ -251,16 +258,17 @@ Messages mentioning "@${id}" are directed at you specifically.${
     },
     undefined,
     parameters,
-    streaming
+    streaming,
   );
   if (streaming) {
     // TODO: split iterator here an add callback above
-    return results;
+    return results as LangchainGenerator;
   }
-  return (results as BaseMessageChunk).content;
+  return results as BaseMessageChunk;
 };
 
-const mentions = async (name) => `@${await replaceAgentNameWithId(name)}`;
+const mentions = async (name: string) =>
+  `@${await replaceAgentNameWithId(name)}`;
 
 const MEME_PENDING = Symbol("MEME PENDING");
 
@@ -271,9 +279,9 @@ export const createResponseMeme = async ({
 }: {
   response?: boolean | string;
   meme?: Meme;
-  streaming?: Boolean;
+  streaming?: boolean;
 } = {}): Promise<
-  [string, string | AsyncGenerator<BaseMessageChunk, void, unknown>]
+  [string, LangchainGenerator | string][]
 > => {
   let agent, messages;
   if (response === true) {
@@ -283,19 +291,25 @@ export const createResponseMeme = async ({
     agent = response;
     messages = await getMemeWithHistory(meme);
   }
-  const content: string = (await generateResponseContent({
+
+  const output = await generateResponseContent({
     messages,
-    agent: await getEntity(agent),
+    agent,
     streaming,
-  })) as any;
-  const [[id]]: Meme = await createMeme(
-    { content: streaming ? MEME_PENDING : content },
+  });
+
+  const [[id]] = await createMeme(
     {
-      agent: new StringRecordId(agent) as unknown as RecordId,
+      content: streaming
+        ? MEME_PENDING
+        : (output as BaseMessageChunk).content as string,
+    },
+    {
+      agent,
       target: meme ? meme.id.toString() : undefined,
-    }
+    },
   );
-  return [[id, content]];
+  return [[id, output as LangchainGenerator | string]];
 };
 
 export const updatePendingMeme = async (
@@ -306,7 +320,7 @@ export const updatePendingMeme = async (
     embedding,
     files = [],
   }: {
-    content?: string | typeof MEME_PENDING;
+    content?: string;
     rendered?: string;
     embedding?: number[];
     files?: ProtoFile[];
@@ -314,8 +328,8 @@ export const updatePendingMeme = async (
   {
     agent,
   }: {
-    agent?: RecordId | string;
-  } = {}
+    agent?: string;
+  } = {},
 ) => {
   const db = await getDB();
   try {
@@ -354,23 +368,25 @@ export const createMeme = async (
     target,
     streaming = false,
   }: {
-    agent?: RecordId | string;
+    agent?: string;
     response?: boolean | string;
     target?: string;
     streaming?: boolean;
-  } = {}
-): Promise<stringstring | AsyncGenerator<BaseMessageChunk, void, unknown>> => {
+  } = {},
+): Promise<
+  [
+    string,
+    string | AsyncGenerator<BaseMessageChunk, void, unknown>,
+  ][]
+> => {
   const db = await getDB();
   try {
+    let meme: Meme | undefined = undefined;
     if (content === MEME_PENDING) {
-      const [meme] = await db.create(TABLE_MEME, {
+      [meme] = await db.create(TABLE_MEME, {
         embedding: await embed(`${Math.random()}`.slice(2)),
-      });
-      return [[meme.id.toString()]];
-    }
-
-    let meme;
-    if (content) {
+      }) as [Meme];
+    } else if (content) {
       const renderedContent = rendered
         ? rendered
         : await renderText(content, { mentions });
@@ -380,18 +396,27 @@ export const createMeme = async (
         raw: content,
         content: renderedContent,
         embedding: embedding ? embedding : await embed(renderedContent),
-      });
+      }) as [Meme];
     }
-    if (target && meme) {
-      await relate(new StringRecordId(target), REL_ELICITS, meme.id);
+    const memeId = meme ? meme.id.toString() : undefined;
+    if (agent && memeId) {
+      await relate(agent, REL_INSERTED, memeId);
     }
-    await createFiles({ files }, { agent });
-    if (agent && meme) {
-      await relate(agent, REL_INSERTED, meme.id);
+    if (target && memeId) {
+      await relate(target, REL_ELICITS, memeId);
     }
-    const results = [];
-    if (meme) {
-      results.push([meme.id.toString(), meme.content]);
+    await createFiles({ files }, { agent, meme: memeId });
+    const results: [
+      string,
+      string | AsyncGenerator<BaseMessageChunk, void, unknown>,
+    ][] = [];
+    if (meme && memeId) {
+      results.push([
+        memeId,
+        meme.content as
+          | string
+          | AsyncGenerator<BaseMessageChunk, void, unknown>,
+      ]);
     }
     if (response) {
       const res = await createResponseMeme({
@@ -401,7 +426,9 @@ export const createMeme = async (
       });
       if (streaming) {
         const [id, content] = res[0];
-        const [fork1, fork2] = forkAsyncIterator(content);
+        const [fork1, fork2] = forkAsyncIterator(
+          content,
+        ) as unknown as LangchainGenerator[];
         res[0][1] = fork1;
         (async () => {
           const data = [];
@@ -410,6 +437,9 @@ export const createMeme = async (
           }
           updatePendingMeme(id, { content: data.join("") });
         })();
+      }
+      if (target && !meme) {
+        await relate(target, REL_ELICITS, res[0][0]);
       }
       results.push(res[0]);
     }
@@ -430,7 +460,7 @@ export const nameExists = async (name: string): Promise<boolean> => {
       {
         table: TABLE_AGENT,
         name,
-      }
+      },
     );
     return !!agent[0];
   } finally {
@@ -461,7 +491,7 @@ export const createAgent = async ({
   qualities?: [string, string][];
   image?: string | null;
   files?: ProtoFile[];
-} = {}) => {
+} = {}): Promise<string[][]> => {
   const db = await getDB();
   try {
     const combinedQualities = (
@@ -476,9 +506,8 @@ export const createAgent = async ({
     const generatedName = name.trim()
       ? name.trim()
       : (await summarize(content, PROMPTS_SUMMARIZE.LLM_NAMES))
-          .split(",")
-          [Math.floor(Math.random() * 5)].split(" ")
-          .join(""); // Split and Join to remove any spaces
+        .split(",")[Math.floor(Math.random() * 5)].split(" ")
+        .join(""); // Split and Join to remove any spaces
 
     const indexed = [description, content, combinedQualities]
       .filter(Boolean)
@@ -496,8 +525,9 @@ export const createAgent = async ({
       embedding,
       indexed,
     });
-    await createFiles({ files }, { agent: agent.id });
-    return agent.id.toString();
+    await createFiles({ files }, { agent: agent.id.toString() });
+
+    return [[agent.id.toString(), agent.content as string]];
   } finally {
     await db.close();
   }

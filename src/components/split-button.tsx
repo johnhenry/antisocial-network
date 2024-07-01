@@ -1,18 +1,21 @@
-import type { ChangeEventHandler, FC, ReactNode } from "react";
+import type {
+  ChangeEventHandler,
+  FC,
+  ReactNode,
+  EventHandler,
+  SyntheticEvent,
+  ChangeEvent,
+} from "react";
 
 import { useState, useRef, useEffect } from "react";
 
 type Props = {
   children: ReactNode;
+  text: string;
+  defaultValue: string;
+  onClick: EventHandler<SyntheticEvent>;
 };
 
-class SelectEvent extends Event {
-  selected: string;
-  constructor(type: string, selected: string) {
-    super(type);
-    this.selected = selected;
-  }
-}
 class SelectedEvent extends Event {
   #target: HTMLElement | null;
   constructor(type: string = "selected", target: HTMLElement | null = null) {
@@ -30,11 +33,13 @@ const SplitButton: FC<Props> = ({
   defaultValue,
   onClick,
 }) => {
-  const [option, setOption] = useState<HTMLOptionElement | null>(
+  const [option, setOption] = useState<SelectedEvent | null>(
     new SelectedEvent("select")
   );
   const select = useRef<HTMLSelectElement>(null);
-  const selectChange: ChangeEventHandler<HTMLSelectElement> = (event) => {
+  const selectChange: ChangeEventHandler<HTMLSelectElement> = (
+    event: ChangeEvent<HTMLSelectElement>
+  ) => {
     setOption(event.target.selectedOptions[0]);
   };
   const sendSelected = () => {
@@ -67,6 +72,7 @@ const SplitButton: FC<Props> = ({
     <>
       <main>
         <select
+          title="options"
           onChange={selectChange}
           defaultValue={defaultValue}
           ref={select}
@@ -79,7 +85,7 @@ const SplitButton: FC<Props> = ({
       </main>
       <footer>
         {" "}
-        <button type="button" onClick={open}>
+        <button title="show" type="button" onClick={open}>
           {text}
         </button>
       </footer>

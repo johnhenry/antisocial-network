@@ -1,19 +1,19 @@
 "use server";
 import { Surreal } from "surrealdb.js";
 import {
+  ALL_TABLES,
+  DB_DATABASE,
+  DB_NAMESPACE,
+  DB_PASSWORD,
   DB_PATH,
   DB_USERNAME,
-  DB_PASSWORD,
-  DB_NAMESPACE,
-  DB_DATABASE,
-  TABLE_SETTINGS_ID_CURRENT,
-  TABLE_SETTINGS,
-  TABLE_AGENT,
-  TABLE_MEME,
-  TABLE_FILE,
-  ALL_TABLES,
   SETTINGS_DEFAULT,
   SIZE_EMBEDDING_VECTOR,
+  TABLE_AGENT,
+  TABLE_FILE,
+  TABLE_MEME,
+  TABLE_SETTINGS,
+  TABLE_SETTINGS_ID_CURRENT,
 } from "@/settings";
 import { RecordId, StringRecordId } from "surrealdb.js";
 
@@ -98,7 +98,7 @@ export const getAll = async (table: string) => {
     await db.close();
   }
 };
-const ensureRecordId = (id: RecordId | StringRecordId | String) => {
+const ensureRecordId = (id: RecordId | StringRecordId | string) => {
   if (typeof id === "string") {
     return new StringRecordId(id);
   }
@@ -106,10 +106,10 @@ const ensureRecordId = (id: RecordId | StringRecordId | String) => {
 };
 
 export const relate = async (
-  inn: RecordId | StringRecordId,
+  inn: string,
   relationship: string,
-  out: RecordId | StringRecordId,
-  data?: Record<string, any>
+  out: string,
+  data?: Record<string, any>,
 ) => {
   const db = await getDB();
   try {
@@ -117,7 +117,7 @@ export const relate = async (
       ensureRecordId(inn),
       relationship,
       ensureRecordId(out),
-      data
+      data,
     );
     return result;
   } finally {
@@ -128,7 +128,7 @@ export const relate = async (
 export const unrelate = async (
   inn: RecordId | StringRecordId | string,
   relationship: string,
-  out: RecordId | StringRecordId | string
+  out: RecordId | StringRecordId | string,
 ): Promise<boolean> => {
   const db = await getDB();
   try {
@@ -136,8 +136,8 @@ export const unrelate = async (
       `SELECT * FROM type::table($relationship) WHERE in = ${inn} AND out = ${out}`,
       {
         relationship,
-      }
-    );
+      },
+    ) as any[][]; // TODO: find the type returned by Surreal DB query
     if (!rel) {
       return false;
     }

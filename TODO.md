@@ -65,6 +65,12 @@
 - db reset may create a bad state
 - @@ mentions (search TODO)
 
+## Possible features
+
+- @mentioning a non-existant user crates a new user based on the name
+- automatically add documents to users base on system prompt
+- #hashtags for actions?
+
 ## Investigate/Consider
 
 - [ ] Investigate pros/cons of using a llm vs vector similarities to choose agents to answer

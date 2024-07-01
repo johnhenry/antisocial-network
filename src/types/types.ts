@@ -1,5 +1,16 @@
+import type { BaseMessageChunk } from "@langchain/core/messages";
+import type { RecordId } from "surrealdb.js";
+
+export type Meme = {
+  id: string | RecordId;
+  timestamp?: string;
+  content?: string;
+  hash?: string;
+  embedding: number[];
+};
+
 export type Agent = {
-  id: string;
+  id: string | RecordId;
   timestamp: string;
   name: string;
   description: string;
@@ -52,17 +63,8 @@ export type AgentParameters = {
   format?: "json";
 };
 
-export type Meme =
-  | {
-      id: string;
-      timestamp: string;
-      content: string;
-      hash: string;
-      embedding: number[];
-    }
-  | { id: string };
 export type File = {
-  id: string;
+  id: string | RecordId;
   timestamp: string;
   content: string;
   hash: string;
@@ -81,6 +83,7 @@ export type Relationship = {
 };
 
 export type Setting = {
+  id: string | RecordId;
   name: string;
   label: string;
   type: string;
@@ -92,3 +95,9 @@ export type Settings = {
   id: string;
   settings: Setting[];
 };
+
+export type LangchainGenerator = AsyncGenerator<
+  BaseMessageChunk,
+  void,
+  unknown
+>;

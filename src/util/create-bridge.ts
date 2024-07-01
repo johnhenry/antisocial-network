@@ -1,14 +1,16 @@
 type BrigedFunction = (
   body: Record<string, any>,
-  options: Record<string, any>
-) => Promise<Record<string, any>>;
+  options: Record<string, any>,
+) => Promise<
+  [string, string | ReadableStream<ArrayBuffer> | Record<string, any>]
+>;
 
 const removeValues = (
   object: Record<string, any>,
   ...omitted: any
 ): Record<string, any> =>
   Object.fromEntries(
-    Object.entries(object).filter(([_, value]) => !omitted.includes(value))
+    Object.entries(object).filter(([_, value]) => !omitted.includes(value)),
   );
 
 const createBridge = (
@@ -17,25 +19,24 @@ const createBridge = (
     method = "POST",
     bridged = "",
     streaming = false,
-  }: { method?: string; bridged?: string } = {}
+  }: { method?: string; bridged?: string; streaming?: boolean } = {},
 ): BrigedFunction => {
-  return async (body, options) => {
+  return async (body = {}, options = {}) => {
     const queryParams = new URLSearchParams(
-      removeValues(options, undefined)
+      removeValues(options, undefined),
     ).toString();
     const response = await fetch(`${endpoint}?${queryParams}`, {
       body: JSON.stringify(body),
+      method,
       headers: {
         "x-bridged": bridged,
-        "x-stream": streaming || "",
+        "x-stream": streaming ? "true" : "",
       },
-      method,
     });
-
     if (response.ok) {
-      const ids = response.headers.get("x-id")?.split(",");
+      const ids = response.headers.get("x-id")!.split(",");
       if (options.streaming) {
-        const id = ids[1];
+        const id = ids[ids.length - 1];
         return [id, response.body];
       }
       const [id] = ids;

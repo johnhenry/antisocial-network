@@ -31,10 +31,10 @@ export default function Home() {
     alert("meme created: " + id);
     router.push(`/meme/${id}`);
   };
-  const filesCreated = (ids: string[]) => {
-    alert("File created: " + ids.join(", "));
+  const filesCreated = (id: string) => {
+    alert("File created! First:" + id);
     // create files;
-    router.push(`/file/${ids[0]}`);
+    router.push(`/file/${id}`);
   };
   const agentCreated = (id: string) => {
     alert("agent created: " + id);

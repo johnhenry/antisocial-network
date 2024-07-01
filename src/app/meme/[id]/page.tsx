@@ -57,7 +57,7 @@ const Page: FC<Params> = ({ params }) => {
         inn: [
           {
             table: "meme",
-            relationship: REL_ELICITS,
+            relationship: REL_PRECEDES,
           },
           {
             table: "agent",
@@ -87,18 +87,15 @@ const Page: FC<Params> = ({ params }) => {
           },
         ],
       });
-
       const before = parseRelationship(out, "meme", REL_PRECEDES)[0] || null;
       const after = parseRelationship(inn, "meme", REL_PRECEDES)[0] || null;
       const contains = parseRelationship(out, "file", REL_CONTAINS)[0] || null;
       const elicits = parseRelationship(inn, "meme", REL_ELICITS);
       const inserted = parseRelationship(out, "agent", REL_INSERTED)[0] || null;
       const responds = parseRelationship(out, "meme", REL_ELICITS)[0] || null;
-
       const remembers = parseRelationship(out, "agent", REL_REMEMBERS).map(
         (x) => x.id
       );
-
       setBefore(before);
       setAfter(after);
       setContains(contains);

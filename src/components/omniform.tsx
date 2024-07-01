@@ -5,11 +5,14 @@ import type {
   SetStateAction,
   Dispatch,
   ChangeEvent,
+  KeyboardEventHandler,
+  RefObject,
+  LegacyRef,
 } from "react";
 import { useState, useRef } from "react";
 import obfo from "obfo";
-import { createFiles, createAgent } from "@/lib/database/create";
-// import { createMeme } from "@/lib/database/create";
+import { createFiles } from "@/lib/bridge/create";
+import { createAgent } from "@/lib/bridge/create";
 import { createMeme } from "@/lib/bridge/create";
 import Image from "next/image";
 import fileToBase64 from "@/util/to-base64";
@@ -24,6 +27,7 @@ type Props = {
   agent?: string;
   target?: string;
   placeholder?: string;
+  placeholderAgentMode: string;
   allowNakedFiles?: boolean;
   allowCreateAgent?: boolean;
 };
@@ -46,7 +50,7 @@ const OmniForm: FC<Props> = ({
   allowCreateAgent = true,
   target,
 }) => {
-  const textRef = useRef<HTMLSelectElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
   const [files, setFiles] = useState<any[]>([]);
   const [agentMode, setAgentMode] = useState(false);
   const toggleAgentMode: ChangeEventHandler = (event) => {
@@ -78,40 +82,44 @@ const OmniForm: FC<Props> = ({
         //   return;
         // }
         cleanInput();
-        const ids = await createFiles({ files });
-        filesCreated(ids);
+        const [id, content] = await createFiles({ files });
+        filesCreated(id);
       }
       return;
     }
     cleanInput();
-    const streaming = true;
-    const [id, data] = await createMeme(
+    const streaming = response && true;
+    const [lastId, data] = await createMeme(
       { content: text, files },
       { response, agent, target, streaming }
     );
     if (streaming) {
       const dec = new TextDecoder("utf-8");
-      for await (const item of data) {
+      for await (const item of data as ReadableStream<ArrayBuffer>) {
+        // TODO: I might have to polyfill the Readable Stream @@asyncIterator https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream#browser_compatibility
         console.log(dec.decode(item));
       }
     } else {
       console.log(data);
     }
-    memeCreated(id);
+    memeCreated(lastId);
   };
   const makeAgent = async () => {
     cleanInput();
-    const id = await createAgent({ description: text, files });
+    const [id, content] = await createAgent({ description: text, files });
+    console.log(content);
     agentCreated(id);
   };
   const cleanInput = () => {
     setTimeout(() => {
-      textRef.current.value = "";
+      if (textRef?.current) {
+        textRef.current.value = "";
+      }
       setText("");
       setFiles([]);
     });
   };
-  const onEnter: ChangeEventHandler = (event: KeyboardEvent) => {
+  const onEnter: KeyboardEventHandler = (event) => {
     if (event.key === "Enter") {
       if (event.metaKey) {
         if (agentMode) {
@@ -123,8 +131,10 @@ const OmniForm: FC<Props> = ({
     }
   };
 
-  const onSplit = (event) => {
-    switch (event?.target.value) {
+  const onSplit: ChangeEventHandler = (
+    event: ChangeEvent<HTMLSelectElement>
+  ) => {
+    switch (event.target.value) {
       case COMBO_OPTIONS[0].label:
         makeFilesOrMemes();
         break;
