@@ -63,6 +63,10 @@ const Page: FC<Params> = ({ params }) => {
             table: "agent",
             relationship: REL_ELICITS,
           },
+          {
+            table: "meme",
+            relationship: REL_ELICITS,
+          },
         ],
         out: [
           {
@@ -120,17 +124,11 @@ const Page: FC<Params> = ({ params }) => {
       </section>
     );
   }
-  const memeCreated = (id: string) => {
-    alert("meme created: " + id);
-    router.push(`/meme/${id}`);
-  };
-  const filesCreated = (ids: string[]) => {
-    alert("files created: " + ids.join(", "));
-    router.push(`/file/${ids[0]}`);
-  };
-  const agentCreated = (id: string) => {
-    alert("agent created: " + id);
-    router.push(`/agent/${id}`);
+
+  const resourceCreated = (id: string) => {
+    const [type] = id.split(":", 1);
+    alert(`${type} created: ${id}` + id);
+    router.push(`/${type}/${id}`);
   };
 
   return (
@@ -186,9 +184,7 @@ const Page: FC<Params> = ({ params }) => {
         </p>
       </aside>
       <OmniForm
-        memeCreated={memeCreated}
-        filesCreated={filesCreated}
-        agentCreated={agentCreated}
+        resourceCreated={resourceCreated}
         text={text}
         target={identifier}
         setText={setText}

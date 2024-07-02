@@ -1,99 +1,83 @@
-/**
- * Replaces mentions in a text with the result of a callback function.
- *
- * @param {string} text - The text to search for mentions.
- * @param {Function} [callback=defaultCallback] - The callback function to be called for each mention. Default is defaultCallback.
- * @param {string} [prefix="@"] - The prefix used for mentions. Default is "@".
- * @returns {string} The text with mentions replaced.
- *
- * @example
- * ```javascript
- * const callback = (mention) => `<<${mention}>>`; // Example callback function
- *  await replaceMentions("Hello @john, have you seen @jane's new post?", callback, "@")
- * // Output: Hello <<john>>, have you seen <<jane>>'s new post?
- * ```
- *
- * @example
- * ```javascript
-
- *  await replaceMentions("Hello@john, have you seen @jane's new post?", callback, "@")
- * // Output: Hello@john, have you seen <<jane>>'s new post?
- * ```
- *
- * @example
- * ```javascript
- *  await replaceMentions("Hello #john, have you seen #jane's new post?", callback, "#")
- *  // Output: Hello <<john>>, have you seen <<jane>>
- * ```
- */
-
-// TODO: BUG
-// If the first character is a "@", it's left in the original string
-// That is,
-// "@<agent-name> @<agent-name>" is rendered as "@@<agent-id> @<agent-id>" (aditional first "@")
 export type MentionCallback = (mention: string) => Promise<string> | string;
 const defaultCallback: MentionCallback = (mention) => mention;
-
 const replaceMentions = async (
   text: string,
-  callback: MentionCallback = defaultCallback,
-  prefix = "@"
-): Promise<string> => {
-  if (!prefix) {
-    return text;
-  }
-  // Escape the prefix to handle special characters in the regular expression
-  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  // Use a regular expression to find all mentions with the specified prefix ensuring a word boundary before the prefix and at the start of the word
-  // const mentionPattern = new RegExp(`(?:^|\\s)${escapedPrefix}(\\w+)`, "g"); // old pattern does not match colons or hyphens
-  const mentionPattern = new RegExp(`(?:^|\\s)${escapedPrefix}([\\w:-]+)`, "g");
-  // Collect all matches
-  const matches: Array<{ match: string; mention: string; index: number }> = [];
-  let match;
-  while ((match = mentionPattern.exec(text)) !== null) {
-    matches.push({ match: match[0], mention: match[1], index: match.index });
-  }
-
-  // Process all matches asynchronously
-  const replacements = await Promise.all(
-    matches.map(async ({ mention }) => ({
-      mention,
-      replacement: await callback(mention),
-    }))
+  replaceCallback: MentionCallback = defaultCallback,
+  startSymbols: string[] = ["@", "#"],
+  additionalChars = ":?\\-",
+) => {
+  const escapedSymbols = startSymbols
+    .map((symbol) => symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
+  const escapedChars = additionalChars.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const mentionRegex = new RegExp(
+    `(?<=^|\\s)(${escapedSymbols})([\\w${escapedChars}]+)`,
+    "g",
   );
+  let result = "";
+  let lastIndex = 0;
 
-  // Replace mentions in the original text
-  let resultText = text;
-  for (let i = replacements.length - 1; i >= 0; i--) {
-    const { replacement } = replacements[i];
-    const match = matches[i];
-    resultText =
-      resultText.slice(0, match.index) +
-      resultText
-        .slice(match.index)
-        .replace(match.match, match.match[0] + replacement);
+  for (const match of text.matchAll(mentionRegex)) {
+    result += text.slice(lastIndex, match.index);
+    const replacement = await replaceCallback(match[0]);
+    result += replacement;
+    lastIndex = match.index + match[0].length;
   }
 
-  return resultText;
+  result += text.slice(lastIndex);
+  return result;
 };
 
-const replaceMentionsSync = (
-  text: string,
-  callback: MentionCallback = defaultCallback,
-  prefix = "@"
+export const replaceAndAccumulate = (
+  replacer: MentionCallback,
+  accumulator: string[][],
 ) => {
-  if (!prefix) {
-    return text;
-  }
-  // Escape the prefix to handle special characters in the regular expression
-  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  // Use a regular expression to find all mentions with the specified prefix ensuring a word boundary before the prefix and at the start of the word
-  const mentionPattern = new RegExp(`(?:^|\\s)${escapedPrefix}(\\w+)`, "g");
-  // Replace each mention with the result of the callback function
-  return text.replace(mentionPattern, (match, p1) => {
-    return match[0] + callback(p1);
-  });
+  return async (mention: string) => {
+    const replacement = await replacer(mention);
+    accumulator.push([mention, replacement]);
+    return replacement;
+  };
 };
 
 export default replaceMentions;
-export { replaceMentions, replaceMentionsSync };
+
+// const texts = [
+//   //@
+//   "Hello @world, @foo:bar and @baz!",
+//   "Hello@world, @foo:bar and@baz!",
+//   "@world, @foo:bar and@baz!",
+//   //#
+//   "Hello #world, #foo:bar and #baz!",
+//   "Hello#world, #foo:bar and#baz!",
+//   "#world, #foo:bar and#baz!",
+//   //
+//   "Hello @#world, @#foo:bar and @#baz!",
+//   "Hello@#world, @#foo:bar and@#baz!",
+//   "@#world, @#foo:bar and@#baz!",
+//   "Hello #world, #foo:bar and #baz!",
+//   "Hello#world, #foo:bar and#baz!",
+//   "#world, #foo:bar and#baz!",
+//   //
+//   "Hello @world, @foo:bar and @baz!",
+//   "Hello@world, @foo:bar and@baz!",
+//   "@world, @foo:bar and@baz!",
+//   "Hello #@world, #@foo:bar and #@baz!",
+//   "Hello#@world, #@foo:bar and#@baz!",
+//   "#@world, #@foo:bar and#@baz!",
+//   //
+//   "@: @- @? @hello:world @hello-world #helloworld?",
+//   "@2",
+// ];
+
+// const replacer = async (mention) => {
+//   return `${mention[0]}(${mention.slice(1).toUpperCase()})`;
+// };
+
+// for await (const text of texts) {
+//   const mentions = [];
+//   const result = await replaceMentions(
+//     text,
+//     replaceAndAccumulate(replacer, mentions),
+//   );
+//   console.log(result, mentions);
+// }

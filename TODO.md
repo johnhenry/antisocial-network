@@ -25,13 +25,27 @@
 ## In progress
 
 - [ ] Rest API
+  - [x] POST
+    - [x] new file
+    - [x] new agent
+    - [x] new meme
+  - [ ] GET
+    - [ ] agent
+    - [ ] meme
+    - [ ] file
 - [ ] Streaming text
 - [ ] Add loading/suspense for search, loading entieies
 - [ ] Which settings should I consider?
   - Default model for
     - agents
     - tools
+    - vision
     - etc
+  - Chunking strategy:
+    - Sentence
+    - Paragraph
+    - Symantic
+    - agentic
 - [ ] Continue investigate using service worker for notifications
 
 ## Planned
@@ -70,6 +84,18 @@
 - @mentioning a non-existant user crates a new user based on the name
 - automatically add documents to users base on system prompt
 - #hashtags for actions?
+  - @<agent-name>
+    - Evokes a response from the agent mentiond
+    - If the agent is not found, the system will attempt to create a new agent with the name
+  - @#<action-name>
+    - @#createatent:<name> create an agent using the surrounding context
+    - @#nosave (don't save the response -- useful along other commans)
+    - @#noindex
+    - @#anyone:<n> get responses from n agents at random
+    - @#best:<n> get responses from the best agent
+    - @#hidecommands
+    - @#help
+    - @system:
 
 ## Investigate/Consider
 

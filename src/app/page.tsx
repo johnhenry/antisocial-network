@@ -27,19 +27,12 @@ export default function Home() {
   const [foundAgents, setFoundAgents] = useState<any[]>([]);
   const [text, setText] = useState<string>("");
   const router = useRouter();
-  const memeCreated = (id: string) => {
-    alert("meme created: " + id);
-    router.push(`/meme/${id}`);
+  const resourceCreated = (id: string) => {
+    const [type] = id.split(":", 1);
+    alert(`${type} created: ${id}` + id);
+    router.push(`/${type}/${id}`);
   };
-  const filesCreated = (id: string) => {
-    alert("File created! First:" + id);
-    // create files;
-    router.push(`/file/${id}`);
-  };
-  const agentCreated = (id: string) => {
-    alert("agent created: " + id);
-    router.push(`/agent/${id}`);
-  };
+
   useDebouncedEffect(
     () => {
       const search = async () => {
@@ -71,9 +64,7 @@ export default function Home() {
         className="agent-masquerade"
       />
       <OmniForm
-        memeCreated={memeCreated}
-        filesCreated={filesCreated}
-        agentCreated={agentCreated}
+        resourceCreated={resourceCreated}
         text={text}
         agent={masquerade?.id}
         setText={setText}

@@ -11,22 +11,15 @@ md.linkify.set({ fuzzyEmail: false });
 
 const renderText = async (
   str: string,
-  {
-    mentions,
-    hashtags,
-  }: { mentions?: MentionCallback; hashtags?: MentionCallback } = {}
+  replacer: MentionCallback,
 ) => {
   return sanitizeHtml(
     md
       .render(
-        await replaceMentions(
-          await replaceMentions(str, mentions, "@"),
-          hashtags,
-          "#"
-        )
+        await replaceMentions(str, replacer),
       )
-      .replace(/^<p>|<\/p>$/g, "") //https://stackoverflow.com/a/28583815/1290781
-  );
+      .replace(/^<p>|<\/p>$/g, "").replaceAll("<p></p>", ""), //https://stackoverflow.com/a/28583815/1290781
+  ).replaceAll("<p></p>", "");
 };
 
 export default renderText;

@@ -1,6 +1,6 @@
 type BrigedFunction = (
   body: Record<string, any>,
-  options: Record<string, any>,
+  options?: Record<string, any>,
 ) => Promise<
   [string, string | ReadableStream<ArrayBuffer> | Record<string, any>]
 >;

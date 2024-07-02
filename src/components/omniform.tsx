@@ -20,9 +20,7 @@ import SplitButton from "@/components/split-button";
 
 type Props = {
   setText: Dispatch<SetStateAction<string>>;
-  memeCreated: Function;
-  filesCreated: Function;
-  agentCreated: Function;
+  resourceCreated: Function;
   text: string;
   agent?: string;
   target?: string;
@@ -39,9 +37,7 @@ const COMBO_OPTIONS = [
 
 const OmniForm: FC<Props> = ({
   setText,
-  memeCreated,
-  filesCreated,
-  agentCreated,
+  resourceCreated,
   text,
   agent,
   placeholder = "Start typing to create an agent, a meme, or search.",
@@ -83,7 +79,7 @@ const OmniForm: FC<Props> = ({
         // }
         cleanInput();
         const [id, content] = await createFiles({ files });
-        filesCreated(id);
+        resourceCreated(id);
       }
       return;
     }
@@ -102,13 +98,13 @@ const OmniForm: FC<Props> = ({
     } else {
       console.log(data);
     }
-    memeCreated(lastId);
+    resourceCreated(lastId);
   };
   const makeAgent = async () => {
     cleanInput();
     const [id, content] = await createAgent({ description: text, files });
     console.log(content);
-    agentCreated(id);
+    resourceCreated(id);
   };
   const cleanInput = () => {
     setTimeout(() => {

@@ -113,25 +113,28 @@ export const getMemeWithHistory = async (
   }
 };
 
-export const getMostAppropriateAgent = async (meme: any) => {
+export const getMostAppropriateAgent = async (
+  meme: any,
+  size: number = 1,
+): Promise<any[]> => {
   const db = await getDB();
   try {
     if (meme) {
       const embedded = await embed(meme.content);
       const query =
         `SELECT id, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM type::table($table) WHERE embedding <|1|> $embedded ORDER BY dist DESC LIMIT 1`;
-      const [[agent]]: [any[]] = await db.query(query, {
+      const [agents]: [any[]] = await db.query(query, {
         table: TABLE_AGENT,
         embedded,
       });
-      return agent;
+      return agents;
     } else {
       const query =
         `SELECT id FROM type::table($table) ORDER BY RAND() LIMIT 1`;
-      const [[agent]]: [any[]] = await db.query(query, {
+      const [agents]: [any[]] = await db.query(query, {
         table: TABLE_AGENT,
       });
-      return agent;
+      return agents;
     }
   } finally {
     await db.close();
@@ -159,6 +162,8 @@ export const getRelevantKnowlede = async (
     return [...remembered, ...bookmarked]
       .map(({ content }) => content)
       .join("\n\n");
+  } catch {
+    return [];
   } finally {
     await db.close();
   }

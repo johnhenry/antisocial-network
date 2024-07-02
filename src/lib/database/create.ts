@@ -45,6 +45,8 @@ import {
   replaceAgentNameWithId,
 } from "@/lib/database/read";
 import type { BaseMessageChunk } from "@langchain/core/messages";
+import { number } from "zod";
+import { replaceAndAccumulate } from "@/util/replace-mentions";
 ////
 // File
 ////
@@ -67,7 +69,10 @@ export const createFile = async (
     publishDate = null,
   }: ProtoFile = {},
   { agent, meme }: { agent?: string; meme?: string } = {},
-): Promise<string[][]> => {
+): Promise<[
+  string,
+  string | LangchainGenerator,
+][]> => {
   const db = await getDB();
   try {
     const [supertype, subtype] = type.split("/");
@@ -121,7 +126,7 @@ export const createFile = async (
         default:
           // Probably text
           const data = buff;
-          const text = data.toString();
+          const text = new TextDecoder().decode(data);
           try {
             [file] = await db.create(TABLE_FILE, {
               timestamp: new Date().toISOString(),
@@ -183,6 +188,7 @@ export const createFile = async (
     if (!file) {
       return [];
     }
+    const id = file.id.toString();
     if (agent) {
       await relate(agent, REL_INSERTED, file.id.toString());
       await relate(agent, REL_BOOKMARKS, file.id.toString());
@@ -190,7 +196,22 @@ export const createFile = async (
     if (meme) {
       await relate(meme, REL_INCLUDES, file.id.toString());
     }
-    return [[file.id.toString(), file.content as string]]; // TODO: Error: Cannot read properties of undefined (reading 'id')
+    if (!file.name) {
+      // Update name to id
+      // await db.update(file.id, {
+      //   name: id.split(":")[1],
+      // });
+      await db.query(
+        `UPDATE type::table($table)  SET name = '${
+          id.split(":")[1]
+        }' WHERE id = $id`,
+        {
+          table: TABLE_FILE,
+          id: file.id,
+        },
+      );
+    }
+    return [[id, file.content as string]]; // TODO: Error: Cannot read properties of undefined (reading 'id')
   } finally {
     await db.close();
   }
@@ -199,7 +220,10 @@ export const createFile = async (
 export const createFiles = async (
   { files = [] }: { files?: ProtoFile[] } = {},
   { agent, meme }: { agent?: string; meme?: string } = {},
-): Promise<string[][]> => {
+): Promise<[
+  string,
+  string | LangchainGenerator,
+][]> => {
   const output = [];
   for (const { name, type, content } of files) {
     const files = await createFile(
@@ -267,9 +291,6 @@ Messages mentioning "@${id}" are directed at you specifically.${
   return results as BaseMessageChunk;
 };
 
-const mentions = async (name: string) =>
-  `@${await replaceAgentNameWithId(name)}`;
-
 const MEME_PENDING = Symbol("MEME PENDING");
 
 export const createResponseMeme = async ({
@@ -277,40 +298,58 @@ export const createResponseMeme = async ({
   meme,
   streaming = false,
 }: {
-  response?: boolean | string;
+  response?: boolean | string | number;
   meme?: Meme;
   streaming?: boolean;
 } = {}): Promise<
   [string, LangchainGenerator | string][]
 > => {
-  let agent, messages;
+  const messages = await getMemeWithHistory(meme);
+  const agents = [];
   if (response === true) {
-    agent = (await getMostAppropriateAgent(meme)).id.toString();
-    messages = await getMemeWithHistory(meme);
+    agents.push(
+      ...(await getMostAppropriateAgent(meme)).map(({ id }) => id.toString()),
+    );
+  } else if (typeof response === "number") {
+    agents.push(
+      ...(await getMostAppropriateAgent(meme, response)).map(({ id }) =>
+        id.toString()
+      ),
+    );
   } else {
-    agent = response;
-    messages = await getMemeWithHistory(meme);
+    if (response.includes(",")) {
+      agents.push(...response.split(","));
+    } else {
+      agents.push(response);
+    }
   }
+  const results: [string, LangchainGenerator | string][] = [];
 
-  const output = await generateResponseContent({
-    messages,
-    agent,
-    streaming,
-  });
-
-  const [[id]] = await createMeme(
-    {
-      content: streaming
-        ? MEME_PENDING
-        : (output as BaseMessageChunk).content as string,
-    },
-    {
+  for (const agent of agents) {
+    const output = await generateResponseContent({
+      messages,
       agent,
-      target: meme ? meme.id.toString() : undefined,
-    },
-  );
-  return [[id, output as LangchainGenerator | string]];
+      streaming,
+    });
+
+    const [[id]] = await createMeme(
+      {
+        content: streaming
+          ? MEME_PENDING
+          : (output as BaseMessageChunk).content as string,
+      },
+      {
+        agent,
+        target: meme ? meme.id.toString() : undefined,
+      },
+    );
+    results.push([id, output as LangchainGenerator | string]);
+  }
+  return results;
 };
+
+const replaceAgents = async (name: string) =>
+  `${name[0]}${await replaceAgentNameWithId(name.slice(1))}`;
 
 export const updatePendingMeme = async (
   id: string,
@@ -333,9 +372,11 @@ export const updatePendingMeme = async (
 ) => {
   const db = await getDB();
   try {
-    const renderedContent = rendered
-      ? rendered
-      : await renderText(content, { mentions });
+    const accumulated: string[][] = [];
+    const renderedContent = rendered ? rendered : await renderText(
+      content,
+      replaceAndAccumulate(replaceAgents, accumulated),
+    );
     await db.update(new StringRecordId(id), {
       timestamp: new Date().toISOString(),
       hash: hashData(content),
@@ -348,6 +389,52 @@ export const updatePendingMeme = async (
     await db.close();
   }
   return id;
+};
+
+const scanForCommand = async (
+  {
+    content = "",
+    rendered = "",
+    embedding,
+    files = [],
+  }: {
+    content?: string;
+    rendered?: string;
+    embedding?: number[];
+    files?: ProtoFile[];
+  } = {},
+  {
+    agent,
+    response = false,
+    target,
+    streaming = false,
+  }: {
+    agent?: string;
+    response?: boolean | string;
+    target?: string;
+    streaming?: boolean;
+  } = {},
+): Promise<
+  [
+    string,
+    string | LangchainGenerator,
+  ][] | void
+> => {
+  if (content.startsWith(":agent:")) {
+    const description = content.substr(":agent:".length);
+    return await createAgent({ description, files });
+  }
+  if (content.startsWith(":file:")) {
+    const text = content.substr(":file:".length);
+    const base64text = Buffer.from(text).toString("base64");
+    //.replace(/^[^,]+,/, "")
+    const file = {
+      type: "text/plain",
+      name: "",
+      content: base64text,
+    };
+    return await createFiles({ files: [...files, file] }, { agent });
+  }
 };
 
 export const createMeme = async (
@@ -376,7 +463,7 @@ export const createMeme = async (
 ): Promise<
   [
     string,
-    string | AsyncGenerator<BaseMessageChunk, void, unknown>,
+    string | LangchainGenerator,
   ][]
 > => {
   const db = await getDB();
@@ -387,9 +474,20 @@ export const createMeme = async (
         embedding: await embed(`${Math.random()}`.slice(2)),
       }) as [Meme];
     } else if (content) {
-      const renderedContent = rendered
-        ? rendered
-        : await renderText(content, { mentions });
+      const command = await scanForCommand({
+        content,
+        rendered,
+        embedding,
+        files,
+      }, { agent, response, target, streaming });
+      if (command) {
+        return command;
+      }
+      const accumulated: string[][] = [];
+      const renderedContent = rendered ? rendered : await renderText(
+        content,
+        replaceAndAccumulate(replaceAgents, accumulated),
+      );
       [meme] = await db.create(TABLE_MEME, {
         timestamp: new Date().toISOString(),
         hash: hashData(content),
@@ -408,14 +506,14 @@ export const createMeme = async (
     await createFiles({ files }, { agent, meme: memeId });
     const results: [
       string,
-      string | AsyncGenerator<BaseMessageChunk, void, unknown>,
+      string | LangchainGenerator,
     ][] = [];
     if (meme && memeId) {
       results.push([
         memeId,
         meme.content as
           | string
-          | AsyncGenerator<BaseMessageChunk, void, unknown>,
+          | LangchainGenerator,
       ]);
     }
     if (response) {
@@ -424,24 +522,26 @@ export const createMeme = async (
         meme,
         streaming,
       });
-      if (streaming) {
-        const [id, content] = res[0];
-        const [fork1, fork2] = forkAsyncIterator(
-          content,
-        ) as unknown as LangchainGenerator[];
-        res[0][1] = fork1;
-        (async () => {
-          const data = [];
-          for await (const { content } of fork2) {
-            data.push(content);
-          }
-          updatePendingMeme(id, { content: data.join("") });
-        })();
+      for (const res_0 of res) {
+        if (streaming) {
+          const [id, content] = res_0;
+          const [fork1, fork2] = forkAsyncIterator(
+            content,
+          ) as unknown as LangchainGenerator[];
+          res_0[1] = fork1;
+          (async () => {
+            const data = [];
+            for await (const { content } of fork2) {
+              data.push(content);
+            }
+            updatePendingMeme(id, { content: data.join("") });
+          })();
+        }
+        if (target && !meme) {
+          await relate(target, REL_ELICITS, res_0[0]);
+        }
+        results.push(res_0);
       }
-      if (target && !meme) {
-        await relate(target, REL_ELICITS, res[0][0]);
-      }
-      results.push(res[0]);
     }
     return results;
   } finally {
@@ -491,7 +591,10 @@ export const createAgent = async ({
   qualities?: [string, string][];
   image?: string | null;
   files?: ProtoFile[];
-} = {}): Promise<string[][]> => {
+} = {}): Promise<[
+  string,
+  string | LangchainGenerator,
+][]> => {
   const db = await getDB();
   try {
     const combinedQualities = (
@@ -499,12 +602,15 @@ export const createAgent = async ({
       "\n\n" +
       qualities.map(([k, v]) => `- ${k}\n  - ${v}`).join("\n")
     ).trim();
+    const giveName = name.trim();
     const content = combinedQualities
       ? await summarize(combinedQualities, PROMPTS_SUMMARIZE.LLM_PROMPT)
+      : giveName
+      ? await summarize(giveName, PROMPTS_SUMMARIZE.LLM_DESCRIPTION)
       : await summarize("", PROMPTS_SUMMARIZE.LLM_PROMPT_RANDOM);
 
-    const generatedName = name.trim()
-      ? name.trim()
+    const generatedName = giveName
+      ? giveName
       : (await summarize(content, PROMPTS_SUMMARIZE.LLM_NAMES))
         .split(",")[Math.floor(Math.random() * 5)].split(" ")
         .join(""); // Split and Join to remove any spaces
