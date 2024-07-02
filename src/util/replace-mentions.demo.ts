@@ -2,7 +2,7 @@ async function replaceMentions(
   text,
   replaceCallback,
   startSymbols = ["@", "#"],
-  additionalChars = ":?\\-"
+  additionalChars = ":?\\-",
 ) {
   const escapedSymbols = startSymbols
     .map((symbol) => symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
@@ -10,7 +10,7 @@ async function replaceMentions(
   const escapedChars = additionalChars.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const mentionRegex = new RegExp(
     `(?<=^|\\s)(${escapedSymbols})([\\w${escapedChars}]+)`,
-    "g"
+    "g",
   );
   let result = "";
   let lastIndex = 0;
@@ -70,7 +70,7 @@ for await (const text of texts) {
   const mentions = [];
   const result = await replaceMentions(
     text,
-    replaceAndAccumulate(replacer, mentions)
+    replaceAndAccumulate(replacer, mentions),
   );
   console.log(result, mentions);
 }
