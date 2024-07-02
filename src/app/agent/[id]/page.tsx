@@ -87,7 +87,10 @@ const Page: FC<Props> = ({ params }) => {
       </h2>
       <main>
         <header>
-          <img src={agent.image || DEFAULT_USER_IMAGE} alt={agent.id}></img>
+          <img
+            src={agent.image ? `/file/${agent.image}/raw` : DEFAULT_USER_IMAGE}
+            alt={agent.id}
+          ></img>
           <form data-obfo-container="{}" data-obfo-name="parameters">
             <label>
               Model

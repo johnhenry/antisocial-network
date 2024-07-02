@@ -71,6 +71,8 @@
 - [ ] Update instruction for ollama
 - [ ] Settings.ts -> Config.ts
 - [ ] Display files associated with memes
+- [ ] Now that i can get a bunch of agents too answer a single post, i need a final agent that can combine the reponses to a post
+  - @SynthezingSamuel
 
 ## Bugs
 
@@ -78,6 +80,8 @@
 - responses are connected with elicits relationships
 - db reset may create a bad state
 - @@ mentions (search TODO)
+- id not converted propertly when reading -- doing searc/retrieving items
+  - also check updates
 
 ## Possible features
 

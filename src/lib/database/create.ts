@@ -47,6 +47,7 @@ import {
 import type { BaseMessageChunk } from "@langchain/core/messages";
 import { number } from "zod";
 import { replaceAndAccumulate } from "@/util/replace-mentions";
+import imageFromString from "@/util/image-from-string";
 ////
 // File
 ////
@@ -348,8 +349,34 @@ export const createResponseMeme = async ({
   return results;
 };
 
-const replaceAgents = async (name: string) =>
-  `${name[0]}${await replaceAgentNameWithId(name.slice(1))}`;
+const getAgentIdByNameOrCreate = async (name: string) => {
+  const db = await getDB();
+  try {
+    const [[agent]]: [[Agent]] = await db.query(
+      "SELECT * FROM type::table($table) WHERE name = $name",
+      {
+        table: TABLE_AGENT,
+        name,
+      },
+    );
+    if (agent) {
+      return agent.id.toString();
+    }
+    return (await createAgent({ name }))[0][0];
+  } finally {
+    await db.close();
+  }
+};
+
+const replaceAgents = async (name: string) => {
+  if (name[0] === "@") {
+    if (name[1] === "?") {
+      return name;
+    }
+    return `${name[0]}${await getAgentIdByNameOrCreate(name.slice(1))}`;
+  }
+  return name;
+};
 
 export const updatePendingMeme = async (
   id: string,
@@ -410,7 +437,7 @@ const scanForCommand = async (
     streaming = false,
   }: {
     agent?: string;
-    response?: boolean | string;
+    response?: bboolean | string | number;
     target?: string;
     streaming?: boolean;
   } = {},
@@ -456,7 +483,7 @@ export const createMeme = async (
     streaming = false,
   }: {
     agent?: string;
-    response?: boolean | string;
+    response?: boolean | string | number;
     target?: string;
     streaming?: boolean;
   } = {},
@@ -467,6 +494,7 @@ export const createMeme = async (
   ][]
 > => {
   const db = await getDB();
+  let constructedResponse = response;
   try {
     let meme: Meme | undefined = undefined;
     if (content === MEME_PENDING) {
@@ -488,13 +516,45 @@ export const createMeme = async (
         content,
         replaceAndAccumulate(replaceAgents, accumulated),
       );
-      [meme] = await db.create(TABLE_MEME, {
-        timestamp: new Date().toISOString(),
-        hash: hashData(content),
-        raw: content,
-        content: renderedContent,
-        embedding: embedding ? embedding : await embed(renderedContent),
-      }) as [Meme];
+      const samsies = [];
+      const agents = [];
+      for (const [inn, out] of accumulated) {
+        if (inn === out) {
+          //nothing changed
+          const [first, second, ...third] = out;
+          if (first === "@") {
+            if (second === "?") {
+              const number = Number(third.join("")) || 1;
+              if (number) {
+                // set response with this number
+                samsies.push(number);
+              }
+            }
+          }
+        } else {
+          // newly created agent
+          // add request response from out
+          agents.push(out.slice(1));
+        }
+      }
+      if (typeof response === "string") {
+        agents.push(response);
+      }
+      constructedResponse = agents.length
+        ? agents.join(",")
+        : samsies.length
+        ? Math.max(...samsies)
+        : response;
+      [meme] = await db.create(
+        TABLE_MEME,
+        {
+          timestamp: new Date().toISOString(),
+          hash: hashData(content),
+          raw: content,
+          content: renderedContent,
+          embedding: embedding ? embedding : await embed(renderedContent),
+        },
+      ) as [Meme];
     }
     const memeId = meme ? meme.id.toString() : undefined;
     if (agent && memeId) {
@@ -516,9 +576,9 @@ export const createMeme = async (
           | LangchainGenerator,
       ]);
     }
-    if (response) {
+    if (constructedResponse) {
       const res = await createResponseMeme({
-        response,
+        response: constructedResponse,
         meme,
         streaming,
       });
@@ -603,10 +663,17 @@ export const createAgent = async ({
       qualities.map(([k, v]) => `- ${k}\n  - ${v}`).join("\n")
     ).trim();
     const giveName = name.trim();
+    // TODO: Bug: content generated from passing name only to agent should be saved
     const content = combinedQualities
       ? await summarize(combinedQualities, PROMPTS_SUMMARIZE.LLM_PROMPT)
       : giveName
-      ? await summarize(giveName, PROMPTS_SUMMARIZE.LLM_DESCRIPTION)
+      ? await summarize(
+        description = await summarize(
+          giveName,
+          PROMPTS_SUMMARIZE.LLM_DESCRIPTION,
+        ),
+        PROMPTS_SUMMARIZE.LLM_PROMPT,
+      )
       : await summarize("", PROMPTS_SUMMARIZE.LLM_PROMPT_RANDOM);
 
     const generatedName = giveName
@@ -618,11 +685,22 @@ export const createAgent = async ({
     const indexed = [description, content, combinedQualities]
       .filter(Boolean)
       .join("\n ------------------ \n");
+
+    const hash = hashData(content);
+    if (!image) {
+      [[image]] = await createFile({
+        type: "image/png",
+        content: await imageFromString(hash) as string,
+        name: generatedName,
+      });
+    }
+
     const embedding = await embed(content as string);
     const [agent] = await db.create(TABLE_AGENT, {
       timestamp: new Date().toISOString(),
       name: generatedName,
       content,
+      hash,
       combinedQualities,
       parameters: removeValuesFromObject(parameters, undefined, ""),
       description: description.trim(),
