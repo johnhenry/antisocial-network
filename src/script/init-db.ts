@@ -1,12 +1,14 @@
 "use server";
 import {
-  TABLE_AGENT,
-  TABLE_MEME,
-  TABLE_FILE,
   SIZE_EMBEDDING_VECTOR,
+  TABLE_AGENT,
+  TABLE_FILE,
+  TABLE_MEME,
 } from "@/settings";
 import { getDB } from "@/lib/db";
 import { createSettings } from "@/lib/database/create";
+const { log } = console;
+
 const initDB = async () => {
   const db = await getDB();
 
@@ -22,7 +24,7 @@ const initDB = async () => {
         await db.query(queries.join(";"));
       } catch (error: any) {
         if (error.message.includes("already exists")) {
-          console.log(`Index already exists on ${table}`);
+          log(`Index already exists on ${table}`);
         } else {
           throw error;
         }

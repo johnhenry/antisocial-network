@@ -19,12 +19,12 @@ export default function RootLayout({
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content={metadata.description || ""} />
-        {/* <script type="module" src="/register-service-worker.mjs" async></script>
+        <script type="module" src="/register-service-worker.mjs" async></script>
         <script
           type="module"
           src="/request-permission-notification.mjs"
           async
-        ></script> */}
+        ></script>
         <link rel="stylesheet" href="/showpicker/style.css" />
         <script src="/showpicker/script.mjs" async></script>
         <title>{metadata.title as string}</title>

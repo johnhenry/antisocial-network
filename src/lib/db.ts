@@ -18,7 +18,7 @@ import {
 import { RecordId, StringRecordId } from "surrealdb.js";
 
 import { replaceNumber as rn } from "@/util/replace-char";
-
+const { log } = console;
 const initialize = async (db: Surreal): Promise<void> => {
   // Define settings table
   try {
@@ -42,7 +42,7 @@ const initialize = async (db: Surreal): Promise<void> => {
       await db.query(queries.join(";"));
     } catch (error: any) {
       if (error.message.includes("already exists")) {
-        console.log(`Index already exists on ${table}`);
+        log(`Index already exists on ${table}`);
       } else {
         throw error;
       }

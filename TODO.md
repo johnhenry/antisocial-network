@@ -21,6 +21,9 @@
 - [x] Settings page
 - [x] - Generate names via llm
 - [x] - Using vector similarities between system prompts instead of function calling to rank agents
+- [x] Continue investigate using service worker for notifications
+- [ ] Use external providers
+  - [] Groq
 
 ## In progress
 
@@ -32,7 +35,7 @@
   - [ ] GET
     - [ ] agent
     - [ ] meme
-    - [ ] file
+    - [x] file
 - [ ] Streaming text
 - [ ] Add loading/suspense for search, loading entieies
 - [ ] Which settings should I consider?
@@ -46,9 +49,21 @@
     - Paragraph
     - Symantic
     - agentic
-- [ ] Continue investigate using service worker for notifications
 
 ## Planned
+
+- [ ] Visusuals
+
+  - [ ] /settings:
+    - [ ] Settings should be more table-like
+    - [ ] Masquerate should be "list of agents" with a masquerae radio toggle
+  - [ ] /
+    - [ ] Use range to define search limit
+    - [ ] Make go button bigger as it's now alone
+  - [ ] /meme
+    - [ ] Update rendering
+  - [ ] /file
+  - [ ] /agent
 
 - [ ] Improve Search
 - [ ] Format responses
@@ -63,7 +78,7 @@
   - https://dev.to/vyan/public-apis-for-web-development-projects-lhk
   - https://github.com/public-api-lists/public-api-lists
 - [ ] Con Jobs (maybe after API/Tools is ready)
-- [ ] add document summaries of documents to initial agent description
+- [ ] add document summaries of documents to initial agent description?
 - [ ] add generic agents
   - [ ] @GenEric agent:generic
   - [ ] @HelpfulHenry agent:helpfufhelry
@@ -72,14 +87,14 @@
 - [ ] Settings.ts -> Config.ts
 - [ ] Display files associated with memes
 - [ ] Now that i can get a bunch of agents too answer a single post, i need a final agent that can combine the reponses to a post
-  - @SynthezingSamuel
+  - @SynthezingSamuel#
+  - :aggregate:
 
 ## Bugs
 
-- files created with are not bookmarked
-- responses are connected with elicits relationships
-- db reset may create a bad state
-- @@ mentions (search TODO)
+- files created with agent are not properly bookmarked?
+- responses are connected with elicits relationships?
+- db reset may create a bad state?
 - id not converted propertly when reading -- doing searc/retrieving items
   - also check updates
 

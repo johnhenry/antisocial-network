@@ -77,6 +77,7 @@ const Page = () => {
       }
     });
     await updateSettings(settings);
+    alert("settings updated!");
   };
   // const [masquerade, setMasquerade] = useState<Agent | null>(null);
   const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(

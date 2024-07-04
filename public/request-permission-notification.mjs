@@ -1,3 +1,5 @@
+const { log } = console;
+
 Notification.requestPermission().then((result) => {
-  console.log(result);
+  log(result);
 });

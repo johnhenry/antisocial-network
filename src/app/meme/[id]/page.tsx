@@ -9,7 +9,11 @@ import {
   REL_ELICITS,
   REL_REMEMBERS,
 } from "@/settings";
-import { getEntityWithReplationships, getAllAgents } from "@/lib/database/read";
+import {
+  getEntityWithReplationships,
+  getAllAgents,
+  getFullMeme,
+} from "@/lib/database/read";
 import OmniForm from "@/components/omniform";
 import { useRouter } from "next/navigation";
 import truncate, { truncateHTML } from "@/util/truncate-string";
@@ -44,62 +48,74 @@ const Page: FC<Params> = ({ params }) => {
   const [remembers, setRemembers] = useState<string[]>([]);
   useEffect(() => {
     const loadMeme = async () => {
+      // const {
+      //   default: meme,
+      //   inn,
+      //   out,
+      // }: {
+      //   default: any;
+      //   inn: Relationship[];
+      //   out: Relationship[];
+      // } = await getEntityWithReplationships(identifier, {
+      //   source: "meme",
+      //   inn: [
+      //     {
+      //       table: "meme",
+      //       relationship: REL_PRECEDES,
+      //     },
+      //     {
+      //       table: "agent",
+      //       relationship: REL_ELICITS,
+      //     },
+      //     {
+      //       table: "meme",
+      //       relationship: REL_ELICITS,
+      //     },
+      //   ],
+      //   out: [
+      //     {
+      //       table: "agent",
+      //       relationship: REL_REMEMBERS,
+      //     },
+      //     {
+      //       table: "meme",
+      //       relationship: REL_PRECEDES,
+      //     },
+      //     {
+      //       table: "file",
+      //       relationship: REL_CONTAINS,
+      //     },
+      //     {
+      //       table: "agent",
+      //       relationship: REL_INSERTED,
+      //     },
+      //     {
+      //       table: "meme",
+      //       relationship: REL_ELICITS,
+      //     },
+      //   ],
+      // });
+      const M = await getFullMeme(identifier);
       const {
-        default: meme,
-        inn,
-        out,
-      }: {
-        default: any;
-        inn: Relationship[];
-        out: Relationship[];
-      } = await getEntityWithReplationships(identifier, {
-        source: "meme",
-        inn: [
-          {
-            table: "meme",
-            relationship: REL_PRECEDES,
-          },
-          {
-            table: "agent",
-            relationship: REL_ELICITS,
-          },
-          {
-            table: "meme",
-            relationship: REL_ELICITS,
-          },
-        ],
-        out: [
-          {
-            table: "agent",
-            relationship: REL_REMEMBERS,
-          },
-          {
-            table: "meme",
-            relationship: REL_PRECEDES,
-          },
-          {
-            table: "file",
-            relationship: REL_CONTAINS,
-          },
-          {
-            table: "agent",
-            relationship: REL_INSERTED,
-          },
-          {
-            table: "meme",
-            relationship: REL_ELICITS,
-          },
-        ],
-      });
-      const before = parseRelationship(out, "meme", REL_PRECEDES)[0] || null;
-      const after = parseRelationship(inn, "meme", REL_PRECEDES)[0] || null;
-      const contains = parseRelationship(out, "file", REL_CONTAINS)[0] || null;
-      const elicits = parseRelationship(inn, "meme", REL_ELICITS);
-      const inserted = parseRelationship(out, "agent", REL_INSERTED)[0] || null;
-      const responds = parseRelationship(out, "meme", REL_ELICITS)[0] || null;
-      const remembers = parseRelationship(out, "agent", REL_REMEMBERS).map(
-        (x) => x.id
-      );
+        meme,
+        before,
+        file: contains,
+        agent: inserted,
+        responds,
+        after,
+        elicits,
+        remembers,
+      } = M;
+
+      // const before = parseRelationship(out, "meme", REL_PRECEDES)[0] || null;
+      // const after = parseRelationship(inn, "meme", REL_PRECEDES)[0] || null;
+      // const contains = parseRelationship(out, "file", REL_CONTAINS)[0] || null;
+      // const elicits = parseRelationship(inn, "meme", REL_ELICITS);
+      // const inserted = parseRelationship(out, "agent", REL_INSERTED)[0] || null;
+      // const responds = parseRelationship(out, "meme", REL_ELICITS)[0] || null;
+      // const remembers = parseRelationship(out, "agent", REL_REMEMBERS).map(
+      //   (x) => x.id
+      // );
       setBefore(before);
       setAfter(after);
       setContains(contains);
@@ -125,12 +141,12 @@ const Page: FC<Params> = ({ params }) => {
     );
   }
 
-  const resourceCreated = (id: string) => {
+  const resourceCreated = (id: string, content: string = "") => {
     const [type] = id.split(":", 1);
-    alert(`${type} created: ${id}` + id);
-    router.push(`/${type}/${id}`);
+    if (confirm(`open ${id}?` + "\n" + content)) {
+      router.push(`/${type}/${id}`);
+    }
   };
-
   return (
     <section className="section-meme">
       <Masquerade

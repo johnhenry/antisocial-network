@@ -1,3 +1,5 @@
+const { log } = console;
+
 async function replaceMentions(
   text,
   replaceCallback,
@@ -72,5 +74,5 @@ for await (const text of texts) {
     text,
     replaceAndAccumulate(replacer, mentions),
   );
-  console.log(result, mentions);
+  log(result, mentions);
 }

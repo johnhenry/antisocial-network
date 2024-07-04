@@ -21,15 +21,17 @@ self.addEventListener("notificationclick", (e) => {
   e.waitUntil(
     clients.matchAll({ type: "window" }).then((clientsArr) => {
       // If a Window tab matching the targeted URL already exists, focus that;
+      // const url = e.notification.data.url;
+      const [id] = e.notification.data.id.split(",");
+      const [type] = id.split(":");
+      const url = `${self.location.origin}/${type}/${id}`;
       const hadWindowToFocus = clientsArr.some((windowClient) =>
-        windowClient.url === e.notification.data.url
-          ? (windowClient.focus(), true)
-          : false
+        windowClient.url === url ? (windowClient.focus(), true) : false
       );
       // Otherwise, open a new tab to the applicable URL and focus it.
       if (!hadWindowToFocus)
         clients
-          .openWindow(e.notification.data.url)
+          .openWindow(url)
           .then((windowClient) => (windowClient ? windowClient.focus() : null));
     })
   );
@@ -39,20 +41,22 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     (async () => {
       const response = await fetch(event.request);
-      const clonedResponse = response.clone();
       // Check if the original calling window is closed
-      const clientList = await self.clients.matchAll({
-        type: "window",
-        includeUncontrolled: true,
-      });
+      // const clientList = await self.clients.matchAll({
+      //   type: "window",
+      //   includeUncontrolled: true,
+      // });
+      const id = response.headers.get("x-id");
+
       if (
-        clientList.length === 0 &&
+        // clientList.length === 0 &&
         response.ok &&
-        self.Notification.permission === "granted"
+        self.Notification.permission === "granted" &&
+        id
       ) {
         const notificationObject = {
-          body: `A process completed in the background.`,
-          data: { url: `${self.location.origin}` },
+          body: `item(s) created with id(s): ${id}`,
+          data: { id, url: `${self.location.origin}` },
           icon: "/static/user.webp", // Add path to your icon
         };
         self.registration.showNotification(
@@ -60,7 +64,7 @@ self.addEventListener("fetch", (event) => {
           notificationObject
         );
       }
-      return clonedResponse;
+      return response;
     })()
   );
 });

@@ -48,6 +48,8 @@ import type { BaseMessageChunk } from "@langchain/core/messages";
 import { number } from "zod";
 import { replaceAndAccumulate } from "@/util/replace-mentions";
 import imageFromString from "@/util/image-from-string";
+import { recordMatch } from "@/util/match";
+
 ////
 // File
 ////
@@ -277,13 +279,14 @@ Messages mentioning "@${id}" are directed at you specifically.${
   // old: "You may inclue the following knowledge as part of your response: "
   // add relevant knowledge to messages
   const results = await respond(
-    messages,
     {
-      relevantKnowledge,
+      messages,
+      invocation: {
+        relevantKnowledge,
+      },
+      parameters,
+      streaming,
     },
-    undefined,
-    parameters,
-    streaming,
   );
   if (streaming) {
     // TODO: split iterator here an add callback above
@@ -369,6 +372,9 @@ const getAgentIdByNameOrCreate = async (name: string) => {
 };
 
 const replaceAgents = async (name: string) => {
+  if (recordMatch.test(name)) {
+    return name;
+  }
   if (name[0] === "@") {
     if (name[1] === "?") {
       return name;

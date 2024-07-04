@@ -7,7 +7,7 @@ const schema = z.object({
       z.object({
         agent: z.string().describe(`ID of the agent e.g. ${TABLE_AGENT}:???`),
         score: z.number().describe("Float score of the agent from 0 to 1"),
-      })
+      }),
     )
     .describe("The list of agents and their scores."),
 });
@@ -26,7 +26,6 @@ const handler = async ({
 }: {
   scores: { agent: string; score: number }[];
 }): Promise<number> => {
-  console.log(scores);
   return 0;
 };
 

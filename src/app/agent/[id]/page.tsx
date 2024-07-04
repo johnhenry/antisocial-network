@@ -4,7 +4,7 @@ import type { FC } from "react";
 import { useState, useEffect } from "react";
 import { getEntity } from "@/lib/database/read";
 import obfo from "obfo";
-import { DEFAULT_USER_IMAGE, MODELS, MODEL_BASIC } from "@/settings";
+import { DEFAULT_USER_IMAGE, MODELS } from "@/settings";
 import { updateAgent } from "@/lib/database/update";
 import { MASQUERADE_KEY } from "@/settings";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
@@ -38,13 +38,8 @@ const Page: FC<Props> = ({ params }) => {
       ([name, description]: [string, string]) =>
         name.trim() && description.trim()
     );
-    // return console.log({ data });
     const updatedAgent = await updateAgent(identifier, data);
     alert(`Agent updated! ${updatedAgent}`);
-    // setAgent(updatedAgent);
-    // setQualities(
-    //   updatedAgent.qualities.length ? updatedAgent.qualities : [["", ""]]
-    // );
     setDirty(false);
   };
   useEffect(() => {

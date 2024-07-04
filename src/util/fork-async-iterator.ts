@@ -53,26 +53,6 @@ const AsyncQueue = class {
   }
 };
 
-// Usage Example
-// async function exampleUsage() {
-//   const asyncQueue = new AsyncQueue();
-
-//   // Enqueue items
-//   setTimeout(() => asyncQueue.enqueue(1), 100);
-//   setTimeout(() => asyncQueue.enqueue(2), 200);
-//   setTimeout(() => asyncQueue.enqueue(3), 300);
-//   setTimeout(() => asyncQueue.end(), 400);
-
-//   // Consume items
-//   for await (const item of asyncQueue) {
-//     console.log(item);
-//   }
-
-//   console.log('Queue has ended.');
-// }
-
-// exampleUsage();
-
 const forkAsyncIterator = (iterator, num = 2) => {
   const queues = [];
   for (let i = 0; i < num; i++) {
@@ -86,35 +66,5 @@ const forkAsyncIterator = (iterator, num = 2) => {
   })();
   return queues;
 };
-
-// Usage Example
-
-// const exampleAsyncGenerator = async function* () {
-//   for (let i = 0; i < 5; i++) {
-//     yield i;
-//     await new Promise((resolve) => setTimeout(resolve, 1000));
-//   }
-// };
-
-// const main = async () => {
-//   const originalIterator = exampleAsyncGenerator();
-//   const [i1, i2] = forkAsyncIterator(originalIterator);
-
-//   (async () => {
-//     for await (const value of i1) {
-//       console.log(`Iterator 1: ${value}`);
-//     }
-//     console.log(1);
-//   })();
-
-//   (async () => {
-//     for await (const value of i2) {
-//       console.log(`Iterator 2: ${value}`);
-//     }
-//     console.log(2);
-//   })();
-// };
-
-// main();
 
 export default forkAsyncIterator;

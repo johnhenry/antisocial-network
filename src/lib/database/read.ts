@@ -5,6 +5,7 @@ import { getDB } from "@/lib/db";
 import {
   REL_BOOKMARKS,
   REL_CONTAINS,
+  REL_ELICITS,
   REL_INSERTED,
   REL_PRECEDES,
   REL_REMEMBERS,
@@ -14,7 +15,8 @@ import {
 } from "@/settings";
 
 import { embed } from "@/lib/ai";
-
+import { recordMatch } from "@/util/match";
+import replaceMentions from "@/util/replace-mentions";
 export const getEntity = async <T>(id: string): Promise<T> => {
   const db = await getDB();
   try {
@@ -29,6 +31,97 @@ export type Relationship = {
   table: string;
   relationship: string;
   results: any[];
+};
+
+const replaceContentWithLinks = async (
+  item: { content?: string },
+): Promise<{ content?: string }> => {
+  recordMatch;
+  item.content = await replaceMentions(
+    item.content || "",
+    async (mention: string) => {
+      if (recordMatch.test(mention)) {
+        const id = mention.slice(1);
+        const [type] = id.split(":");
+        const name = await replaceAgentIdWithName(id);
+        return `<a href="/${type}/${id}">${mention[0]}${name}</a>`;
+      }
+      return mention;
+    },
+  );
+  return item;
+};
+
+export const getFullMeme = async (id: string): Promise<any> => {
+  const queries = [];
+  // select target
+  queries.push(
+    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where id = $id`,
+  );
+  // select incoming relationships
+  // precedes
+  queries.push(
+    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where ->${REL_PRECEDES}->(meme where id = $id)`,
+  );
+  // // contains
+  queries.push(
+    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM file where ->${REL_CONTAINS}->(meme where id = $id)`,
+  );
+  // // inserted
+  queries.push(
+    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM agent where ->${REL_INSERTED}->(meme where id = $id)`,
+  );
+  // // responds
+  queries.push(
+    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where ->${REL_ELICITS}->(meme where id = $id)`,
+  );
+  // // select outgoing relationships
+  // // precedes
+  queries.push(
+    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where <-${REL_PRECEDES}<-(meme where id = $id)`,
+  );
+  // // elicits
+  queries.push(
+    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where <-${REL_ELICITS}<-(meme where id = $id)`,
+  );
+  // // remembers
+  queries.push(
+    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM agent where <-${REL_REMEMBERS}<-(meme where id = $id)`,
+  );
+
+  const db = await getDB();
+  try {
+    const [
+      [meme],
+      [before],
+      [file],
+      [agent],
+      [responds],
+      [after],
+      elicits,
+      remembers,
+    ]: [[Meme], [Meme], [File], [Agent], [Meme], [Meme], Meme[], Agent[]] =
+      await db.query(
+        queries.join(";"),
+        {
+          id: new StringRecordId(id),
+        },
+      );
+    const obj = {
+      meme: await replaceContentWithLinks(meme),
+      before,
+      file,
+      agent,
+      responds,
+      after,
+      elicits,
+      remembers,
+    };
+
+    return obj;
+  } finally {
+    await db.close();
+  }
 };
 
 export const getEntityWithReplationships = async (
@@ -51,7 +144,13 @@ export const getEntityWithReplationships = async (
       out: [],
     };
     const id = new StringRecordId(identifier);
-    output.default = await db.select(id);
+    const [[d]]: [any[]] = await db.query(
+      `SELECT *, string::concat("", id) as id OMIT embedding, data FROM ${source}`,
+      {
+        meme: id,
+      },
+    );
+    output.default = d;
     for (const { table, relationship } of inn) {
       const [results]: [any[]] = await db.query(
         `SELECT * OMIT embedding, data FROM ${table} where <-${relationship}<-(${source} where id = $meme)`,
@@ -205,7 +304,7 @@ export const replaceAgentIdWithName = async (
     const [[agent]]: Agent[][] = await db.query(
       `SELECT name FROM ${TABLE_AGENT} WHERE id = $id`,
       {
-        id,
+        id: new StringRecordId(id),
       },
     );
     return agent ? agent.name : id;
@@ -230,7 +329,7 @@ export const getSettings = async (): Promise<Setting[]> => {
   }
 };
 
-export const getSettingObject = async (): Promise<
+export const getSettingsObject = async (): Promise<
   Record<string, string | undefined>
 > => {
   const protoSettings: Setting[] = await getSettings();

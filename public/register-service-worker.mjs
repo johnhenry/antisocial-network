@@ -1,10 +1,12 @@
+const { log } = console;
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .register("/service-worker.mjs", { scope: "/" })
     .then((registration) => {
-      console.log("Service Worker registered with scope:", registration.scope);
+      log("Service Worker registered with scope:", registration.scope);
     })
     .catch((error) => {
-      console.error("Service Worker registration failed:", error);
+      error("Service Worker registration failed:", error);
     });
 }

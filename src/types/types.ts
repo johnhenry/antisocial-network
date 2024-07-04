@@ -83,7 +83,7 @@ export type Relationship = {
 };
 
 export type Setting = {
-  id: string | RecordId;
+  id?: string | RecordId;
   name: string;
   label: string;
   type: string;

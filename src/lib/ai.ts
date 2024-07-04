@@ -1,18 +1,15 @@
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
 import type { BaseMessageChunk } from "@langchain/core/messages";
-
+import { ChatGroq } from "@langchain/groq";
 import { Ollama } from "ollama";
 import { OllamaFunctions } from "@langchain/community/experimental/chat_models/ollama_functions";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import {
-  MODEL_BASIC,
-  MODEL_EMBEDDING,
-  MODEL_FUNCTIONS,
-  MODEL_IMAGE,
-  OLLAMA_LOCATION,
-} from "@/settings";
+import { MODEL_FUNCTIONS, OLLAMA_LOCATION } from "@/settings";
 import { JsonOutputFunctionsParser } from "@langchain/core/output_parsers/openai_functions";
+import { getSettingsObject } from "@/lib/database/read";
+
+import { API_KEY_GROQ } from "@/settings";
 
 type FunctionDescriptor = {
   name: string;
@@ -21,77 +18,136 @@ type FunctionDescriptor = {
 };
 
 type FunctionsForOllama = {
-  functions: FunctionDescriptor[];
+  functions?: FunctionDescriptor[];
   function_call?: {
     name: string;
   };
 };
 
 export const respond = async (
-  messages: [string, string][],
-  invocation: Record<string, any> = {},
-  functions?: FunctionsForOllama,
-  parameters?: Record<string, any>,
-  streaming?: boolean,
+  {
+    messages = [],
+    invocation = {},
+    parameters = {},
+    streaming = false,
+  }: {
+    messages?: [string, string][];
+    invocation?: Record<string, any>;
+    parameters?: Record<string, any>;
+    streaming?: boolean;
+  } = {},
 ): Promise<
   BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
 > => {
-  const model = functions
-    ? new OllamaFunctions({
-      ...parameters,
-      baseUrl: OLLAMA_LOCATION,
-      model: MODEL_FUNCTIONS,
-    }).bind(functions)
-    : new ChatOllama({
-      model: MODEL_BASIC,
-      ...parameters,
-      baseUrl: OLLAMA_LOCATION,
-    });
-  const prompt = ChatPromptTemplate.fromMessages(messages);
-  let chain = prompt.pipe(model);
-  if (functions) {
-    chain = chain.pipe(new JsonOutputFunctionsParser());
-  }
-  if (streaming) {
-    return chain.stream(invocation).then(async function* (textStream) {
-      for await (const text of textStream) {
-        yield text;
+  const settings = await getSettingsObject();
+  const [source, model] = (parameters?.model || settings.model).split("::");
+  const arg = {
+    ...parameters,
+    model,
+  };
+  try {
+    let invoker;
+    switch (source) {
+      case "groq": {
+        arg.apiKey = settings.apikeygroq;
+        delete arg.logprobs;
+        delete arg.logit_bias;
+        delete arg.top_logprobs;
+        invoker = new ChatGroq(arg);
+        break;
       }
-    });
+      case "ollama":
+      default: {
+        arg.baseUrl = OLLAMA_LOCATION;
+        invoker = new ChatOllama(arg);
+      }
+    }
+    const prompt = ChatPromptTemplate.fromMessages(messages);
+    const chain = prompt.pipe(invoker);
+    if (streaming) {
+      return chain.stream(invocation).then(async function* (textStream) {
+        for await (const text of textStream) {
+          yield text;
+        }
+      });
+    }
+    return chain.invoke(invocation);
+  } catch (error) {
+    throw error;
   }
-  return chain.invoke(invocation);
+};
+
+export const respondFunc = async (
+  {
+    messages = [],
+    invocation = {},
+    parameters = {},
+    functions = {},
+  }: {
+    messages?: [string, string][];
+    invocation?: Record<string, any>;
+    parameters?: Record<string, any>;
+    functions?: FunctionsForOllama;
+  } = {},
+): Promise<
+  BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
+> => {
+  const [source, model] = MODEL_FUNCTIONS.split("::");
+
+  const invoker = new OllamaFunctions({
+    ...parameters,
+    baseUrl: OLLAMA_LOCATION,
+    model,
+  }).bind(functions);
+  const prompt = ChatPromptTemplate.fromMessages(messages);
+  return prompt.pipe(invoker).pipe(new JsonOutputFunctionsParser()).invoke(
+    invocation,
+  );
 };
 
 export const embed = async (prompt: string) => {
-  const ollama = new Ollama({
-    host: OLLAMA_LOCATION,
-  });
+  const settings = await getSettingsObject();
+  const [source, model] = settings.modelembedding!.split("::");
   try {
-    const { embedding } = await ollama.embeddings({
-      model: MODEL_EMBEDDING,
-      prompt,
-    });
-    return embedding;
+    switch (source) {
+      case "ollama":
+      default: {
+        const ollama = new Ollama({
+          host: OLLAMA_LOCATION,
+        });
+        const { embedding } = await ollama.embeddings({
+          model,
+          prompt,
+        });
+        return embedding;
+      }
+    }
   } catch (EmbeddingError) {
     throw EmbeddingError;
   }
 };
 
 export const describe = async (base64data: string) => {
-  const model = new OllamaLangchain({
-    model: MODEL_IMAGE,
-    baseUrl: OLLAMA_LOCATION,
-  }).bind({
-    images: [base64data],
-  });
-  const res = await model.invoke("What's in this image?");
-  return res;
+  const settings = await getSettingsObject();
+  const [source, model] = settings.modelvision!.split("::");
+  try {
+    switch (source) {
+      case "ollama":
+      default: {
+        const invoker = new OllamaLangchain({
+          model,
+          baseUrl: OLLAMA_LOCATION,
+        }).bind({
+          images: [base64data],
+        });
+        const res = await invoker.invoke("What's in this image?");
+        return res;
+      }
+    }
+  } catch (EmbeddingError) {
+    throw EmbeddingError;
+  }
 };
-
-const SUMMARIZE_PROMPTS = [
-  "Please summarize this content:",
-  "Please create a concise 1 paragraph summary of the following:",
-];
 
 export const PROMPTS_SUMMARIZE = {
   TITLE:
@@ -113,9 +169,11 @@ export const summarize = async (
   prompt: string = PROMPTS_SUMMARIZE.SUMMARY,
 ): Promise<string> => {
   const { content: output } = await respond(
-    [["user", `${prompt}\n\n{content}`]],
     {
-      content,
+      messages: [["user", `${prompt}\n\n{content}`]],
+      invocation: {
+        content,
+      },
     },
   ) as BaseMessageChunk;
   return output as string;

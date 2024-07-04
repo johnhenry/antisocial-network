@@ -57,17 +57,18 @@ export const MASQUERADE_KEY = "masquerade";
 // A.I.
 ////
 export const MODEL_BASIC = read("MODEL_BASIC", {
-  defaultValue: "llama3:latest",
+  defaultValue: "ollama::llama3:latest",
 });
 export const MODEL_FUNCTIONS = read("MODEL_FUNCTIONS", {
-  defaultValue: "mistral:latest",
+  defaultValue: "ollama::mistral:latest",
 });
 export const MODEL_EMBEDDING = read("MODEL_EMBEDDING", {
-  defaultValue: "nomic-embed-text:latest",
+  defaultValue: "ollama::nomic-embed-text:latest",
 });
-export const MODEL_IMAGE = read("MODEL_IMAGE", {
-  defaultValue: "llava:latest",
+export const MODEL_VISION = read("MODEL_VISION", {
+  defaultValue: "ollama::llava:latest",
 });
+
 const MODELS_OTHER = read("MODELS_OTHER", {
   defaultValue: [],
   cast: (s: string) => s.split(","),
@@ -78,9 +79,9 @@ export const MODELS = [
       MODEL_BASIC,
       MODEL_FUNCTIONS,
       MODEL_EMBEDDING,
-      MODEL_IMAGE,
+      MODEL_VISION,
       ...MODELS_OTHER,
-    ].filter((model) => model)
+    ].filter((model) => model),
   ),
 ];
 export const OLLAMA_LOCATION = read("OLLAMA_LOCATION", {
@@ -98,6 +99,8 @@ export const SIZE_KNN = read("SIZE_KNN", {
   cast: parseInt,
 });
 
+export const API_KEY_GROQ = read("API_KEY_GROQ");
+
 export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   embeddingOnly: false,
   // f16KV: false,
@@ -107,7 +110,7 @@ export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   logitsAll: undefined,
   lowVram: undefined,
   mainGpu: 0,
-  model: MODEL_BASIC,
+  model: undefined,
   baseUrl: undefined,
   mirostat: 0,
   mirostatEta: 0.1,
@@ -144,5 +147,25 @@ export const SETTINGS_DEFAULT: Setting[] = [
     type: "select",
     options: MODELS,
     defaultValue: MODEL_BASIC,
+  },
+  {
+    name: "modelembedding",
+    label: "Embedding Model",
+    type: "select",
+    options: MODELS,
+    defaultValue: MODEL_EMBEDDING,
+  },
+  {
+    name: "modelvision",
+    label: "Vision Model",
+    type: "select",
+    options: MODELS,
+    defaultValue: MODEL_VISION,
+  },
+  {
+    name: "apikeygroq",
+    label: "API Key: Groq",
+    type: "password",
+    defaultValue: API_KEY_GROQ,
   },
 ];

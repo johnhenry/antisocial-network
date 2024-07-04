@@ -1,4 +1,6 @@
 import * as SETTINGS from "@/settings";
+const { log } = console;
+
 Object.entries(SETTINGS).forEach(([key, value]) => {
-  console.log(key, value);
+  log(key, value);
 });

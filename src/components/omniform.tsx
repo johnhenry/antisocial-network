@@ -6,17 +6,14 @@ import type {
   Dispatch,
   ChangeEvent,
   KeyboardEventHandler,
-  RefObject,
-  LegacyRef,
 } from "react";
 import { useState, useRef } from "react";
 import obfo from "obfo";
 import { createFiles } from "@/lib/bridge/create";
-import { createAgent } from "@/lib/bridge/create";
 import { createMeme } from "@/lib/bridge/create";
 import Image from "next/image";
 import fileToBase64 from "@/util/to-base64";
-import SplitButton from "@/components/split-button";
+const { log } = console;
 
 type Props = {
   setText: Dispatch<SetStateAction<string>>;
@@ -25,9 +22,7 @@ type Props = {
   agent?: string;
   target?: string;
   placeholder?: string;
-  placeholderAgentMode: string;
   allowNakedFiles?: boolean;
-  allowCreateAgent?: boolean;
 };
 
 const COMBO_OPTIONS = [
@@ -41,19 +36,12 @@ const OmniForm: FC<Props> = ({
   text,
   agent,
   placeholder = "Start typing to create an agent, a meme, or search.",
-  placeholderAgentMode = "Start typing to create an agent.",
   allowNakedFiles = true,
-  allowCreateAgent = true,
   target,
 }) => {
   const textRef = useRef<HTMLTextAreaElement>(null);
   const [files, setFiles] = useState<any[]>([]);
-  const [agentMode, setAgentMode] = useState(false);
-  const toggleAgentMode: ChangeEventHandler = (event) => {
-    setAgentMode(
-      (event.target as HTMLInputElement).checked && allowCreateAgent
-    );
-  };
+
   const addFile = (file: any) => setFiles((files) => [...files, file]);
   const removeFile = (index: number) =>
     setFiles(files.filter((_, i) => i !== index));
@@ -73,19 +61,16 @@ const OmniForm: FC<Props> = ({
   };
   const makeFilesOrMemes = async (response = false) => {
     if (!text) {
-      if (files.length) {
-        // if (!confirm("Create files?")) {
-        //   return;
-        // }
+      if (files.length && allowNakedFiles) {
         cleanInput();
         const [id, content] = await createFiles({ files });
-        resourceCreated(id);
+        resourceCreated(id, content);
       }
       return;
     }
     cleanInput();
     const streaming = response && true;
-    const [lastId, data] = await createMeme(
+    const [firstId, data] = await createMeme(
       { content: text, files },
       { response, agent, target, streaming }
     );
@@ -93,18 +78,12 @@ const OmniForm: FC<Props> = ({
       const dec = new TextDecoder("utf-8");
       for await (const item of data as ReadableStream<ArrayBuffer>) {
         // TODO: I might have to polyfill the Readable Stream @@asyncIterator https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream#browser_compatibility
-        console.log(dec.decode(item));
+        log(dec.decode(item));
       }
+      resourceCreated(firstId);
     } else {
-      console.log(data);
+      resourceCreated(firstId, data);
     }
-    resourceCreated(lastId);
-  };
-  const makeAgent = async () => {
-    cleanInput();
-    const [id, content] = await createAgent({ description: text, files });
-    console.log(content);
-    resourceCreated(id);
   };
   const cleanInput = () => {
     setTimeout(() => {
@@ -118,11 +97,7 @@ const OmniForm: FC<Props> = ({
   const onEnter: KeyboardEventHandler = (event) => {
     if (event.key === "Enter") {
       if (event.metaKey) {
-        if (agentMode) {
-          makeAgent();
-        } else {
-          makeFilesOrMemes(event.altKey);
-        }
+        makeFilesOrMemes();
       }
     }
   };
@@ -142,11 +117,11 @@ const OmniForm: FC<Props> = ({
 
   return (
     <>
-      <form className={`form-create${agentMode ? " agent-mode" : ""}`}>
+      <form className={`form-create`}>
         <textarea
           title="text"
           name="text"
-          placeholder={agentMode ? placeholderAgentMode : placeholder}
+          placeholder={placeholder}
           onChange={(event: ChangeEvent) =>
             setText((event.target as HTMLInputElement).value.trim())
           }
@@ -193,33 +168,10 @@ const OmniForm: FC<Props> = ({
         </footer>
       </form>
       <form className="form-create-buttons">
-        {text ? (
-          agentMode ? (
-            <button type="button" onClick={makeAgent} title={"Create agent"}>
-              Create Agent
-            </button>
-          ) : (
-            <div className="split-button">
-              <SplitButton onClick={onSplit} defaultValue={"Create meme"}>
-                {COMBO_OPTIONS.map((option, index) => {
-                  return (
-                    <option title={option.title} key={index}>
-                      {option.label + (files.length ? " with files" : "")}
-                    </option>
-                  );
-                })}
-              </SplitButton>
-            </div>
-          )
-        ) : files.length && allowNakedFiles && !agentMode ? (
+        {text || (files.length && allowNakedFiles) ? (
           <button type="button" onClick={() => makeFilesOrMemes()}>
-            Upload Files
+            {text ? "Post" : "Upload"}
           </button>
-        ) : null}
-        {allowCreateAgent ? (
-          <label>
-            <input type="checkbox" onChange={toggleAgentMode} /> Create Agent
-          </label>
         ) : null}
       </form>
     </>
