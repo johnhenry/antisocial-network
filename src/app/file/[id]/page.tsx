@@ -18,7 +18,7 @@ type Props = {
   };
 };
 const Page: FC<Props> = ({ params }) => {
-  const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(
+  const [masquerade, setmasquerade] = useLocalStorage<Agent | null>(
     MASQUERADE_KEY,
     null
   );
@@ -65,7 +65,7 @@ const Page: FC<Props> = ({ params }) => {
     <section className="section-file" data-obfo-container="{}">
       <Masquerade
         masquerade={masquerade}
-        setMasquerade={setMasquerade}
+        setmasquerade={setmasquerade}
         className="agent-masquerade"
       >
         <RelationshipToggler

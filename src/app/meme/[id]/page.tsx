@@ -29,7 +29,7 @@ type Params = {
 };
 
 const Page: FC<Params> = ({ params }) => {
-  const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(
+  const [masquerade, setmasquerade] = useLocalStorage<Agent | null>(
     MASQUERADE_KEY,
     null
   );
@@ -151,7 +151,7 @@ const Page: FC<Params> = ({ params }) => {
     <section className="section-meme">
       <Masquerade
         masquerade={masquerade}
-        setMasquerade={setMasquerade}
+        setmasquerade={setmasquerade}
         className="agent-masquerade"
       >
         {" "}
@@ -210,7 +210,7 @@ const Page: FC<Params> = ({ params }) => {
       />
       {elicits.length ? (
         <>
-          <ul className="search-results">
+          <ul className="search-results-b">
             {elicits.map((meme) => (
               <li key={meme.id}>
                 <a

@@ -69,8 +69,15 @@ export const MODEL_VISION = read("MODEL_VISION", {
   defaultValue: "ollama::llava:latest",
 });
 
+const MODELS_OTHERS_DEFAULT = [
+  "groq::llama3-8b-8192",
+  "groq::llama3-70b-8192",
+  "groq::mixtral-8x7b-32768",
+  "groq::gemma-7b-it",
+];
+
 const MODELS_OTHER = read("MODELS_OTHER", {
-  defaultValue: [],
+  defaultValue: MODELS_OTHERS_DEFAULT,
   cast: (s: string) => s.split(","),
 });
 export const MODELS = [

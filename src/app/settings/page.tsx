@@ -79,8 +79,8 @@ const Page = () => {
     await updateSettings(settings);
     alert("settings updated!");
   };
-  // const [masquerade, setMasquerade] = useState<Agent | null>(null);
-  const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(
+  // const [masquerade, setmasquerade] = useState<Agent | null>(null);
+  const [masquerade, setmasquerade] = useLocalStorage<Agent | null>(
     MASQUERADE_KEY,
     null
   );
@@ -136,13 +136,13 @@ const Page = () => {
       </button>
       <hr />
       <h2>Masquerade</h2>
-      <ul className="search-results">
+      <ul className="search-results-b">
         {masquerade === null ? (
           agents.map((agent: any) => (
             <li
               className=""
               key={agent.id}
-              onClick={() => setMasquerade(agent)}
+              onClick={() => setmasquerade(agent)}
             >
               <p className="name">{agent.name}</p>
               <p>{truncate(agent.content, 80)}</p>
@@ -152,7 +152,7 @@ const Page = () => {
           <li
             className=""
             key={masquerade.id}
-            onClick={() => setMasquerade(null)}
+            onClick={() => setmasquerade(null)}
           >
             🎭 Masquerading as: <p className="name">{masquerade.name}</p>
             <p>{truncate(masquerade.content, 80)}</p>

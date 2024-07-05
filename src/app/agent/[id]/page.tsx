@@ -12,7 +12,7 @@ import Masquerade from "@/components/masquerade";
 export type Props = { params: { id: string } };
 
 const Page: FC<Props> = ({ params }) => {
-  const [masquerade, setMasquerade] = useLocalStorage<Agent | null>(
+  const [masquerade, setmasquerade] = useLocalStorage<Agent | null>(
     MASQUERADE_KEY,
     null
   );
@@ -64,7 +64,7 @@ const Page: FC<Props> = ({ params }) => {
     <section data-obfo-container="{}" className="section-agent">
       <Masquerade
         masquerade={masquerade}
-        setMasquerade={setMasquerade}
+        setmasquerade={setmasquerade}
         className="agent-masquerade"
       />
       <h2>

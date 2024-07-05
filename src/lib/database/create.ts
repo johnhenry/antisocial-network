@@ -111,7 +111,7 @@ export const createFile = async (
               const [[meme_id]] = await createMeme({
                 content: chunk,
                 embedding,
-              });
+              }, { file:file.id.toString(),});
               const id = meme_id;
               await relate(file.id.toString(), REL_CONTAINS, id);
               if (previousMemeId) {
@@ -320,7 +320,7 @@ export const createResponseMeme = async ({
         id.toString()
       ),
     );
-  } else {
+  } else if(response) {
     if (response.includes(",")) {
       agents.push(...response.split(","));
     } else {
@@ -335,7 +335,6 @@ export const createResponseMeme = async ({
       agent,
       streaming,
     });
-
     const [[id]] = await createMeme(
       {
         content: streaming
@@ -427,8 +426,6 @@ export const updatePendingMeme = async (
 const scanForCommand = async (
   {
     content = "",
-    rendered = "",
-    embedding,
     files = [],
   }: {
     content?: string;
@@ -438,14 +435,9 @@ const scanForCommand = async (
   } = {},
   {
     agent,
-    response = false,
-    target,
-    streaming = false,
+
   }: {
     agent?: string;
-    response?: bboolean | string | number;
-    target?: string;
-    streaming?: boolean;
   } = {},
 ): Promise<
   [
@@ -484,11 +476,13 @@ export const createMeme = async (
   } = {},
   {
     agent,
+    file,
     response = false,
     target,
     streaming = false,
   }: {
     agent?: string;
+    file?:string,
     response?: boolean | string | number;
     target?: string;
     streaming?: boolean;
@@ -504,8 +498,9 @@ export const createMeme = async (
   try {
     let meme: Meme | undefined = undefined;
     if (content === MEME_PENDING) {
-      [meme] = await db.create(TABLE_MEME, {
+        [meme] = await db.create(TABLE_MEME, {
         embedding: await embed(`${Math.random()}`.slice(2)),
+        source: (file || agent) ? (await db.select(new StringRecordId(String(file || agent)))).id : null
       }) as [Meme];
     } else if (content) {
       const command = await scanForCommand({
@@ -513,7 +508,7 @@ export const createMeme = async (
         rendered,
         embedding,
         files,
-      }, { agent, response, target, streaming });
+      }, { agent });
       if (command) {
         return command;
       }
@@ -559,6 +554,7 @@ export const createMeme = async (
           raw: content,
           content: renderedContent,
           embedding: embedding ? embedding : await embed(renderedContent),
+          source: (file || agent) ? (await db.select(new StringRecordId(String(file || agent)))).id : null
         },
       ) as [Meme];
     }
