@@ -1,5 +1,5 @@
 import Identicon from "identicon.js";
-const base64ToHex = (base64) => {
+const base64ToHex = (base64:string) => {
   const raw = Buffer.from(base64, "base64");
   let hex = "";
   for (let i = 0; i < raw.length; i++) {

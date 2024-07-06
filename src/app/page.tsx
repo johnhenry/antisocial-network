@@ -1,4 +1,5 @@
 "use client";
+import type { ReactNode } from "react";
 import type { Agent } from "@/types/types";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
@@ -10,39 +11,20 @@ import { MASQUERADE_KEY } from "@/settings";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import Masquerade from "@/components/masquerade";
 
-const MiniFile = ({ file }: any) => <>{truncate(file.content, 128)}</>;
-const MiniAgent = ({ agent }: any) => (
-  <>
-    @{agent.name}:{truncate(agent.content, 128)}
-  </>
-);
-const MiniMeme = ({ meme }: any) => (
-  <li key={meme.id}>
-    <main>
-      <span></span>
-      <a
-        className="meme tamed-html"
-        href={`/meme/${meme.id}`}
-        key={meme.id}
-        title={meme.timestamp}
-        dangerouslySetInnerHTML={{ __html: meme.content }}
-      ></a>
-      <span></span>
-    </main>
-    <footer></footer>
-  </li>
-);
+import { MiniFile, MiniAgent, MiniMeme } from "@/components/mini";
 
 const Item = ({ item }: any) => {
   const [type] = item.id.split(":", 1);
-  if (type === "meme") {
-    return <MiniMeme meme={item} />;
-  } else if (item.type === "file") {
-    return <MiniFile file={item} />;
-  } else if (item.type === "agent") {
-    return <MiniAgent agent={item} />;
+  switch (type) {
+    case "meme":
+      return <MiniMeme meme={item} />;
+    case "file":
+      return <MiniFile file={item} />;
+    case "agent":
+      return <MiniAgent agent={item} />;
+    default:
+      return <></>;
   }
-  return <></>;
 };
 
 export default function Home() {

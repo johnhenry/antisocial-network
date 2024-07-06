@@ -13,6 +13,9 @@ import { createFiles } from "@/lib/bridge/create";
 import { createMeme } from "@/lib/bridge/create";
 import Image from "next/image";
 import fileToBase64 from "@/util/to-base64";
+import QuoteCycler from "@/components/quote-cycler";
+import { AI_SAYINGS } from "@/settings";
+
 const { log } = console;
 
 type Props = {
@@ -41,6 +44,7 @@ const OmniForm: FC<Props> = ({
 }) => {
   const textRef = useRef<HTMLTextAreaElement>(null);
   const [files, setFiles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const addFile = (file: any) => setFiles((files) => [...files, file]);
   const removeFile = (index: number) =>
@@ -60,29 +64,34 @@ const OmniForm: FC<Props> = ({
     (event.target as HTMLInputElement).value = "";
   };
   const makeFilesOrMemes = async (response = false) => {
-    if (!text) {
-      if (files.length && allowNakedFiles) {
-        cleanInput();
-        const [id, content] = await createFiles({ files });
-        resourceCreated(id, content);
+    setLoading(true);
+    try {
+      if (!text) {
+        if (files.length && allowNakedFiles) {
+          cleanInput();
+          const [id, content] = await createFiles({ files });
+          resourceCreated(id, content);
+        }
+        return;
       }
-      return;
-    }
-    cleanInput();
-    const streaming = response && true;
-    const [firstId, data] = await createMeme(
-      { content: text, files },
-      { response, agent, target, streaming }
-    );
-    if (streaming) {
-      const dec = new TextDecoder("utf-8");
-      for await (const item of data as ReadableStream<ArrayBuffer>) {
-        // TODO: I might have to polyfill the Readable Stream @@asyncIterator https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream#browser_compatibility
-        log(dec.decode(item));
+      cleanInput();
+      const streaming = response && true;
+      const [firstId, data] = await createMeme(
+        { content: text, files },
+        { response, agent, target, streaming }
+      );
+      if (streaming) {
+        const dec = new TextDecoder("utf-8");
+        for await (const item of data as ReadableStream<ArrayBuffer>) {
+          // TODO: I might have to polyfill the Readable Stream @@asyncIterator https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream#browser_compatibility
+          log(dec.decode(item));
+        }
+        resourceCreated(firstId);
+      } else {
+        resourceCreated(firstId, data);
       }
-      resourceCreated(firstId);
-    } else {
-      resourceCreated(firstId, data);
+    } finally {
+      setLoading(false);
     }
   };
   const cleanInput = () => {
@@ -115,9 +124,21 @@ const OmniForm: FC<Props> = ({
     }
   };
 
+  if (loading) {
+    return (
+      <form className={`form-create hover-solid`}>
+        <QuoteCycler
+          sayings={AI_SAYINGS}
+          interval={5000}
+          className="quote-cycler"
+        />
+      </form>
+    );
+  }
+
   return (
     <>
-      <form className={`form-create`}>
+      <form className={`form-create hover-solid`}>
         <textarea
           title="text"
           name="text"

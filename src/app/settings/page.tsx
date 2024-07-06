@@ -26,21 +26,19 @@ const SettingsForm = ({
         const { type, name, label, options, defaultValue } = setting;
         if (type === "checkbox") {
           return (
-            <div key={name}>
-              <label>
-                <input
-                  type="checkbox"
-                  name={name}
-                  defaultChecked={defaultValue}
-                />
-                {label}
-              </label>
-            </div>
+            <label key={name}>
+              <input
+                type="checkbox"
+                name={name}
+                defaultChecked={defaultValue}
+              />
+              <span>{label}</span>
+            </label>
           );
         } else if (type === "select") {
           return (
-            <div key={name}>
-              <label>{label}</label>
+            <label key={name}>
+              <span>{label}</span>
               <select name={name} defaultValue={defaultValue}>
                 {options.map((option) => (
                   <option key={option} value={option}>
@@ -48,14 +46,14 @@ const SettingsForm = ({
                   </option>
                 ))}
               </select>
-            </div>
+            </label>
           );
         } else {
           return (
-            <div key={name}>
-              <label>{label}</label>
+            <label key={name}>
+              <span>{label}</span>
               <input type={type} name={name} defaultValue={defaultValue} />
-            </div>
+            </label>
           );
         }
       })}
@@ -129,39 +127,62 @@ const Page = () => {
       <h1>Settings</h1>
 
       <hr />
-      <h2>Settings</h2>
-      <SettingsForm settings={settings || []} ref={settingsFormRef} />
+      <h2>Agents</h2>
+      <p>
+        Click an agent's name to masquerade as that agent. When masquerading as
+        an agent, posts and files that you create are associated with that
+        agent.
+      </p>
+      <ul className="masquerade">
+        {agents.map((agent: any) => {
+          const masquerading = agent.id === masquerade?.id;
+
+          const title = `${masquerading ? "🎭 masquerading as " : ""}@${
+            agent.name
+          }
+----------------
+${agent.id}
+----------------
+${agent.content}`;
+
+          return (
+            <li
+              className={`masquerade-selector${
+                masquerading ? " selected" : ""
+              }`}
+              title={title}
+              key={agent.id}
+            >
+              <p
+                className="name"
+                onClick={() => {
+                  masquerading ? setmasquerade(null) : setmasquerade(agent);
+                }}
+              >
+                {agent.name}
+              </p>
+              <p>{truncate(agent.content, 64)}</p>
+              <a href={`/agent/${agent.id}`}>↗</a>
+            </li>
+          );
+        })}
+      </ul>
+      <hr />
+      <h2>General Settings</h2>
+      <SettingsForm
+        settings={settings || []}
+        ref={settingsFormRef}
+        className="settings-form"
+      />
       <button type="button" onClick={submitUpdateSettings}>
         Submit
       </button>
       <hr />
-      <h2>Masquerade</h2>
-      <ul className="search-results-b">
-        {masquerade === null ? (
-          agents.map((agent: any) => (
-            <li
-              className=""
-              key={agent.id}
-              onClick={() => setmasquerade(agent)}
-            >
-              <p className="name">{agent.name}</p>
-              <p>{truncate(agent.content, 80)}</p>
-            </li>
-          ))
-        ) : (
-          <li
-            className=""
-            key={masquerade.id}
-            onClick={() => setmasquerade(null)}
-          >
-            🎭 Masquerading as: <p className="name">{masquerade.name}</p>
-            <p>{truncate(masquerade.content, 80)}</p>
-          </li>
-        )}
-      </ul>
-      <hr />
-
       <h2>Reset Database</h2>
+      <p>
+        Resetting the database may cause unforseen consequences. Please be
+        careful before deleting.
+      </p>
       <button type="button" onClick={submitResetDatabase}>
         ⚠️ Reset Database ⚠️
       </button>
