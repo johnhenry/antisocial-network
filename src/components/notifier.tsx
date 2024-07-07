@@ -6,6 +6,7 @@ const { error } = console;
 
 const Notifier = (props) => {
   const [message, setMessage] = useState(null);
+  const [spinner, setSpinner] = useState(null);
   const showNotification = (text, url = null) => {
     setMessage({ text, url });
   };
@@ -20,17 +21,20 @@ const Notifier = (props) => {
       }
     };
     eventSource.onerror = (e) => {
+      setSpinner(null);
       error("SSE error:", e);
       eventSource.close();
     };
+    setSpinner(() => () => <div className="spinner" />);
     return () => {
       try {
+        setSpinner(null);
         eventSource.close();
       } catch (e) {
         error(e);
       }
     };
   }, []);
-  return <ToastNotification {...props} message={message} />;
+  return <ToastNotification {...props} message={message} Spinner={spinner} />;
 };
 export default Notifier;

@@ -13,8 +13,6 @@ import { createFiles } from "@/lib/bridge/create";
 import { createMeme } from "@/lib/bridge/create";
 import Image from "next/image";
 import fileToBase64 from "@/util/to-base64";
-import QuoteCycler from "@/components/quote-cycler";
-import { AI_SAYINGS } from "@/settings";
 
 const { log } = console;
 
@@ -123,18 +121,6 @@ const OmniForm: FC<Props> = ({
         break;
     }
   };
-
-  if (loading) {
-    return (
-      <form className={`form-create hover-solid`}>
-        <QuoteCycler
-          sayings={AI_SAYINGS}
-          interval={5000}
-          className="quote-cycler"
-        />
-      </form>
-    );
-  }
 
   return (
     <>

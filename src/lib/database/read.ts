@@ -59,39 +59,41 @@ const replaceContentWithLinks = async (
 
 export const getFullMeme = async (id: string): Promise<any> => {
   const queries = [];
+    const ADDITIONAL_FIELDS =
+      `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source`;
   // select target
   queries.push(
-    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where id = $id`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM meme where id = $id`,
   );
   // select incoming relationships
   // precedes
   queries.push(
-    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where ->${REL_PRECEDES}->(meme where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM meme where ->${REL_PRECEDES}->(meme where id = $id)`,
   );
   // // contains
   queries.push(
-    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM file where ->${REL_CONTAINS}->(meme where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM file where ->${REL_CONTAINS}->(meme where id = $id)`,
   );
   // // inserted
   queries.push(
-    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM agent where ->${REL_INSERTED}->(meme where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM agent where ->${REL_INSERTED}->(meme where id = $id)`,
   );
   // // responds
   queries.push(
-    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where ->${REL_ELICITS}->(meme where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM meme where ->${REL_ELICITS}->(meme where id = $id)`,
   );
   // // select outgoing relationships
   // // precedes
   queries.push(
-    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where <-${REL_PRECEDES}<-(meme where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM meme where <-${REL_PRECEDES}<-(meme where id = $id)`,
   );
   // // elicits
   queries.push(
-    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM meme where <-${REL_ELICITS}<-(meme where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM meme where <-${REL_ELICITS}<-(meme where id = $id)`,
   );
   // // remembers
   queries.push(
-    `SELECT *, string::concat("", id) as id OMIT embedding, data FROM agent where <-${REL_REMEMBERS}<-(meme where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM agent where <-${REL_REMEMBERS}<-(meme where id = $id)`,
   );
 
   const db = await getDB();
@@ -205,14 +207,16 @@ export const getMemeWithHistory = async (
       const [[agent]]: [Agent[]] = await db.query(
         `SELECT * FROM ${TABLE_AGENT} where ->${REL_INSERTED}->(meme where id = $meme)`,
         {
-          meme: meme.id,
+          meme: currentMeme.id,
         },
       );
-      messages.unshift([agent ? "assistant" : "user", meme.content]);
+      // messages.unshift([agent ? "assistant" : "user", currentMeme.content]);
+      messages.unshift(["user",(agent ? `[${agent.id.toString()}] :`:"")+currentMeme.content]);
+
       [[currentMeme]] = await db.query(
-        `SELECT * FROM ${TABLE_MEME} where ->${REL_PRECEDES}->(meme where id = $meme)`,
+        `SELECT * FROM ${TABLE_MEME} where ->${REL_ELICITS}->(meme where id = $meme)`,
         {
-          meme: meme.id,
+          meme: currentMeme.id,
         },
       );
     }
@@ -310,14 +314,20 @@ export const replaceAgentIdWithName = async (
   id: string,
 ): Promise<string | null> => {
   const db = await getDB();
+
   try {
-    const [[agent]]: Agent[][] = await db.query(
-      `SELECT name FROM ${TABLE_AGENT} WHERE id = $id`,
-      {
-        id: new StringRecordId(id),
-      },
-    );
-    return agent ? agent.name : id;
+    try{
+      const [[agent]]: Agent[][] = await db.query(
+        `SELECT name FROM ${TABLE_AGENT} WHERE id = $id`,
+        {
+          id: new StringRecordId(id),
+        },
+      );
+      return agent ? agent.name : id;
+    }catch(e){
+      console.error(e)
+      return id;
+    }
   } finally {
     await db.close();
   }

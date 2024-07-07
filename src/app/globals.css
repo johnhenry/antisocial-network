@@ -110,11 +110,6 @@ label:has(> input[type="file"]:only-child) {
     display: none;
   }
 }
-a {
-  &:hover {
-    text-decoration: underline;
-  }
-}
 
 /* button,
 label:has(> input[type="file"]:only-child),
@@ -368,28 +363,71 @@ pre {
 }
 
 .section-meme {
-  > main {
+  .meme {
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     gap: 1rem;
     align-items: center;
-    > a {
+    &.responds {
+      zoom: 0.75;
+    }
+    .elicited & {
+      justify-content: start;
+      padding: var(--size-gap-inner);
+
+      padding-bottom: 1rem;
+
+      &:hover {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: color(srgb 0 0 0 / 0.3) 0px 1px 2px 0px,
+          color(srgb 0 0 0 / 0.15) 0px 2px 6px 2px;
+      }
+    }
+
+    > .before,
+    > .after {
+      flex: 0;
+    }
+    > .quote {
       display: inline-flex;
       flex-direction: column;
       font-size: 3rem;
       align-self: stretch;
-      &:first-child {
+      &.start {
         justify-content: start;
+        &::before {
+          content: "“";
+        }
       }
-      &:last-child {
-        /* justify-content: end; */
-        /* margin-bottom: -3rem; */
+      &.end {
+        justify-content: end;
+
+        &::before {
+          content: "”";
+        }
       }
     }
-    > p {
-      letter-spacing: 0.125rem;
-      line-height: 2rem;
+    > .before {
+      display: inline-flex;
+      flex-direction: column;
+      font-size: 3rem;
+      align-self: stretch;
+      justify-content: center;
+      &::before {
+        content: "‹";
+      }
+    }
+    > .after {
+      display: inline-flex;
+      flex-direction: column;
+      font-size: 3rem;
+      align-self: stretch;
+      justify-content: center;
+      &::before {
+        content: "›";
+      }
     }
   }
   > aside {
@@ -399,6 +437,12 @@ pre {
         content: "-- ";
       }
     }
+  }
+  .elicited {
+    padding-left: 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-gap-inner);
   }
 }
 
@@ -429,8 +473,13 @@ pre {
     display: block;
     width: 100%;
 
-    box-shadow: color(srgb 0 0 0 / 0.3) 0px 1px 2px 0px,
-      color(srgb 0 0 0 / 0.15) 0px 2px 6px 2px;
+    &:hover {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: color(srgb 0 0 0 / 0.3) 0px 1px 2px 0px,
+        color(srgb 0 0 0 / 0.15) 0px 2px 6px 2px;
+    }
+
     > a {
       word-break: break-all;
       width: 100%;
@@ -464,12 +513,19 @@ pre {
       }
     }
     > aside {
-      background-color: var(--color-text);
-      color: var(--color-background);
       text-align: right;
       place-content: center;
       padding: var(--size-gap);
-      font-size: 1.25rem;
+      &.found-in {
+        &::before {
+          content: "-- Found in: ";
+        }
+      }
+      &.posted-by {
+        &::before {
+          content: "--Posted by: ";
+        }
+      }
     }
   }
   > .agent {
@@ -515,43 +571,6 @@ pre {
         justify-content: space-between;
         padding: var(--size-gap);
         font-size: 1.25rem;
-      }
-    }
-  }
-}
-
-.search-results-b {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding-left: 4rem;
-  > * {
-    cursor: pointer;
-    border-bottom: 1px dashed var(--color-text);
-    &:hover {
-      border-style: solid;
-    }
-  }
-}
-
-.search-results-b {
-  .agent {
-    .name {
-      &::before {
-        content: "@";
-        display: inline;
-      }
-      .remembers & {
-        &::after {
-          content: " remembers this";
-          display: inline;
-        }
-      }
-      .bookmarks & {
-        &::after {
-          content: " bookmarks this";
-          display: inline;
-        }
       }
     }
   }
@@ -912,5 +931,25 @@ input[type="range"] {
   100% {
     opacity: 0;
     transform: translateY(-20px);
+  }
+}
+
+@keyframes rotateAnimation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  &::before {
+    content: "↻";
+    animation: rotateAnimation 2s linear infinite;
+
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
   }
 }

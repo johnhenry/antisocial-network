@@ -13,7 +13,7 @@ export const search = async (
   const db = await getDB();
   try {
     const ADDITIONAL_FIELDS =
-      `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name} ELSE NULL END AS source`;
+      `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source`;
     const OMIT_FIELDS = `embedding, data`;
     const embedded = search ? await embed(search) : undefined;
     const query = search

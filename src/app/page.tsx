@@ -30,9 +30,6 @@ export default function Home() {
   );
   // Search Results
   const [foundItems, setFoundItems] = useState<any[]>([]);
-  const [foundMemes, setFoundMemes] = useState<any[]>([]);
-  const [foundFiles, setFoundFiles] = useState<any[]>([]);
-  const [foundAgents, setFoundAgents] = useState<any[]>([]);
   const [text, setText] = useState<string | undefined>();
   const [searchSize, setSearchSize] = useState<number>(3);
 

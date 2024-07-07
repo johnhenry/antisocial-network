@@ -16,7 +16,8 @@ import RelationshipToggler from "@/components/relationship-toggler";
 import { MASQUERADE_KEY } from "@/settings";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import Masquerade from "@/components/masquerade";
-
+import QuoteCycler from "@/components/quote-cycler";
+import { AI_SAYINGS } from "@/settings";
 type Params = {
   params: {
     id: string;
@@ -74,7 +75,12 @@ const Page: FC<Params> = ({ params }) => {
   if (!meme) {
     return (
       <section>
-        <h2>Loading...</h2>
+        <QuoteCycler
+          sayings={AI_SAYINGS}
+          interval={5000}
+          className="quote-cycler"
+          random
+        />
       </section>
     );
   }
@@ -98,22 +104,24 @@ const Page: FC<Params> = ({ params }) => {
         </RelationshipToggler>
       </Masquerade>
       {responds ? (
-        <a
-          href={`/meme/${responds.id}`}
-          className="tamed-html"
-          dangerouslySetInnerHTML={{
-            __html: `⇪"${truncateHTML(responds.content, 64)}"`,
-          }}
-        ></a>
+        <div className="meme responds" title={`hash: ${meme.hash}`}>
+          <span className="quote start"></span>
+          <a
+            href={`/meme/${responds.id}`}
+            dangerouslySetInnerHTML={{
+              __html: truncateHTML(responds.content, 16),
+            }}
+            title={responds.content}
+          ></a>
+          <span className="quote end"></span>
+        </div>
       ) : null}
-      <main title={`hash: ${meme.hash}`}>
-        <a href={before ? `/meme/${before.id}` : null}>
-          <span>“</span>
-        </a>
-        <pre dangerouslySetInnerHTML={{ __html: meme.content }}></pre>
-        <a href={after ? `/meme/${after.id}` : null}>
-          <span>”</span>
-        </a>
+      <main className="meme" title={`hash: ${meme.hash}`}>
+        {before ? <a className="before" href={`/meme/${before.id}`}></a> : null}
+        <span className="quote start"></span>
+        <div dangerouslySetInnerHTML={{ __html: meme.content }}></div>
+        <span className="quote end"></span>
+        {after ? <a className="after" href={`/meme/${after.id}`}></a> : null}
       </main>
       <aside>
         {contains ? (
@@ -140,23 +148,25 @@ const Page: FC<Params> = ({ params }) => {
       />
       {elicits.length ? (
         <>
-          <ul className="search-results-b">
+          <div className="elicited">
             {elicits.map((meme) => (
-              <li key={meme.id}>
-                <a
-                  className="meme"
-                  href={`/meme/${meme.id}`}
-                  key={meme.id}
-                  title={meme.timestamp}
-                >
-                  <pre
-                    dangerouslySetInnerHTML={{ __html: meme.content }}
-                    className="tamed-html"
-                  ></pre>
-                </a>
-              </li>
+              <a
+                title={`hash: ${meme.hash}`}
+                key={meme.id}
+                href={`/meme/${meme.id}`}
+                className="meme tamed-html"
+                title={
+                  meme.content + (meme.source ? "\n--" + meme.source.name : "")
+                }
+              >
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: truncateHTML(meme.content, 32),
+                  }}
+                ></div>
+              </a>
             ))}
-          </ul>
+          </div>
         </>
       ) : null}
     </section>

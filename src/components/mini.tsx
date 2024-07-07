@@ -55,13 +55,13 @@ export const MiniAgent = ({ agent }: any) => {
 export const MiniMeme = ({ meme }: any) => {
   const aside = meme.source ? (
     meme.source.id.startsWith("agent:") ? (
-      <aside>
-        -- posted by:{" "}
+      <aside className="posted-by">
+        {" "}
         <a href={`/agent/${meme.source.id}`}>@{meme.source.name}</a>
       </aside>
     ) : (
-      <aside>
-        -- found in: <a href={`/file/${meme.source.id}`}>{meme.source.name}</a>
+      <aside className="found-in">
+        <a href={`/file/${meme.source.id}`}>{meme.source.name}</a>
       </aside>
     )
   ) : null;

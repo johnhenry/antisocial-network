@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 
-const ToastNotification = ({ duration = 5000, ...props }) => {
+const ToastNotification = ({ duration = 5000, Spinner, ...props }) => {
   const [notifications, setNotifications] = useState([]);
 
   const removeNotification = useCallback((id) => {
@@ -69,6 +69,7 @@ const ToastNotification = ({ duration = 5000, ...props }) => {
 
   return (
     <div className="toast-notification" {...props}>
+      {Spinner ? <Spinner /> : null}
       {notifications.map((notification) => (
         <div
           key={notification.id}

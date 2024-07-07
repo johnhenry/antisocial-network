@@ -22,20 +22,28 @@ const truncate = (str: string, maxLength: number = Infinity): string => {
  * @param suggesteLength - The suggested length of the truncated string.
  * @returns The truncated string.
  */
-export const truncateHTML = (htmtstr: string, suggesteLength: number) => {
+export const truncateHTML = (htmtstr: string, suggesteLength: number = 16): string => {
   let truncated = htmtstr;
   let length = 0;
   let inTag = false;
+  let inWord = false;
   for (let i = 0; i < htmtstr.length; i++) {
     if (htmtstr[i] === "<") {
       inTag = true;
     } else if (htmtstr[i] === ">") {
       inTag = false;
     } else if (!inTag) {
-      length++;
+      if (htmtstr[i] === " ") {
+        inWord = false;
+      } else {
+        if (!inWord) {
+          inWord = true;
+          length++;
+        }
+      }
     }
     if (length > suggesteLength) {
-      truncated = htmtstr.slice(0, i);
+      truncated = htmtstr.slice(0, i) + "...";
       break;
     }
   }
