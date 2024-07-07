@@ -8,7 +8,6 @@ import type {
   Setting,
   Settings,
 } from "@/types/types";
-import renderText from "@/util/render-text";
 import "server-only";
 import { getDB, relate } from "@/lib/db";
 import {
@@ -48,6 +47,8 @@ import { replaceAndAccumulate } from "@/util/replace-mentions";
 import { recordMatch } from "@/util/match";
 import getWriteManager from "@/lib/write-space";
 import { getSettingsObject } from "@/lib/database/read";
+import replaceMentions from "@/util/replace-mentions";
+
 ////
 // File
 ////
@@ -415,7 +416,7 @@ export const updatePendingMeme = async (
   const db = await getDB();
   try {
     const accumulated: string[][] = [];
-    const renderedContent = rendered ? rendered : await renderText(
+    const renderedContent = rendered ? rendered : await replaceMentions(
       content,
       replaceAndAccumulate(replaceAgents, accumulated),
     );
@@ -524,7 +525,7 @@ export const createMeme = async (
         return command;
       }
       const accumulated: string[][] = [];
-      const renderedContent = rendered ? rendered : await renderText(
+      const renderedContent = rendered ? rendered : await replaceMentions(
         content,
         replaceAndAccumulate(replaceAgents, accumulated),
       );

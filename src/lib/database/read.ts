@@ -13,6 +13,7 @@ import {
   TABLE_FILE,
   TABLE_MEME,
 } from "@/settings";
+import renderText from "@/util/render-text";
 
 import { embed } from "@/lib/ai";
 import { recordMatch } from "@/util/match";
@@ -35,10 +36,14 @@ export type Relationship = {
 
 const replaceContentWithLinks = async (
   item: { content?: string },
+  render: boolean = false,
 ): Promise<{ content?: string }> => {
-  recordMatch;
+  const content = render
+    ? await renderText(item?.content || "")
+    : (item?.content || "");
+
   item.content = await replaceMentions(
-    item.content || "",
+    content,
     async (mention: string) => {
       if (recordMatch.test(mention)) {
         const id = mention.slice(1);
@@ -107,14 +112,19 @@ export const getFullMeme = async (id: string): Promise<any> => {
           id: new StringRecordId(id),
         },
       );
+    if (!meme) {
+      return {};
+    }
     const obj = {
-      meme: await replaceContentWithLinks(meme),
-      before,
+      meme: await replaceContentWithLinks(meme, true),
+      before: before ? await replaceContentWithLinks(before) : undefined,
       file,
       agent,
-      responds,
+      responds: responds ? await replaceContentWithLinks(responds) : undefined,
       after,
-      elicits,
+      elicits: await Promise.all(
+        elicits.filter((x) => x).map((meme) => replaceContentWithLinks(meme)),
+      ),
       remembers,
     };
 

@@ -12,9 +12,11 @@
     "env:vars": "npm run deno:run -s src/script/list-settings.ts"
   },
   "dependencies": {
+    "@langchain/anthropic": "^0.2.3",
     "@langchain/community": "^0.2.11",
     "@langchain/core": "^0.2.6",
     "@langchain/groq": "^0.0.13",
+    "@langchain/openai": "^0.2.1",
     "compromise": "^14.13.0",
     "compromise-paragraphs": "^0.1.0",
     "dotenv": "^16.4.5",

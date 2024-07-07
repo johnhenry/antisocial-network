@@ -70,10 +70,25 @@ export const MODEL_VISION = read("MODEL_VISION", {
 });
 
 const MODELS_OTHERS_DEFAULT = [
+  // https://console.groq.com/docs/models
   "groq::llama3-8b-8192",
   "groq::llama3-70b-8192",
   "groq::mixtral-8x7b-32768",
   "groq::gemma-7b-it",
+  // https://docs.anthropic.com/en/docs/about-claude/models
+  "anthropic::claude-3-5-sonnet-20240620",
+  "anthropic::claude-3-opus-20240229",
+  "anthropic::claude-3-sonnet-20240229",
+  "anthropic::claude-3-haiku-20240307",
+  // https://platform.openai.com/docs/models
+  "openai::gpt-4o",
+  "openai::gpt-4-turbo",
+  "openai::gpt-3.5-turbo",
+  "openai::dall-e-3",
+  "openai::dall-e-2",
+  "openai::text-embedding-3-large",
+  "openai::text-embedding-3-small",
+  "openai::text-embedding-ada-002",
 ];
 
 const MODELS_OTHER = read("MODELS_OTHER", {
@@ -105,6 +120,8 @@ export const SIZE_KNN = read("SIZE_KNN", {
 });
 
 export const API_KEY_GROQ = read("API_KEY_GROQ");
+export const API_KEY_OPENAI = read("API_KEY_OPENAI");
+export const API_KEY_ANTHROPIC = read("API_KEY_ANTHROPIC");
 
 export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   embeddingOnly: false,
@@ -172,6 +189,18 @@ export const SETTINGS_DEFAULT: Setting[] = [
     label: "API Key: Groq",
     type: "password",
     defaultValue: API_KEY_GROQ,
+  },
+  {
+    name: "apikeyopenai",
+    label: "API Key: Open AI",
+    type: "password",
+    defaultValue: API_KEY_OPENAI,
+  },
+  {
+    name: "apikeyanthropic",
+    label: "API Key: Anthropic",
+    type: "password",
+    defaultValue: API_KEY_ANTHROPIC,
   },
   {
     name: "chunkingstrategy",

@@ -2,14 +2,14 @@ import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
 import type { BaseMessageChunk } from "@langchain/core/messages";
 import { ChatGroq } from "@langchain/groq";
+import { OpenAI } from "@langchain/openai";
+import { ChatAnthropic } from "@langchain/anthropic";
 import { Ollama } from "ollama";
 import { OllamaFunctions } from "@langchain/community/experimental/chat_models/ollama_functions";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { MODEL_FUNCTIONS, OLLAMA_LOCATION } from "@/settings";
 import { JsonOutputFunctionsParser } from "@langchain/core/output_parsers/openai_functions";
 import { getSettingsObject } from "@/lib/database/read";
-
-import { API_KEY_GROQ } from "@/settings";
 
 type FunctionDescriptor = {
   name: string;
@@ -54,6 +54,16 @@ export const respond = async (
         delete arg.logit_bias;
         delete arg.top_logprobs;
         invoker = new ChatGroq(arg);
+        break;
+      }
+      case "openai": {
+        arg.apiKey = settings.apikeyopenai;
+        invoker = new OpenAI(arg);
+        break;
+      }
+      case "anthropic": {
+        arg.apiKey = settings.apikeyanthropic;
+        invoker = new ChatAnthropic(arg);
         break;
       }
       case "ollama":

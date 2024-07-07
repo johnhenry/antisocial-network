@@ -79,12 +79,6 @@ const Page: FC<Params> = ({ params }) => {
     );
   }
 
-  const resourceCreated = (id: string, content: string = "") => {
-    const [type] = id.split(":", 1);
-    if (confirm(`open ${id}?` + "\n" + content)) {
-      router.push(`/${type}/${id}`);
-    }
-  };
   return (
     <section className="section-meme">
       <Masquerade
