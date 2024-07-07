@@ -41,6 +41,10 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     (async () => {
       const response = await fetch(event.request);
+      if (event.request.headers.get("accept") === "text/event-stream") {
+        // This is here to prevent the service worker from caching the event stream
+        return response;
+      }
       // Check if the original calling window is closed
       // const clientList = await self.clients.matchAll({
       //   type: "window",

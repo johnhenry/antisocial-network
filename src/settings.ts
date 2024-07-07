@@ -94,9 +94,7 @@ export const MODELS = [
 export const OLLAMA_LOCATION = read("OLLAMA_LOCATION", {
   defaultValue: "http://localhost:11434",
 });
-export const DEFAULT_USER_IMAGE = read("DEFAULT_USER_IMAGE", {
-  defaultValue: "/static/user.webp",
-});
+
 export const SIZE_EMBEDDING_VECTOR = read("SIZE_EMBEDDING_VECTOR", {
   defaultValue: 768,
   cast: parseInt,
@@ -174,6 +172,13 @@ export const SETTINGS_DEFAULT: Setting[] = [
     label: "API Key: Groq",
     type: "password",
     defaultValue: API_KEY_GROQ,
+  },
+  {
+    name: "chunkingstrategy",
+    label: "Chunking Strategy*",
+    type: "select",
+    options: ["sentence", "semantic", "agentic"],
+    defaultValue: MODEL_EMBEDDING,
   },
 ];
 

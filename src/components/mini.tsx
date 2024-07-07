@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import imageFromString from "@/util/image-from-string";
+
 export const MiniFile = ({ file }: any) => {
   const image = file.type.startsWith("image/") ? (
     <Image
@@ -27,7 +29,11 @@ export const MiniFile = ({ file }: any) => {
 export const MiniAgent = ({ agent }: any) => {
   const image = (
     <Image
-      src={`/file/${agent.image}/raw`}
+      src={
+        agent.image
+          ? `/file/${agent.image}/raw`
+          : `data:image/png;base64, ${imageFromString(agent.hash)}`
+      }
       alt={agent.name}
       width="128"
       height="128"

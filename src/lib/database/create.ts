@@ -45,9 +45,9 @@ import {
 } from "@/lib/database/read";
 import type { BaseMessageChunk } from "@langchain/core/messages";
 import { replaceAndAccumulate } from "@/util/replace-mentions";
-import imageFromString from "@/util/image-from-string";
 import { recordMatch } from "@/util/match";
-
+import getWriteManager from "@/lib/write-space";
+import { getSettingsObject } from "@/lib/database/read";
 ////
 // File
 ////
@@ -81,6 +81,18 @@ export const createFile = async (
     const buff = base64to(content as unknown as string);
 
     if (supertype === "application" || supertype === "text") {
+      const settings = await getSettingsObject();
+
+      let chunker;
+      switch (settings.chunker) {
+        case "sentence":
+        case "agentic":
+        case "semantic":
+        default:
+          chunker = semanticChunker;
+          break;
+      }
+
       switch (subtype) {
         case "pdf":
           try {
@@ -90,7 +102,7 @@ export const createFile = async (
             const embedding = await embed(text);
             const hash = hashData(text);
             [file] = await db.create(TABLE_FILE, {
-              timestamp: new Date().toISOString(),
+              timestamp: Date.now(),
               type,
               name,
               author,
@@ -105,11 +117,11 @@ export const createFile = async (
 
             let previousMemeId = null;
             // embed chunks
-            for await (const { chunk, embedding } of semanticChunker(text)) {
+            for await (const { chunk, embedding } of chunker(text)) {
               const [[meme_id]] = await createMeme({
                 content: chunk,
                 embedding,
-              }, { file:file.id.toString(),});
+              }, { file: file.id.toString() });
               const id = meme_id;
               await relate(file.id.toString(), REL_CONTAINS, id);
               if (previousMemeId) {
@@ -130,7 +142,7 @@ export const createFile = async (
           const text = new TextDecoder().decode(data);
           try {
             [file] = await db.create(TABLE_FILE, {
-              timestamp: new Date().toISOString(),
+              timestamp: Date.now(),
               type,
               name,
               author,
@@ -153,7 +165,7 @@ export const createFile = async (
       const embedding = await embed(data.toString());
       const metadata = await exifr.parse(data);
       [file] = await db.create(TABLE_FILE, {
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
         type,
         name,
         author,
@@ -173,7 +185,7 @@ export const createFile = async (
       const embedding = await embed(data.toString());
       const metadata = {};
       [file] = await db.create(TABLE_FILE, {
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
         type,
         name,
         author,
@@ -318,7 +330,7 @@ export const createResponseMeme = async ({
         id.toString()
       ),
     );
-  } else if(response) {
+  } else if (response) {
     if (response.includes(",")) {
       agents.push(...response.split(","));
     } else {
@@ -408,7 +420,7 @@ export const updatePendingMeme = async (
       replaceAndAccumulate(replaceAgents, accumulated),
     );
     await db.update(new StringRecordId(id), {
-      timestamp: new Date().toISOString(),
+      timestamp: Date.now(),
       hash: hashData(content),
       raw: content,
       content: renderedContent,
@@ -433,7 +445,6 @@ const scanForCommand = async (
   } = {},
   {
     agent,
-
   }: {
     agent?: string;
   } = {},
@@ -480,7 +491,7 @@ export const createMeme = async (
     streaming = false,
   }: {
     agent?: string;
-    file?:string,
+    file?: string;
     response?: boolean | string | number;
     target?: string;
     streaming?: boolean;
@@ -496,9 +507,11 @@ export const createMeme = async (
   try {
     let meme: Meme | undefined = undefined;
     if (content === MEME_PENDING) {
-        [meme] = await db.create(TABLE_MEME, {
+      [meme] = await db.create(TABLE_MEME, {
         embedding: await embed(`${Math.random()}`.slice(2)),
-        source: (file || agent) ? (await db.select(new StringRecordId(String(file || agent)))).id : null
+        source: (file || agent)
+          ? (await db.select(new StringRecordId(String(file || agent)))).id
+          : null,
       }) as [Meme];
     } else if (content) {
       const command = await scanForCommand({
@@ -547,12 +560,14 @@ export const createMeme = async (
       [meme] = await db.create(
         TABLE_MEME,
         {
-          timestamp: new Date().toISOString(),
+          timestamp: Date.now(),
           hash: hashData(content),
           raw: content,
           content: renderedContent,
           embedding: embedding ? embedding : await embed(renderedContent),
-          source: (file || agent) ? (await db.select(new StringRecordId(String(file || agent)))).id : null
+          source: (file || agent)
+            ? (await db.select(new StringRecordId(String(file || agent)))).id
+            : null,
         },
       ) as [Meme];
     }
@@ -603,6 +618,8 @@ export const createMeme = async (
         results.push(res_0);
       }
     }
+    const writeManager = getWriteManager();
+    writeManager.sendToWriters(JSON.stringify(results));
     return results;
   } finally {
     await db.close();
@@ -687,17 +704,10 @@ export const createAgent = async ({
       .join("\n ------------------ \n");
 
     const hash = hashData(content);
-    if (!image) {
-      [[image]] = await createFile({
-        type: "image/png",
-        content: await imageFromString(hash) as string,
-        name: generatedName,
-      });
-    }
 
     const embedding = await embed(content as string);
     const [agent] = await db.create(TABLE_AGENT, {
-      timestamp: new Date().toISOString(),
+      timestamp: Date.now(),
       name: generatedName,
       content,
       hash,

@@ -110,6 +110,11 @@ label:has(> input[type="file"]:only-child) {
     display: none;
   }
 }
+a {
+  &:hover {
+    text-decoration: underline;
+  }
+}
 
 /* button,
 label:has(> input[type="file"]:only-child),
@@ -753,7 +758,7 @@ input[type="range"] {
     font-weight: 600;
     line-height: 1.4;
     opacity: 0;
-    animation: fadeInOut 5s ease-in-out;
+    animation: faceInOutQueryCycler 5s ease-in-out;
 
     &::before {
       content: "\201C";
@@ -775,7 +780,7 @@ input[type="range"] {
   > cite {
     font-size: 1rem;
     opacity: 0;
-    animation: fadeInOut 5s ease-in-out;
+    animation: faceInOutQueryCycler 5s ease-in-out;
     text-align: right;
     &::before {
       content: "— ";
@@ -783,7 +788,7 @@ input[type="range"] {
   }
 }
 
-@keyframes fadeInOut {
+@keyframes faceInOutQueryCycler {
   0%,
   100% {
     opacity: 0;
@@ -842,5 +847,70 @@ input[type="range"] {
     a {
       margin-left: auto;
     }
+  }
+}
+
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 1000;
+  background-color: transparent;
+  .toast-item {
+    background-color: var(--color-text);
+    color: var(--color-background);
+    padding: 12px 20px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    max-width: 300px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: fadeOutToastNotification 0.5s ease-out forwards;
+    animation-delay: calc(var(--duration, 3000ms) - 500ms);
+  }
+
+  .toast-item:hover {
+    animation-play-state: paused;
+  }
+
+  .toast-item > a {
+    text-decoration: none;
+    margin-right: 10px;
+  }
+
+  .toast-item > a:hover {
+    text-decoration: underline;
+  }
+
+  .toast-item > button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px;
+    visibility: hidden;
+
+    &::before {
+      visibility: visible;
+      content: "×";
+    }
+  }
+
+  .toast-item > button:hover {
+    color: white;
+  }
+}
+
+@keyframes fadeOutToastNotification {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
   }
 }

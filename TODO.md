@@ -1,7 +1,5 @@
 # The Antisocial Network (TODO)
 
-## Done
-
 - [x] Bookmakring
   - [x] Allow bookmarking for documents
   - [x] Allow memorization for memes
@@ -23,9 +21,22 @@
 - [x] - Using vector similarities between system prompts instead of function calling to rank agents
 - [x] Continue investigate using service worker for notifications
 - [ ] Use external providers
-  - [] Groq
+  - [x] Groq
+  - [ ] Open AI
+  - [ ] Anthropic
+- [x] Settings
 
-## In progress
+  - [x] Default model for
+    - agents
+    - tools
+    - vision
+    - etc
+  - [x] Chunking strategy (only senetence implemented):
+    - Sentence
+    - semantic
+    - agentic
+  - [x] Settings should be more table-like
+  - [x] Masquerate should be "list of agents" with a masquerae radio toggle
 
 - [ ] Rest API
   - [x] POST
@@ -38,34 +49,18 @@
     - [x] file
 - [ ] Streaming text
 - [ ] Add loading/suspense for search, loading entieies
-- [ ] Which settings should I consider?
-  - Default model for
-    - agents
-    - tools
-    - vision
-    - etc
-  - Chunking strategy:
-    - Sentence
-    - Paragraph
-    - Symantic
-    - agentic
+- [ ] Improve Search
+- [ ] Visuals
 
-## Planned
-
-- [ ] Visusuals
-
-  - [ ] /settings:
-    - [ ] Settings should be more table-like
-    - [ ] Masquerate should be "list of agents" with a masquerae radio toggle
   - [ ] /
-    - [ ] Use range to define search limit
+    - [x] Use range to define search limit
     - [ ] Make go button bigger as it's now alone
+      - [ ] Add create file and create agent buttons next to go button
   - [ ] /meme
     - [ ] Update rendering
   - [ ] /file
   - [ ] /agent
 
-- [ ] Improve Search
 - [ ] Format responses
 - [ ] Mobile CSS
 
@@ -100,6 +95,7 @@
 - db reset may create a bad state?
 - id not converted propertly when reading -- doing searc/retrieving items
   - also check updates
+- I think there's a reaction between service worker notification and in-page notifications.
 
 ## Possible features
 

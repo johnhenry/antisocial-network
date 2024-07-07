@@ -20,7 +20,7 @@ const { log } = console;
 
 type Props = {
   setText: Dispatch<SetStateAction<string>>;
-  resourceCreated: Function;
+  resourceCreated?: Function;
   text: string;
   agent?: string;
   target?: string;
@@ -35,7 +35,7 @@ const COMBO_OPTIONS = [
 
 const OmniForm: FC<Props> = ({
   setText,
-  resourceCreated,
+  resourceCreated = () => {},
   text,
   agent,
   placeholder = "Start typing to create an agent, a meme, or search.",

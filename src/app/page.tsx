@@ -1,16 +1,12 @@
 "use client";
-import type { ReactNode } from "react";
 import type { Agent } from "@/types/types";
 import { useState, useEffect, Suspense } from "react";
-import { useRouter } from "next/navigation";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
 import { search } from "@/lib/database/search";
 import OmniForm from "@/components/omniform";
-import truncate, { truncateHTML } from "@/util/truncate-string";
 import { MASQUERADE_KEY } from "@/settings";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import Masquerade from "@/components/masquerade";
-
 import { MiniFile, MiniAgent, MiniMeme } from "@/components/mini";
 
 const Item = ({ item }: any) => {
@@ -39,13 +35,7 @@ export default function Home() {
   const [foundAgents, setFoundAgents] = useState<any[]>([]);
   const [text, setText] = useState<string | undefined>();
   const [searchSize, setSearchSize] = useState<number>(3);
-  const router = useRouter();
-  const resourceCreated = (id: string, content: string = "") => {
-    const [type] = id.split(":", 1);
-    if (confirm(`open ${id}?` + "\n" + content)) {
-      router.push(`/${type}/${id}`);
-    }
-  };
+
   const searchSizeChange = (event: any) => {
     setSearchSize(Number(event.target.value));
   };
@@ -62,8 +52,7 @@ export default function Home() {
         const items: any[][] = await search(text || "", {
           size: searchSize,
         });
-        console.log({ items });
-
+        // console.log({ items });
         setFoundItems(items);
       };
       load();
@@ -82,12 +71,7 @@ export default function Home() {
         setmasquerade={setmasquerade}
         className="agent-masquerade"
       />
-      <OmniForm
-        resourceCreated={resourceCreated}
-        text={text}
-        agent={masquerade?.id}
-        setText={setText}
-      />
+      <OmniForm text={text} agent={masquerade?.id} setText={setText} />
       <input
         type="range"
         min="3"

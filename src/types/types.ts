@@ -3,7 +3,7 @@ import type { RecordId } from "surrealdb.js";
 
 export type Meme = {
   id: string | RecordId;
-  timestamp?: string;
+  timestamp?: number;
   content?: string;
   hash?: string;
   embedding: number[];
@@ -11,7 +11,7 @@ export type Meme = {
 
 export type Agent = {
   id: string | RecordId;
-  timestamp: string;
+  timestamp: number;
   name: string;
   description: string;
   content: string;
@@ -65,7 +65,7 @@ export type AgentParameters = {
 
 export type File = {
   id: string | RecordId;
-  timestamp: string;
+  timestamp: number;
   content: string;
   hash: string;
   type: string;

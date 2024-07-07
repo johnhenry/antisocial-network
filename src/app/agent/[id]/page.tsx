@@ -4,11 +4,13 @@ import type { FC } from "react";
 import { useState, useEffect } from "react";
 import { getEntity } from "@/lib/database/read";
 import obfo from "obfo";
-import { DEFAULT_USER_IMAGE, MODELS } from "@/settings";
+import { MODELS } from "@/settings";
 import { updateAgent } from "@/lib/database/update";
 import { MASQUERADE_KEY } from "@/settings";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import Masquerade from "@/components/masquerade";
+import imageFromString from "@/util/image-from-string";
+
 export type Props = { params: { id: string } };
 
 const Page: FC<Props> = ({ params }) => {
@@ -83,7 +85,11 @@ const Page: FC<Props> = ({ params }) => {
       <main>
         <header>
           <img
-            src={agent.image ? `/file/${agent.image}/raw` : DEFAULT_USER_IMAGE}
+            src={
+              agent.image
+                ? `/file/${agent.image}/raw`
+                : `data:image/png;base64, ${imageFromString(agent.hash)}`
+            }
             alt={agent.id}
           />
           <input type="hidden" name="image" value={agent.image} />
