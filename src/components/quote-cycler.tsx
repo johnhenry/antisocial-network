@@ -1,54 +1,45 @@
-import { useState, useEffect, useCallback } from "react";
-import type { JSX } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
-export type Saying = [string, string][];
-
-/**
- * Props for the QuoteCycler component.
- */
-export interface QuoteCyclerProps {
-  sayings: Saying;
-  interval?: number;
-  random?: boolean;
-}
-
-/**
- * A component that cycles through a list of quotes and authors.
- * @param {QuoteCyclerProps} props - The component props.
- * @returns {JSX.Element} The rendered component.
- */
 const QuoteCycler = ({
   sayings = [],
-  interval = 5000,
+  interval = 3000,
   random = false,
   ...props
-}: QuoteCyclerProps): JSX.Element => {
-  const [index, setIndex] = useState<number>(0);
-  /**
-   * Callback function to cycle to the next quote.
-   */
+}) => {
+  const [randomizedSayings, setRandomizedSayings] = useState(sayings);
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (random) {
+      const shuffled = [...sayings].sort(() => Math.random() - 0.5);
+      setRandomizedSayings(shuffled);
+    } else {
+      setRandomizedSayings(sayings);
+    }
+    setIndex(0);
+  }, [sayings, random]);
+
   const cycleQuote = useCallback(() => {
-    if (sayings.length > 0) {
+    if (randomizedSayings.length > 0) {
       if (random) {
-        let newIndex: number;
+        let newIndex;
         do {
-          newIndex = Math.floor(Math.random() * sayings.length);
-        } while (newIndex === index && sayings.length > 1);
+          newIndex = Math.floor(Math.random() * randomizedSayings.length);
+        } while (newIndex === index && randomizedSayings.length > 1);
         setIndex(newIndex);
       } else {
-        setIndex((prevIndex) => (prevIndex + 1) % sayings.length);
+        setIndex((prevIndex) => (prevIndex + 1) % randomizedSayings.length);
       }
     }
-  }, [sayings, random, index]);
+  }, [randomizedSayings, random, index]);
 
   useEffect(() => {
-    if (sayings.length > 0) {
+    if (randomizedSayings.length > 0) {
       const timer = setTimeout(cycleQuote, interval);
       return () => clearTimeout(timer);
     }
-  }, [cycleQuote, interval, sayings, index, random]);
+  }, [cycleQuote, interval, randomizedSayings]);
 
-  if (!Array.isArray(sayings) || sayings.length === 0) {
+  if (!Array.isArray(randomizedSayings) || randomizedSayings.length === 0) {
     return (
       <div {...props}>
         <p>Loading...</p>
@@ -56,7 +47,7 @@ const QuoteCycler = ({
     );
   }
 
-  const [quote, author] = sayings[index];
+  const [quote, author] = randomizedSayings[index];
 
   return (
     <div {...props}>

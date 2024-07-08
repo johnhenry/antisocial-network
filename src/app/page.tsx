@@ -68,7 +68,12 @@ export default function Home() {
         setmasquerade={setmasquerade}
         className="agent-masquerade"
       />
-      <OmniForm text={text} agent={masquerade?.id} setText={setText} />
+      <OmniForm
+        text={text}
+        agent={masquerade?.id}
+        setText={setText}
+        placeholder="start typing to search or post a new meme"
+      />
       <input
         type="range"
         min="3"

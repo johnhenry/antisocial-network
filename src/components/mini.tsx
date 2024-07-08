@@ -16,7 +16,7 @@ export const MiniFile = ({ file }: any) => {
     <li className="file">
       <a href={`/file/${file.id}`}>
         <main>
-          {content} {image}
+          <div>{content}</div> {image}
         </main>
         <aside>
           <span>{file.name}</span>
@@ -42,11 +42,9 @@ export const MiniAgent = ({ agent }: any) => {
   return (
     <li className="agent">
       <a href={`/agent/${agent.id}`}>
-        <aside>
-          @{agent.name} ({agent.id})
-        </aside>
+        <aside title={agent.id}>{agent.name}</aside>
         <main>
-          {image} {agent.content}
+          {image} <div>{agent.content}</div>
         </main>
       </a>
     </li>

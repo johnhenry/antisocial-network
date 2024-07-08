@@ -10,7 +10,8 @@ import { MASQUERADE_KEY } from "@/settings";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import Masquerade from "@/components/masquerade";
 import imageFromString from "@/util/image-from-string";
-
+import QuoteCycler from "@/components/quote-cycler";
+import { AI_SAYINGS } from "@/settings";
 export type Props = { params: { id: string } };
 
 const Page: FC<Props> = ({ params }) => {
@@ -58,7 +59,7 @@ const Page: FC<Props> = ({ params }) => {
   if (!agent) {
     return (
       <section>
-        <h1>Loading...</h1>
+        <QuoteCycler sayings={AI_SAYINGS} className="quote-cycler" random />
       </section>
     );
   }
@@ -92,7 +93,6 @@ const Page: FC<Props> = ({ params }) => {
             }
             alt={agent.id}
           />
-          <input type="hidden" name="image" value={agent.image} />
           <form data-obfo-container="{}" data-obfo-name="parameters">
             <label>
               Model

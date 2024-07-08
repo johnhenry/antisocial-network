@@ -1,5 +1,7 @@
 # The Antisocial Network (TODO)
 
+- [ ] Add search filter buttons
+- [ ] Style response meme better
 - [x] Bookmakring
   - [x] Allow bookmarking for documents
   - [x] Allow memorization for memes
@@ -22,8 +24,8 @@
 - [x] Continue investigate using service worker for notifications
 - [ ] Use external providers
   - [x] Groq
-  - [ ] Open AI
-  - [ ] Anthropic
+  - [x] Open AI
+  - [x Anthropic
 - [x] Settings
 
   - [x] Default model for
@@ -32,7 +34,7 @@
     - vision
     - etc
   - [x] Chunking strategy (only senetence implemented):
-    - Sentence
+    - sentence
     - semantic
     - agentic
   - [x] Settings should be more table-like
@@ -47,7 +49,7 @@
     - [ ] agent
     - [ ] meme
     - [x] file
-- [ ] Streaming text
+- [x] Streaming text
 - [ ] Add loading/suspense for search, loading entieies
 - [ ] Improve Search
 - [ ] Visuals

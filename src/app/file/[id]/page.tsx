@@ -2,10 +2,9 @@
 import type { FC } from "react";
 import type { Agent, File, Relationship } from "@/types/types";
 import { useEffect, useState } from "react";
-import { getEntityWithReplationships, getAllAgents } from "@/lib/database/read";
+import { getAllAgents, getFullFile } from "@/lib/database/read";
 import truncate from "@/util/truncate-string";
 import { updateFile } from "@/lib/database/update";
-import { parseRelationship } from "@/util/parse-relationships";
 import obfo from "obfo";
 import { REL_BOOKMARKS } from "@/settings";
 import RelationshipToggler from "@/components/relationship-toggler";
@@ -31,21 +30,10 @@ const Page: FC<Props> = ({ params }) => {
   const indetifier = decodeURIComponent(params.id || "");
   useEffect(() => {
     const fetchFile = async () => {
-      // const file = await getEntity(indetifier);
-      const {
-        default: file,
-        out,
-        inn,
-      } = await getEntityWithReplationships(indetifier, {
-        source: "file",
-        out: [{ table: "agent", relationship: REL_BOOKMARKS }],
-      });
+      const { file, bookmarks } = await getFullFile(indetifier);
+      console.log({ bookmarks });
       setFile(file);
-      const bookmarks = parseRelationship(out, "agent", REL_BOOKMARKS).map(
-        (x) => x.id
-      );
       setBookmarks(bookmarks);
-
       const agents = await getAllAgents();
       setAgents(agents);
     };

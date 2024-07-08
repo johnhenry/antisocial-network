@@ -3,15 +3,10 @@ import type { FC } from "react";
 import type { Meme, File, Agent } from "@/types/types";
 import { useState, useEffect } from "react";
 import { REL_REMEMBERS } from "@/settings";
-import {
-  getEntityWithReplationships,
-  getAllAgents,
-  getFullMeme,
-} from "@/lib/database/read";
+import { getAllAgents, getFullMeme } from "@/lib/database/read";
 import OmniForm from "@/components/omniform";
 import { useRouter } from "next/navigation";
 import { truncateHTML } from "@/util/truncate-string";
-import { parseRelationship } from "@/util/parse-relationships";
 import RelationshipToggler from "@/components/relationship-toggler";
 import { MASQUERADE_KEY } from "@/settings";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
@@ -75,12 +70,7 @@ const Page: FC<Params> = ({ params }) => {
   if (!meme) {
     return (
       <section>
-        <QuoteCycler
-          sayings={AI_SAYINGS}
-          interval={5000}
-          className="quote-cycler"
-          random
-        />
+        <QuoteCycler sayings={AI_SAYINGS} className="quote-cycler" random />
       </section>
     );
   }
@@ -131,7 +121,7 @@ const Page: FC<Params> = ({ params }) => {
         ) : null}
         {inserted ? (
           <a href={`/agent/${inserted.id}`} className="source">
-            Posted by @{inserted.name}
+            @{inserted.name}
           </a>
         ) : null}
         <p className="date" title={meme.timestamp}>
@@ -144,7 +134,10 @@ const Page: FC<Params> = ({ params }) => {
         setText={setText}
         allowNakedFiles={false}
         allowCreateAgent={false}
+        placeholder="reply to this meme"
         agent={masquerade?.id}
+        postLabel="Reply"
+        postOnly={true}
       />
       {elicits.length ? (
         <>

@@ -136,60 +136,47 @@ export const getFullMeme = async (id: string): Promise<any> => {
   }
 };
 
-export const getEntityWithReplationships = async (
-  identifier: string,
-  {
-    source = "meme",
-    inn = [],
-    out = [],
-  }: {
-    source?: string;
-    inn?: Record<any, any>[];
-    out?: Record<any, any>[];
-  } = {},
-) => {
+export const getFullFile = async (id: string): Promise<any> => {
+  const queries = [];
+  const ADDITIONAL_FIELDS =
+    `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source`;
+  // select target
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM file where id = $id`,
+  );
+  // select incoming relationships
+  // precedes
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data from agent where ->${REL_BOOKMARKS}->(file where id = $id)`,
+  );
+
   const db = await getDB();
   try {
-    const output: { default: any; inn: Relationship[]; out: Relationship[] } = {
-      default: null,
-      inn: [],
-      out: [],
+    const [
+      [file],
+      bookmarks,
+    ]: [[File], Agent[]] =
+      await db.query(
+        queries.join(";"),
+        {
+          id: new StringRecordId(id),
+        },
+      );
+    if (!file) {
+      return {};
+    }
+    const obj = {
+      file,
+      bookmarks
     };
-    const id = new StringRecordId(identifier);
-    const [[d]]: [any[]] = await db.query(
-      `SELECT *, string::concat("", id) as id OMIT embedding, data FROM ${source}`,
-      {
-        meme: id,
-      },
-    );
-    output.default = d;
-    for (const { table, relationship } of inn) {
-      const [results]: [any[]] = await db.query(
-        `SELECT * OMIT embedding, data FROM ${table} where <-${relationship}<-(${source} where id = $meme)`,
-        {
-          meme: id,
-        },
-      );
-      if (results.length) {
-        output.inn.push({ table, relationship, results });
-      }
-    }
-    for (const { table, relationship } of out) {
-      const [results]: [any[]] = await db.query(
-        `SELECT * OMIT embedding, data FROM ${table} where ->${relationship}->(${source} where id = $meme)`,
-        {
-          meme: id,
-        },
-      );
-      if (results.length) {
-        output.out.push({ table, relationship, results });
-      }
-    }
-    return output;
+    console.log({bookmarks})
+
+    return obj;
   } finally {
     await db.close();
   }
 };
+
 
 type Messages = [string, string][];
 

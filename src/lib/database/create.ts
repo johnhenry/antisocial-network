@@ -326,10 +326,10 @@ Your name is {id} are you are participating in a in multi-user conversation thre
 9. Adapting Tone and Style:
    - Observe the tone and style of the conversation and try to match it appropriately.
 ${
-  relevantKnowledge
-    ? `\n10. Uses the following information to color your response::\n\n{relevantKnowledge}`
-    : ""
-}`,
+      relevantKnowledge
+        ? `\n10. Uses the following information to color your response::\n\n{relevantKnowledge}`
+        : ""
+    }`,
   ]);
 
   // old: "You may inclue the following knowledge as part of your response: "
@@ -481,44 +481,6 @@ export const updatePendingMeme = async (
   return id;
 };
 
-const scanForCommand = async (
-  {
-    content = "",
-    files = [],
-  }: {
-    content?: string;
-    rendered?: string;
-    embedding?: number[];
-    files?: ProtoFile[];
-  } = {},
-  {
-    agent,
-  }: {
-    agent?: string;
-  } = {},
-): Promise<
-  [
-    string,
-    string | LangchainGenerator,
-  ][] | void
-> => {
-  if (content.startsWith(":agent:")) {
-    const description = content.substr(":agent:".length);
-    return await createAgent({ description, files });
-  }
-  if (content.startsWith(":file:")) {
-    const text = content.substr(":file:".length);
-    const base64text = Buffer.from(text).toString("base64");
-    //.replace(/^[^,]+,/, "")
-    const file = {
-      type: "text/plain",
-      name: "",
-      content: base64text,
-    };
-    return await createFiles({ files: [...files, file] }, { agent });
-  }
-};
-
 export const createMeme = async (
   {
     content = "",
@@ -562,15 +524,6 @@ export const createMeme = async (
           : null,
       }) as [Meme];
     } else if (content) {
-      const command = await scanForCommand({
-        content,
-        rendered,
-        embedding,
-        files,
-      }, { agent });
-      if (command) {
-        return command;
-      }
       const accumulated: string[][] = [];
       const renderedContent = rendered ? rendered : await replaceMentions(
         content,

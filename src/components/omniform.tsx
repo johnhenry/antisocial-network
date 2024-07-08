@@ -11,8 +11,10 @@ import { useState, useRef } from "react";
 import obfo from "obfo";
 import { createFiles } from "@/lib/bridge/create";
 import { createMeme } from "@/lib/bridge/create";
+import { createAgent } from "@/lib/bridge/create";
 import Image from "next/image";
 import fileToBase64 from "@/util/to-base64";
+import SplitButton from "@/components/split-button";
 
 const { log } = console;
 
@@ -24,6 +26,8 @@ type Props = {
   target?: string;
   placeholder?: string;
   allowNakedFiles?: boolean;
+  postLabel?: string;
+  postOnly?: boolean;
 };
 
 const COMBO_OPTIONS = [
@@ -36,9 +40,11 @@ const OmniForm: FC<Props> = ({
   resourceCreated = () => {},
   text,
   agent,
-  placeholder = "Start typing to create an agent, a meme, or search.",
+  placeholder = "",
   allowNakedFiles = true,
   target,
+  postLabel = "Post",
+  postOnly = false,
 }) => {
   const textRef = useRef<HTMLTextAreaElement>(null);
   const [files, setFiles] = useState<any[]>([]);
@@ -109,77 +115,104 @@ const OmniForm: FC<Props> = ({
     }
   };
 
-  const onSplit: ChangeEventHandler = (
-    event: ChangeEvent<HTMLSelectElement>
-  ) => {
+  const onSplitClick = async (event: SelectedEvent) => {
+    let name;
     switch (event.target.value) {
-      case COMBO_OPTIONS[0].label:
-        makeFilesOrMemes();
+      case "agent":
+        name = prompt("Agent Name? (optional)");
+        if (name === null) {
+          return;
+        }
+        name = name.trim().split(" ").join("-").toLowerCase();
+        const llmAgent = { description: text, files, name };
+        console.log({ llmAgent });
+        cleanInput();
+        await createAgent(llmAgent);
         break;
-      case COMBO_OPTIONS[1].label:
-        makeFilesOrMemes(true);
+      case "textfile":
+        name = prompt("File Name? (optional)");
+        if (name === null) {
+          return;
+        }
+        const file = {
+          type: "text/plain",
+          name,
+          content: Buffer.from(text).toString("base64"), //.replace(/^[^,]+,/, "")
+        };
+        cleanInput();
+        await createFiles({ files: [...files, file] }, { agent });
         break;
     }
   };
 
   return (
     <>
-      <form className={`form-create hover-solid`}>
-        <textarea
-          title="text"
-          name="text"
-          placeholder={placeholder}
-          onChange={(event: ChangeEvent) =>
-            setText((event.target as HTMLInputElement).value.trim())
-          }
-          onKeyDown={onEnter}
-          ref={textRef}
-        />
-        <footer>
-          <label title="files" data-obfo-container="{}">
-            📎
-            <input
-              name="files"
-              type="file"
-              data-obfo-cast="files"
-              multiple
-              onChange={attach}
-            />{" "}
-          </label>
-          {files.map((file, index) => (
-            // file shoud have a button to remove it from list
-            <div
-              key={Math.random()}
-              data-obfo-container="{}"
-              className="attached-file"
-              title={`${file.path}:\n${file.type}`}
-            >
-              <button type="button" onClick={() => removeFile(index)}>
-                x
-              </button>
-              <input type="hidden" name="name" value={file.name} />
-              <input type="hidden" name="type" value={file.type} />
-              <input type="hidden" name="content" value={file.content} />
-              <Image
-                alt={file.name}
-                src={
-                  file.type.startsWith("image/")
-                    ? file.content
-                    : "/static/attachment.png"
-                }
-                width={32}
-                height={32}
-              />
+      <form className={`omni-form`}>
+        <main className="hover-solid">
+          <textarea
+            title="text"
+            name="text"
+            placeholder={placeholder}
+            onChange={(event: ChangeEvent) =>
+              setText((event.target as HTMLInputElement).value.trim())
+            }
+            onKeyDown={onEnter}
+            ref={textRef}
+          />
+          <footer>
+            <label title="files" data-obfo-container="{}">
+              📎
+              <input
+                name="files"
+                type="file"
+                data-obfo-cast="files"
+                multiple
+                onChange={attach}
+              />{" "}
+            </label>
+            {files.map((file, index) => (
+              // file shoud have a button to remove it from list
+              <div
+                key={Math.random()}
+                data-obfo-container="{}"
+                className="attached-file"
+                title={`${file.path}:\n${file.type}`}
+              >
+                <button type="button" onClick={() => removeFile(index)}>
+                  x
+                </button>
+                <input type="hidden" name="name" value={file.name} />
+                <input type="hidden" name="type" value={file.type} />
+                <input type="hidden" name="content" value={file.content} />
+                <Image
+                  alt={file.name}
+                  src={
+                    file.type.startsWith("image/")
+                      ? file.content
+                      : "/static/attachment.png"
+                  }
+                  width={32}
+                  height={32}
+                />
+              </div>
+            ))}
+          </footer>
+        </main>
+        <div className="form-create-buttons">
+          {text || (files.length && allowNakedFiles) ? (
+            <button type="button" onClick={() => makeFilesOrMemes()}>
+              {text ? postLabel : "Upload"}
+            </button>
+          ) : null}
+          {text && !postOnly ? (
+            <div className="split-button">
+              <SplitButton text="+" onClick={onSplitClick} defaultValue="">
+                <option value="agent">Agent</option>
+                <option value="textfile">Text File</option>
+              </SplitButton>
             </div>
-          ))}
-        </footer>
-      </form>
-      <form className="form-create-buttons">
-        {text || (files.length && allowNakedFiles) ? (
-          <button type="button" onClick={() => makeFilesOrMemes()}>
-            {text ? "Post" : "Upload"}
-          </button>
-        ) : null}
+          ) : null}
+        </div>
       </form>
     </>
   );
