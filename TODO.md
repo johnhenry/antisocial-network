@@ -1,7 +1,8 @@
 # The Antisocial Network (TODO)
 
-- [ ] Add search filter buttons
+- [x] Add search filter buttons
 - [ ] Style response meme better
+- [ ] Fix bookmarking/memorization
 - [x] Bookmakring
   - [x] Allow bookmarking for documents
   - [x] Allow memorization for memes
@@ -82,6 +83,7 @@
 - [ ] Show in-meme attachment links
 - [ ] Update instruction for ollama
 - [ ] Settings.ts -> Config.ts
+- [ ] Meme -> Post
 - [ ] Display files associated with memes
 - [ ] Now that i can get a bunch of agents too answer a single post, i need a final agent that can combine the reponses to a post
   - @SynthezingSamuel#
