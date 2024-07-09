@@ -5,6 +5,7 @@ import type {
   File,
   LangchainGenerator,
   Meme,
+  ProtoFile,
   Setting,
   Settings,
 } from "@/types/types";
@@ -48,18 +49,7 @@ import { recordMatch } from "@/util/match";
 import getWriteManager from "@/lib/write-space";
 import { getSettingsObject } from "@/lib/database/read";
 import replaceMentions from "@/util/replace-mentions";
-
-////
-// File
-////
-type ProtoFile = {
-  name?: string;
-  author?: string;
-  type?: string;
-  content?: string;
-  publisher?: string | null;
-  publishDate?: string | null;
-};
+import command from "@/lib/command";
 
 export const createFile = async (
   {
@@ -481,6 +471,53 @@ export const updatePendingMeme = async (
   return id;
 };
 
+const scanForCommand = async (
+  {
+    content = "",
+    rendered = "",
+    embedding,
+    files = [],
+  }: {
+    content?: string | typeof MEME_PENDING;
+    rendered?: string;
+    embedding?: number[];
+    files?: ProtoFile[];
+  } = {},
+  {
+    agent,
+    file,
+    response = false,
+    target,
+    streaming = false,
+  }: {
+    agent?: string;
+    file?: string;
+    response?: boolean | string | number;
+    target?: string;
+    streaming?: boolean;
+  } = {},
+): Promise<
+  [
+    string,
+    string | LangchainGenerator,
+  ][] | void
+> => {
+  if (content.trim().startsWith("/")) {
+    return command({
+      content,
+      rendered,
+      embedding,
+      files,
+    }, {
+      agent,
+      file,
+      response,
+      target,
+      streaming,
+    });
+  }
+};
+
 export const createMeme = async (
   {
     content = "",
@@ -524,6 +561,21 @@ export const createMeme = async (
           : null,
       }) as [Meme];
     } else if (content) {
+      const command = await scanForCommand({
+        content,
+        rendered,
+        embedding,
+        files,
+      }, {
+        agent,
+        file,
+        response,
+        target,
+        streaming,
+      });
+      if (command) {
+        return command;
+      }
       const accumulated: string[][] = [];
       const renderedContent = rendered ? rendered : await replaceMentions(
         content,

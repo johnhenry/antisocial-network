@@ -90,7 +90,8 @@
   - :aggregate:
   - @system:aggregate:n -- these n post are all responses to the above posts
     please carefully examine the style and contet of each post. Use that information to create a new post that is a combination of the n posts
-  -
+  - $ystem <commands>
+  - $ystem aggregate --agent --target --
 
 ## Bugs
 

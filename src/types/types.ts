@@ -101,3 +101,12 @@ export type LangchainGenerator = AsyncGenerator<
   void,
   unknown
 >;
+
+export type ProtoFile = {
+  name?: string;
+  author?: string;
+  type?: string;
+  content?: string;
+  publisher?: string | null;
+  publishDate?: string | null;
+};
