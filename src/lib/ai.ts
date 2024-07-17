@@ -1,16 +1,21 @@
+// import { encode as gpt3Encoder } from "gpt-3-encoder";
+
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
 import type { BaseMessageChunk } from "@langchain/core/messages";
+import type { ChatPromptValueInterface } from "@langchain/core/prompt_values";
 import { ChatGroq } from "@langchain/groq";
 import { OpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { Ollama } from "ollama";
 import { OllamaFunctions } from "@langchain/community/experimental/chat_models/ollama_functions";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { MODEL_FUNCTIONS, OLLAMA_LOCATION } from "@/settings";
+import { MODEL_FUNCTIONS, OLLAMA_LOCATION } from "@/config/mod";
 import { JsonOutputFunctionsParser } from "@langchain/core/output_parsers/openai_functions";
-import { getSettingsObject } from "@/lib/database/read";
-
+import { getSettingsObject } from "@/lib/read";
+import genRandomString from "@/lib/util/gen-random-string";
+import { RunnableLike } from "@langchain/core/runnables";
+import { getEncoding } from "js-tiktoken";
 type FunctionDescriptor = {
   name: string;
   description: string;
@@ -23,6 +28,12 @@ type FunctionsForOllama = {
     name: string;
   };
 };
+
+type Invoker =
+  | ChatGroq
+  | OpenAI
+  | ChatAnthropic
+  | ChatOllama;
 
 export const respond = async (
   {
@@ -41,12 +52,12 @@ export const respond = async (
 > => {
   const settings = await getSettingsObject();
   const [source, model] = (parameters?.model || settings.model).split("::");
-  const arg = {
+  const arg: Record<any, any> = {
     ...parameters,
     model,
   };
   try {
-    let invoker;
+    let invoker: Invoker;
     switch (source) {
       case "groq": {
         arg.apiKey = settings.apikeygroq;
@@ -73,7 +84,9 @@ export const respond = async (
       }
     }
     const prompt = ChatPromptTemplate.fromMessages(messages);
-    const chain = prompt.pipe(invoker);
+    const chain = prompt.pipe(
+      invoker as RunnableLike,
+    );
     if (streaming) {
       return chain.stream(invocation).then(async function* (textStream) {
         for await (const text of textStream) {
@@ -115,7 +128,7 @@ export const respondFunc = async (
   );
 };
 
-export const embed = async (prompt: string) => {
+export const embed = async (prompt: string = genRandomString()) => {
   const settings = await getSettingsObject();
   const [source, model] = settings.modelembedding!.split("::");
   try {
@@ -188,3 +201,6 @@ export const summarize = async (
   ) as BaseMessageChunk;
   return output as string;
 };
+
+const enc = getEncoding("gpt2");
+export const tokenize = (string: string) => enc.encode(string);
