@@ -11,7 +11,7 @@ async function replaceMentions(
     .join("|");
   const escapedChars = additionalChars.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const mentionRegex = new RegExp(
-    `(?<=^|\\s)(${escapedSymbols})([\\w${escapedChars}]+)`,
+    `(?<=^|\\s)(${escapedSymbols})([\\w${escapedChars}]+[\\w])`,
     "g",
   );
   let result = "";

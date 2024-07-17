@@ -4,7 +4,7 @@ const replaceMentions = async (
   text: string,
   replaceCallback: MentionCallback = defaultCallback,
   startSymbols: string[] = ["@", "#"],
-  additionalChars = ":?\\-",
+  additionalChars = ":\\-",
 ) => {
   const escapedSymbols = startSymbols
     .map((symbol) => symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))

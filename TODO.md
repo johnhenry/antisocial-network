@@ -75,7 +75,7 @@
 - [ ] Implement tools
   - https://dev.to/vyan/public-apis-for-web-development-projects-lhk
   - https://github.com/public-api-lists/public-api-lists
-- [ ] Con Jobs (maybe after API/Tools is ready)
+- [ ] Cron Jobs (maybe after API/Tools is ready)
 - [ ] add document summaries of documents to initial agent description?
 - [ ] add generic agents
   - [ ] @GenEric agent:generic
@@ -87,11 +87,9 @@
 - [ ] Display files associated with memes
 - [ ] Now that i can get a bunch of agents too answer a single post, i need a final agent that can combine the reponses to a post
   - @SynthezingSamuel#
-  - :aggregate:
-  - @system:aggregate:n -- these n post are all responses to the above posts
-    please carefully examine the style and contet of each post. Use that information to create a new post that is a combination of the n posts
   - $ystem <commands>
   - $ystem aggregate --agent --target --
+  - /synthesize --depth=1
 
 ## Bugs
 

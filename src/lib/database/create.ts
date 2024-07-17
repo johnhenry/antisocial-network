@@ -343,7 +343,7 @@ ${
   return results as BaseMessageChunk;
 };
 
-const MEME_PENDING = Symbol("MEME PENDING");
+export const MEME_PENDING = Symbol("MEME PENDING");
 
 export const createResponseMeme = async ({
   response = false,

@@ -24,6 +24,8 @@
   color-scheme: light dark;
   --color-primary: brown;
   --color-primary: #a52a2a;
+  --color-primary: rgb(165, 42, 42);
+  --some-color: #e0461f;
   --color-secondary: #f5f5f5;
   --color-tertiary: hsl(from var(--color-primary) h calc(s) calc(l * 0.9));
   --color-midground: var(--color-primary);
