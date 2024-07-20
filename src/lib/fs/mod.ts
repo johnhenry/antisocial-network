@@ -27,11 +27,8 @@ export const putObject = async (
   const readableStream = new stream.PassThrough();
   readableStream.end(Buffer.from(buff));
   const exists = await minioClient.bucketExists(FS_BUCKET);
-  if (exists) {
-    console.log("Bucket " + FS_BUCKET + " exists.");
-  } else {
+  if (!exists) {
     await minioClient.makeBucket(FS_BUCKET, "us-east-1");
-    console.log("Bucket " + FS_BUCKET + ' created in "us-east-1".');
   }
   await minioClient.putObject(
     FS_BUCKET,

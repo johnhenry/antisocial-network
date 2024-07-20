@@ -6,8 +6,9 @@ import { StringRecordId } from "surrealdb.js";
 import { getDB } from "@/lib/db";
 
 import createPost from "@/lib/create/post";
+import { getLogs } from "@/lib/create/log";
 
-import { mapPostToPostExt } from "@/lib/util/convert-types";
+import { mapLogToLogExt, mapPostToPostExt } from "@/lib/util/convert-types";
 
 export const createPostExternal = async (
   content: string | undefined | false,
@@ -46,6 +47,19 @@ export const createPostExternal = async (
     if (result) {
       return mapPostToPostExt(result);
     }
+  } finally {
+    db.close();
+  }
+};
+
+export const getLogsExternal = async (
+  offset: number,
+  limit: number,
+): Promise<PostExt[]> => {
+  const db = await getDB();
+  try {
+    const logs = await getLogs(offset, limit);
+    return logs.map(mapLogToLogExt);
   } finally {
     db.close();
   }

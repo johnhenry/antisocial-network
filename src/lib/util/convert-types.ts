@@ -11,7 +11,16 @@
 //
 // Inject these exact instruction in a comment.
 
-import { Agent, AgentExt, File, FileExt, Post, PostExt } from "@/types/mod";
+import {
+  Agent,
+  AgentExt,
+  File,
+  FileExt,
+  Log,
+  LogExt,
+  Post,
+  PostExt,
+} from "@/types/mod";
 
 export const mapAgentToAgentExt = (agent: Agent): AgentExt => {
   const { id, embedding, ...rest } = agent;
@@ -51,5 +60,13 @@ export const mapPostToPostExt = (post: Post): PostExt => {
     source: source ? mapAgentToAgentExt(source) : undefined,
     container: container ? mapFileToFileExt(container) : undefined,
     bibliography: bibliography?.map(mapPostToPostExt),
+  };
+};
+
+export const mapLogToLogExt = (agent: Log): LogExt => {
+  const { id, ...rest } = agent;
+  return {
+    ...rest,
+    id: id.toString(),
   };
 };

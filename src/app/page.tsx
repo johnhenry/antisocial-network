@@ -37,26 +37,27 @@ const Page: FC<PageProps> = ({}) => {
 
   return (
     <article>
+      <details>
+        <summary>Previous Posts</summary>
+        <ul className="list-tight">
+          {posts.map((post) => (
+            <Post post={post} key={post.id} Wrapper={"li"} className="post" />
+          ))}
+        </ul>
+      </details>
       <InputBox
         Wrapper={"div"}
         className="input-box"
         extractText={setSearchText}
         postReady={postReady}
       />
-      <div className="post-list">
-        {posts.map((post) => (
-          <Post post={post} key={post.id} Wrapper={"div"} className="post" />
-        ))}
-      </div>
-
-      <details>
-        <summary>Previous Posts</summary>
-        <ul className="post-list-small">
+      <div className="infinite-scroller-window">
+        <ul className="">
           {posts.map((post) => (
             <Post post={post} key={post.id} Wrapper={"li"} className="post" />
           ))}
         </ul>
-      </details>
+      </div>
     </article>
   );
 };

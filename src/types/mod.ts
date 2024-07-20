@@ -172,6 +172,8 @@ export type LangchainGenerator = AsyncGenerator<
 export type Log = {
   id: RecordId;
   timestamp: number;
+  traget: string;
+  type: string;
   content: string;
   metadata?: JSON;
 };

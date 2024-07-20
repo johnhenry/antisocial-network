@@ -111,17 +111,6 @@
 
 /* components */
 
-.inverted-colors {
-  color: var(--color-inverse);
-  background-color: var(--background-color-inverse);
-}
-.menu-icon {
-  display: var(--hide-landscape, flex);
-}
-.collapse-text-portrait {
-  display: var(--hide-portrait, inline);
-}
-
 html,
 body {
   display: contents;
@@ -149,27 +138,28 @@ a,
   }
 }
 
-label.label-file {
-  > input[type="file"] {
-    display: none;
+label {
+  &.label-file {
+    > input[type="file"] {
+      display: none;
+    }
+  }
+  &.label-checkbox {
+    > input[type="checkbox"] {
+      display: none;
+    }
+    &:has(:checked) {
+    }
+  }
+  &.label-radio {
+    > input[type="radio"] {
+      display: none;
+    }
+    &:has(:checked) {
+    }
   }
 }
 
-label.label-checkbox {
-  > input[type="checkbox"] {
-    display: none;
-  }
-  &:has(:checked) {
-  }
-}
-
-label.label-radio {
-  > input[type="radio"] {
-    display: none;
-  }
-  &:has(:checked) {
-  }
-}
 button,
 .button,
 label.label-file,
@@ -185,33 +175,24 @@ label.label-radio {
 svg {
   display: inline;
 }
+article {
+  /* self control */
+  padding-top: var(--size-padding);
+  padding-right: var(--size-header);
+  min-height: 100vh;
+  width: 100vw;
+  align-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--size-gap);
+  width: var(--size-width-applicaion);
+  margin-left: auto;
+  margin-right: auto;
 
-.img {
-  display: inline-block;
-  background-color: pink;
-}
-.attached-file {
-  position: relative;
-  font-size: 0.75rem;
-  > button {
-    --size: 1rem;
-    padding: 0;
-    width: var(--size);
-    aspect-ratio: 1;
-    border-radius: 50%;
-    display: none;
-    position: absolute;
-    top: calc(-1 * var(--size) / 2);
-    right: calc(-1 * var(--size) / 2);
-    :hover > & {
-      display: block;
-    }
-  }
-  image {
-    width: 32px;
-    aspect-ratio: 1;
-  }
-  &:hover {
+  @media (orientation: landscape) {
+    padding-right: inherit;
+    padding-top: calc(var(--size-header) + var(--size-padding));
   }
 }
 
@@ -295,27 +276,6 @@ body > main {
   }
 }
 
-article {
-  /* self control */
-  padding-top: var(--size-padding);
-  padding-right: var(--size-header);
-  min-height: 100vh;
-  width: 100vw;
-  align-content: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--size-gap);
-  width: var(--size-width-applicaion);
-  margin-left: auto;
-  margin-right: auto;
-
-  @media (orientation: landscape) {
-    padding-right: inherit;
-    padding-top: calc(var(--size-header) + var(--size-padding));
-  }
-}
-
 .input-box {
   width: 100%;
   padding-left: var(--size-padding);
@@ -374,6 +334,56 @@ article {
       color: green;
     }
   }
+}
+
+.infinite-scroller-window {
+  flex-direction: column;
+  overflow: auto;
+  display: block;
+  display: flex;
+  /* height: 100vh; */
+  flex-direction: column;
+  .infinite-scroller {
+    background-color: black;
+    overflow-y: auto;
+    min-height: 150%;
+    display: flex;
+    flex-direction: column;
+    > *:last-child {
+      background-color: red;
+      height: 1px;
+      margin-top: auto;
+      height: 150px;
+    }
+  }
+}
+
+.log-list-window {
+  /* height: 50vh; */
+  height: 64px;
+  .log-list {
+    > * {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      &:last-child:not([disabled]) {
+        before: "loading...";
+      }
+    }
+  }
+}
+
+ul:has(> :where(.post)) {
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+ul.list-tight:has(> :where(.post)) {
+  gap: 0;
 }
 
 .post {
@@ -466,7 +476,7 @@ article {
   box-shadow: color(srgb 0 0 0 / 0.3) 0px 1px 2px 0px,
     color(srgb 0 0 0 / 0.15) 0px 2px 6px 2px;
 
-  .post-list-small > & {
+  .list-tight > & {
     > header {
       .content {
         white-space: nowrap;
@@ -486,14 +496,38 @@ article {
   }
 }
 
-.post-list {
-  white-space: nowrap;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  max-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
+.inverted-colors {
+  color: var(--color-inverse);
+  background-color: var(--background-color-inverse);
+}
+.menu-icon {
+  display: var(--hide-landscape, flex);
+}
+.collapse-text-portrait {
+  display: var(--hide-portrait, inline);
+}
+
+.attached-file {
+  position: relative;
+  font-size: 0.75rem;
+  > button {
+    --size: 1rem;
+    padding: 0;
+    width: var(--size);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: none;
+    position: absolute;
+    top: calc(-1 * var(--size) / 2);
+    right: calc(-1 * var(--size) / 2);
+    :hover > & {
+      display: block;
+    }
+  }
+  image {
+    width: 32px;
+    aspect-ratio: 1;
+  }
+  &:hover {
+  }
 }

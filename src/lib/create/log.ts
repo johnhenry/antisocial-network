@@ -1,3 +1,4 @@
+"use server";
 import type { Log } from "@/types/mod";
 import { print as printToConsole } from "@/lib/util/logging";
 import { TABLE_LOG } from "@/config/mod";
@@ -19,6 +20,7 @@ export const createLog = async (
   const db = await getDB();
   try {
     const [log] = await db.create(TABLE_LOG, {
+      timestamp: Date.now(),
       target,
       type,
       content: content ? content : `${type}: ${target}`,
@@ -28,6 +30,27 @@ export const createLog = async (
       printToConsole(log);
     }
     return log;
+  } finally {
+    db.close();
+  }
+};
+
+export const getLogs = async (
+  offset: number,
+  limit: number,
+): Promise<Log[]> => {
+  const db = await getDB();
+  try {
+    const query = `
+            SELECT *
+            FROM ${TABLE_LOG}
+            ORDER BY timestamp DESC
+            LIMIT ${limit}
+            START ${offset}
+        `;
+
+    const [result] = await db.query(query) as Log[][];
+    return result;
   } finally {
     db.close();
   }
