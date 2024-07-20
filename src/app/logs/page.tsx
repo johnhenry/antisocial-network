@@ -1,20 +1,12 @@
 "use client";
-import type { FC } from "react";
+import type { FC, ComponentClass } from "react";
 import type { LogExt } from "@/types/mod";
 import InfiniteScroller from "@/components/infinite-scroller";
 import { getLogsExternal } from "@/lib/create/mod";
 import { usePathname } from "next/navigation";
-const MiniLog = ({ id, timestamp, content, metadata }: LogExt) => (
-  <li title={id} className="log">
-    {content}
-    {metadata ? (
-      <details title={String(timestamp)}>
-        <summary>Metadata</summary>
-        <pre>{JSON.stringify(metadata, null, " ")}</pre>
-      </details>
-    ) : null}
-  </li>
-);
+
+import Log from "@/components/log";
+
 const SIZE = 10;
 type PageProps = {};
 const Page: FC<PageProps> = ({}) => {
@@ -32,17 +24,13 @@ const Page: FC<PageProps> = ({}) => {
   };
   return (
     <article className={classes}>
-      <div className="infinite-scroller-window log-list-window">
-        <ul className="infinite-scroller log-list">
-          <InfiniteScroller
-            fetchChildren={fetchChildren(0)}
-            ChildRenderer={MiniLog}
-            initialItems={[]}
-            FinalItem={({ children, ...props }) => (
-              <li {...props}>{children}</li>
-            )}
-          />
-        </ul>
+      <div className="infinite-scroller-window">
+        <InfiniteScroller
+          fetchChildren={fetchChildren(0)}
+          ChildRenderer={Log}
+          childProps={{ className: "log" }}
+          FinalItem={({ children, ...props }) => <li {...props}>{children}</li>}
+        />
       </div>
     </article>
   );

@@ -22,7 +22,7 @@ const Post: FC<PostProps> = ({
   source,
   timestamp,
   content,
-  Wrapper,
+  Wrapper = "li",
   files,
   children,
   ...props

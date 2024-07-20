@@ -7,31 +7,39 @@ import React, {
   ElementType,
   RefObject,
   ReactNode,
+  ComponentClass,
 } from "react";
+import { set } from "zod";
 
 type HasId = any & { id: string };
 
 interface InfiniteScrollerProps {
   ChildRenderer?: ComponentType<any> | string;
+  childProps?: Record<string, any>;
   fetchChildren?: () => Promise<HasId[]>;
   size?: number;
   scrollThreshold?: number;
-  initialItems?: HasId[];
+  prependedItems?: HasId[];
+  resetPrepended?: () => void;
   FinalItem: ComponentType<any> | string;
+  Wrapper?: ComponentClass<any> | string;
 }
 
 const InfiniteScroller = ({
   ChildRenderer = "li" as ComponentType<HasId> | string,
+  childProps = {},
   fetchChildren = async () => [],
   size = -1,
   scrollThreshold = 0.5,
-  initialItems = [],
+  prependedItems = [],
+  resetPrepended = () => {},
   FinalItem = "li" as ComponentType<any> | string,
+  Wrapper = "ul" as ComponentClass<any> | string,
+  ...props
 }: InfiniteScrollerProps) => {
-  const [items, setItems] = useState<HasId[]>(initialItems);
+  const [items, setItems] = useState<HasId[]>([]);
   const [loading, setLoading] = useState(false);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
-
   const loadMoreItems = async () => {
     if (loading) {
       return;
@@ -55,6 +63,16 @@ const InfiniteScroller = ({
   };
 
   useEffect(() => {
+    if (prependedItems.length) {
+      setItems((prevItems) => {
+        const updatedItems = [...prependedItems, ...prevItems];
+        return size === -1 ? updatedItems : updatedItems.slice(-size);
+      });
+      resetPrepended();
+    }
+  }, [prependedItems]);
+
+  useEffect(() => {
     if (lastItemRef) {
       const options = {
         // root: rootRef.current,
@@ -67,15 +85,21 @@ const InfiniteScroller = ({
     }
   }, [lastItemRef]);
 
-  return (
+  const body = (
     <>
       {items.map((item: HasId, index) => {
         const { id, ...props } = item;
-        return <ChildRenderer key={index} {...props} />;
+        return <ChildRenderer key={id} {...childProps} {...props} />;
       })}
       <FinalItem ref={lastItemRef} disabled={loading ? null : true} />
     </>
   );
+
+  if (Wrapper) {
+    return <Wrapper {...props}>{body}</Wrapper>;
+  } else {
+    return body;
+  }
 };
 
 export default InfiniteScroller;

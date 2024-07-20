@@ -11,20 +11,33 @@ import Post from "@/components/post";
 import InputBox from "@/components/input-box";
 type PageProps = {};
 const Page: FC<PageProps> = ({}) => {
-  const [posts, setPosts] = useState<PostExt[]>([]);
   const [searchText, setSearchText] = useState("");
+  const [prependedItems, setPrepended] = useState<PostExt[]>([]);
+  const resetPrepended = () => setPrepended([]);
   useEffect(() => {
     const load = () => {
       setSearchText("");
-      setPosts(postExtArray);
     };
     load();
     return () => {};
   }, []);
+
+  const fetchChildren = (start = 0) => {
+    let offset = start;
+    return async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const newItems = postExtArray.slice(offset, offset + 10);
+      offset += newItems.length;
+      return newItems;
+    };
+  };
+
   const postReady = (post: PostExt) => {
     if (confirm(`navigate to /post/${post.id} ?`)) {
     }
-    setPosts([post, ...posts]);
+    setPrepended([post]);
+    // TOOO: add post to scroll list?
+    // can i add some method that allows me to prepend items to the list
   };
   const search = console.log;
 
@@ -41,7 +54,7 @@ const Page: FC<PageProps> = ({}) => {
       <details>
         <summary>Previous Posts</summary>
         <ul className="list-tight">
-          {posts.map((post) => (
+          {postExtArray.map((post) => (
             <Post key={post.id} Wrapper={"li"} className="post" {...post} />
           ))}
         </ul>
@@ -53,11 +66,14 @@ const Page: FC<PageProps> = ({}) => {
         postReady={postReady}
       />
       <div className="infinite-scroller-window">
-        <ul className="">
-          {posts.map((post) => (
-            <Post key={post.id} Wrapper={"li"} className="post" {...post} />
-          ))}
-        </ul>
+        <InfiniteScroller
+          ChildRenderer={Post}
+          fetchChildren={fetchChildren(0)}
+          prependedItems={prependedItems}
+          resetPrepended={resetPrepended}
+          childProps={{ className: "post" }}
+          FinalItem={({ children, ...props }) => <li {...props}>{children}</li>}
+        />
       </div>
     </article>
   );

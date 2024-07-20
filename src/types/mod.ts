@@ -91,6 +91,9 @@ export type FileExt = Omit<File, "id" | "embedding" | "data" | "owner"> & {
   owner?: AgentExt;
 };
 
+export type Entity = Agent | File | Post;
+export type EntityExt = AgentExt | FileExt | PostExt;
+
 export type FileProto = Omit<
   File,
   | "id"
@@ -172,7 +175,7 @@ export type LangchainGenerator = AsyncGenerator<
 export type Log = {
   id: RecordId;
   timestamp: number;
-  traget: string;
+  target: string; // TODO: change to entity and
   type: string;
   content: string;
   metadata?: JSON;
