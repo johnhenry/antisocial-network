@@ -343,8 +343,7 @@ body > main {
   display: flex;
   /* height: 100vh; */
   flex-direction: column;
-  .infinite-scroller {
-    background-color: black;
+  > * {
     overflow-y: auto;
     min-height: 150%;
     display: flex;
@@ -352,26 +351,30 @@ body > main {
     > *:last-child {
       background-color: red;
       height: 1px;
-      margin-top: auto;
       height: 150px;
+    }
+    > *:first-child:not(:only-child) {
+      margin-top: auto;
+    }
+  }
+}
+
+ul:has(> :where(.log)) {
+  background-color: black;
+
+  > * {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    &:last-child:not([disabled])::before {
+      content: "loading...";
     }
   }
 }
 
 .log-list-window {
-  /* height: 50vh; */
-  height: 64px;
-  .log-list {
-    > * {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      padding: 1rem;
-      &:last-child:not([disabled]) {
-        before: "loading...";
-      }
-    }
-  }
+  height: 25vh;
 }
 
 ul:has(> :where(.post)) {

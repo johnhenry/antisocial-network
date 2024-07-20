@@ -13,7 +13,7 @@ type HasId = any & { id: string };
 
 interface InfiniteScrollerProps {
   ChildRenderer?: ComponentType<any> | string;
-  fetchChildren: () => Promise<HasId[]>;
+  fetchChildren?: () => Promise<HasId[]>;
   size?: number;
   scrollThreshold?: number;
   initialItems?: HasId[];
@@ -22,7 +22,7 @@ interface InfiniteScrollerProps {
 
 const InfiniteScroller = ({
   ChildRenderer = "li" as ComponentType<HasId> | string,
-  fetchChildren,
+  fetchChildren = async () => [],
   size = -1,
   scrollThreshold = 0.5,
   initialItems = [],
