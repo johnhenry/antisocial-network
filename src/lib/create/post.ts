@@ -1,16 +1,90 @@
-import type { Agent, FileProto, Post } from "@/types/mod";
+import type { Agent, File, FileProto, Post, PostExt } from "@/types/mod";
 
-import { TABLE_POST } from "@/config/mod";
+import { REL_ELICITS, REL_INSERTED, TABLE_POST } from "@/config/mod";
 import { embed, tokenize } from "@/lib/ai";
-import { getDB } from "@/lib/db";
+
+import { getDB, relate } from "@/lib/db";
 import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
 import parsePostContent from "@/lib/util/parse-post-content";
 import { createFiles } from "@/lib/create/file";
+import createLog from "@/lib/create/log";
+import { getAgent } from "@/lib/create/agent";
+
+import { RecordId } from "surrealdb.js";
+
 import hash from "@/lib/util/hash";
 
+// map a list of post to messages
+const mapPostsToMessages = (posts: Post[]) => {
+  const messages = [];
+  for (const post of posts) {
+    messages.push([
+      "user",
+      (post.source ? `[${post.source.id.toString()}] :` : ``) + post.content,
+    ]);
+  }
+  return messages;
+};
+
+export const getPostWithHistory = async (
+  post?: Post,
+  depth: number = -1,
+): Promise<Post[]> => {
+  const db = await getDB();
+  if (!post) {
+    return [];
+  }
+  try {
+    const posts = [post];
+    let currentPost = post;
+    while (currentPost.target) {
+      const [[target]] = await db.query(
+        `SELECT * FROM ${TABLE_POST} WHERE id = $target`,
+        { target: currentPost.target },
+      ) as [[Post]];
+      posts.push(target);
+      currentPost = target;
+    }
+    return posts;
+  } finally {
+    await db.close();
+  }
+};
+
+///////
+type RecursiveDescendantResult = [Post, RecursiveDescendantResult[]];
+const recursiveQuery = `
+    SELECT * FROM ${TABLE_POST}
+    WHERE <-${REL_ELICITS}<-(${TABLE_POST} WHERE id = $id)
+  `;
+const recursiveDescendants = async (
+  post: Post,
+  depth: number = 1,
+): Promise<RecursiveDescendantResult> => {
+  if (depth === 0) {
+    return [post, []];
+  }
+
+  const db = await getDB();
+  try {
+    const descendants: Post[] = await db.query(recursiveQuery, { id: post.id });
+    const results: RecursiveDescendantResult[] = await Promise.all(
+      descendants.map(async (descendant) =>
+        recursiveDescendants(descendant, depth === -1 ? -1 : depth - 1)
+      ),
+    );
+    return [post, results];
+  } catch (error) {
+    console.error("Error fetching descendants:", error);
+    return [post, []];
+  } finally {
+    await db.close();
+  }
+};
+
 export const createPost = async (
-  content: string | undefined | false,
+  content: string | undefined | false | null,
   {
     embedding,
     source,
@@ -19,6 +93,7 @@ export const createPost = async (
     streaming = false,
     tool,
     depth = -1,
+    container,
   }: {
     embedding?: number[];
     source?: Agent;
@@ -27,13 +102,16 @@ export const createPost = async (
     streaming?: boolean;
     tool?: string;
     depth?: number;
+    container?: File;
   } = {},
 ): Promise<Post | void> => {
   const db = await getDB();
   try {
     let post: Post;
+    const scanned: (string | [string, Agent])[] = [];
     const mentions: Agent[] = [];
     const tools: string[] = [];
+
     if (content) {
       // create a message
       if (isSlashCommand(content)) {
@@ -41,11 +119,20 @@ export const createPost = async (
         return;
       } else {
         // create a post
-        const parsed = parsePostContent(content, mentions, tools);
-        const createdFiles = await createFiles({ files, source });
+        const parsed = await parsePostContent(content, scanned);
+        const createdFiles = await createFiles({ files, owner: source });
         const contents = createdFiles.map(({ content }) => content);
         contents.unshift(parsed);
         const content_ = contents.join("\n");
+        for (const scan of scanned) {
+          if (typeof scan === "string") {
+            tools.push(scan);
+          } else {
+            const [_, agent] = scan;
+            mentions.push(agent);
+          }
+        }
+
         [post] = await db.create(TABLE_POST, {
           timestamp: Date.now(),
           content: parsed,
@@ -54,29 +141,12 @@ export const createPost = async (
           hash: hash(content_),
           files: createdFiles,
           mentions,
+          tools,
           source,
           target,
+          container,
         }) as Post[];
       }
-    } else if (content === undefined) {
-      // create a post
-      if (!files.length) {
-        throw new Error("No content or files provided.");
-      }
-      const createdFiles = await createFiles({ files, source });
-      const contents = createdFiles.map(({ content }) => content);
-      const content = contents.join("\n");
-      [post] = await db.create(TABLE_POST, {
-        timestamp: Date.now(),
-        content,
-        embedding: embedding ? embedding : await embed(content),
-        count: tokenize(content).length,
-        hash: hash(content),
-        files: createdFiles,
-        mentions,
-        source,
-        target,
-      }) as Post[];
     } else if (content === null) {
       // temporary content will be created later.
       [post] = await db.create(TABLE_POST, {
@@ -84,14 +154,19 @@ export const createPost = async (
         embedding: await embed(""),
         source,
         target,
+        container,
       }) as Post[];
     } else if (content === false) {
+      // content will be generated by a tool or an agent.
       throw new Error("TODO: Implement");
       // const history = await getPostWithHistory(target, -1);
       // let content;
       // if (tool) {
       //   content = await toolResponse(tool, history);
       // } else if (source) {
+      //   if (!source.content) {
+      //     source = await updateAgent(source.id);
+      //   }
       //   content = await agentResponse(source, history);
       // }
 
@@ -104,6 +179,25 @@ export const createPost = async (
       //   source,
       //   tool,
       // }) as Post[];
+    } else if (!content) {
+      // Content undefined, but files possibly provided.
+      if (!files.length) {
+        throw new Error("No content or files provided.");
+      }
+      const createdFiles = await createFiles({ files, owner: source });
+      const contents = createdFiles.map(({ content }) => content);
+      const content = contents.join("\n");
+      [post] = await db.create(TABLE_POST, {
+        timestamp: Date.now(),
+        content,
+        embedding: embedding ? embedding : await embed(content),
+        count: tokenize(content).length,
+        hash: hash(content),
+        files: createdFiles,
+        source,
+        target,
+        container,
+      }) as Post[];
     } else {
       throw new Error("Invalid content provided.");
     }
@@ -112,17 +206,63 @@ export const createPost = async (
         return;
       }
       depth -= 1;
-      for (const tool of tools) {
-        createPost("", { tool, target: post, depth, streaming });
-      }
       for (const source of mentions) {
-        createPost("", { source, target: post, depth, streaming });
+        createPost(false, { source, target: post, depth, streaming });
+      }
+      for (const tool of tools) {
+        createPost(false, { tool, target: post, depth, streaming });
       }
     };
     next(depth);
+    createLog(post.id.toString());
+
+    if (source) {
+      await relate(source.id, REL_INSERTED, post.id);
+    }
+    if (target) {
+      await relate(target.id, REL_ELICITS, post.id);
+    }
+
     return post;
   } finally {
     await db.close();
   }
 };
+
+export const updatePendingPost = async (
+  id: RecordId,
+  {
+    content,
+    embedding,
+    files = [],
+    source,
+  }: {
+    content?: string;
+    embedding?: number[];
+    files?: FileProto[];
+    source?: Agent;
+  } = {},
+): Promise<Post> => {
+  if (!(content || "").trim()) {
+    throw new Error("Content is required to update a post.");
+  }
+  const db = await getDB();
+  try {
+    const mentions: string[] = [];
+    const content_ = await parsePostContent(content as string, mentions);
+    const post = await db.update(id, {
+      timestamp: Date.now(),
+      hash: hash(content_),
+      raw: content,
+      content: content_,
+      embedding: embedding ? embedding : await embed(content_),
+      source,
+    }) as Post;
+    await createFiles({ files, owner: source });
+    return post;
+  } finally {
+    await db.close();
+  }
+};
+
 export default createPost;

@@ -1,3 +1,5 @@
+"use client";
+
 import type {
   FC,
   ReactNode,
@@ -9,46 +11,56 @@ import { useRef, useState } from "react";
 import { CgAttachment } from "react-icons/cg";
 import Image from "next/image";
 import obfo from "obfo";
-
+import { mentionMatch } from "@/lib/util/match";
+import { HiOutlineSparkles } from "react-icons/hi";
 import type { PostExt } from "@/types/mod";
 type InputBoxProps = {
-  Wrapper?: ComponentClass<any>;
-  post: PostExt;
+  Wrapper?: ComponentClass<any> | string;
   postReady: (post: PostExt) => void;
   extractText?: (s: string) => void;
-  extractTextDelay?: number;
   className?: string;
   sourceId?: string;
   targetId?: string;
   children?: ReactNode;
+  buttonText?: string;
 };
 
 import { isSlashCommand } from "@/lib/util/command-format";
-import useDebouncedEffect from "@/lib/hooks/use-debounce";
 import fileToBase64 from "@/lib/util/to-base64";
 
 import { createPostExternal } from "@/lib/create/mod";
 
 const InputBox: FC<InputBoxProps> = ({
   Wrapper,
-  post,
   postReady,
   extractText,
-  extractTextDelay = 1000,
   sourceId,
   targetId,
   children,
-
+  buttonText = "Post",
   ...props
 }) => {
-  const [text, setText] = useState("");
+  const [text, doText] = useState("");
+  const isSlash = isSlashCommand(text);
+  const hasMention = !isSlash && mentionMatch.test(text);
   const [files, setFiles] = useState<any[]>([]);
   const filePicker = useRef<HTMLInputElement>(null);
   const textArea = useRef<HTMLTextAreaElement>(null);
   const addFile = (file: any) => setFiles((files) => [...files, file]);
   const removeFile = (index: number) =>
     setFiles(files.filter((_, i) => i !== index));
+
+  const setText = (text: string) => {
+    doText(text);
+    if (extractText) {
+      extractText(text);
+    }
+  };
+
   const attach: ChangeEventHandler = async (event) => {
+    // @ts-ignore
+    // Type error: This expression is not callable.
+    //  Type 'typeof import("obfo")' has no call signatures.
     const files = obfo(filePicker.current);
     if (!files || !files.length) {
       return;
@@ -76,7 +88,7 @@ const InputBox: FC<InputBoxProps> = ({
         return execute();
       case "/": {
         event.preventDefault();
-        if (isSlashCommand(text)) {
+        if (isSlash) {
           const indexOfSlash = text.indexOf("/");
           textArea.current!.value = text.slice(indexOfSlash + 1);
         } else {
@@ -92,26 +104,10 @@ const InputBox: FC<InputBoxProps> = ({
     }
   };
 
-  useDebouncedEffect(
-    () => {
-      const send = async () => {
-        if (extractText) {
-          extractText(text);
-        }
-      };
-      send();
-      return () => {
-        // cleanup
-      };
-    },
-    [text],
-    extractTextDelay
-  );
-
   const body = (
     <>
       <textarea
-        className={isSlashCommand(text) ? "slash-command" : ""}
+        className={isSlash ? "slash-command" : ""}
         placeholder="Type your message here"
         onChange={(event) => {
           setText(event.target.value);
@@ -123,6 +119,7 @@ const InputBox: FC<InputBoxProps> = ({
         <label className="label-file">
           <CgAttachment />
           <input
+            title="hidden file picker"
             ref={filePicker}
             type="file"
             data-obfo-cast="files"
@@ -157,7 +154,15 @@ const InputBox: FC<InputBoxProps> = ({
           </div>
         ))}
       </fieldset>
-      <button onClick={execute}>Go</button>
+      <button onClick={execute}>
+        {isSlash ? "/" : buttonText}
+        {hasMention ? (
+          <>
+            {" "}
+            <HiOutlineSparkles />
+          </>
+        ) : null}
+      </button>
     </>
   );
 

@@ -133,6 +133,9 @@ body {
 button,
 .button {
   padding: var(--size-padding-inside);
+  &:hover {
+    filter: brightness(0.9);
+  }
 }
 
 a,
@@ -354,6 +357,10 @@ article {
     margin: 0 auto;
     border-start-end-radius: 0;
     border-start-start-radius: 0;
+    > svg {
+      transform: scale(0.9);
+      margin-top: -3px;
+    }
   }
   &:has(> textarea.slash-command) {
     .label-file {
@@ -365,16 +372,6 @@ article {
     > button {
       background-color: black;
       color: green;
-    }
-
-    > button {
-      color: transparent;
-      position: relative;
-      &::before,
-      &::after {
-        color: green;
-        content: "/";
-      }
     }
   }
 }

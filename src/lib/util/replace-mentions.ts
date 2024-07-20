@@ -1,4 +1,7 @@
-export type MentionCallback = (mention: string) => Promise<string> | string;
+export type MentionCallback = (
+  mention: string,
+) => Promise<string | [string, any]>;
+
 const defaultCallback: MentionCallback = (mention) => mention;
 const replaceMentions = async (
   text: string,
@@ -30,11 +33,14 @@ const replaceMentions = async (
 
 export const replaceAndAccumulate = (
   replacer: MentionCallback,
-  accumulator: string[][],
-) => {
+  accumulator: (any)[],
+): MentionCallback => {
   return async (mention: string) => {
     const replacement = await replacer(mention);
-    accumulator.push([mention, replacement]);
+    accumulator.push(replacement);
+    if (Array.isArray(replacement)) {
+      return replacement[0];
+    }
     return replacement;
   };
 };

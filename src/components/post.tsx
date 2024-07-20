@@ -6,7 +6,7 @@ import { RxExternalLink } from "react-icons/rx";
 
 type PostProps = {
   post: PostExt;
-  Wrapper?: ComponentClass<any>;
+  Wrapper?: ComponentClass<any> | string;
   children?: ReactNode;
   className?: string;
 };

@@ -12,19 +12,38 @@ export const DB_DATABASE = read("DB_DATABASE", { defaultValue: "test" });
 export const DB_NAMESPACE = read("DB_NAMESPACE", { defaultValue: "test" });
 export const DB_USERNAME = read("DB_USERNAME", { defaultValue: "root" });
 export const DB_PASSWORD = read("DB_PASSWORD", { defaultValue: "root" });
-// Tables
-export const TABLE_SETTINGS = `settings`;
-export const TABLE_AGENT = `agent`;
-export const TABLE_FILE = `file`;
-export const TABLE_POST = `post`;
-export const TABLE_TOOL = `tool`;
+// // Tables
+// export const TABLE_SETTINGS = `settings`;
+// export const TABLE_AGENT = `agent`;
+// export const TABLE_FILE = `file`;
+// export const TABLE_POST = `post`;
+// export const TABLE_TOOL = `tool`;
+// export const TABLE_LOG = `log`;
+// export const ALL_TABLES = [
+//   TABLE_SETTINGS,
+//   TABLE_AGENT,
+//   TABLE_FILE,
+//   TABLE_POST,
+//   TABLE_TOOL,
+//   TABLE_LOG,
+// ];
 export const ALL_TABLES = [
+  "settings",
+  "agent",
+  "file",
+  "post",
+  "tool",
+  "log",
+];
+export const [
   TABLE_SETTINGS,
   TABLE_AGENT,
   TABLE_FILE,
   TABLE_POST,
   TABLE_TOOL,
-];
+  TABLE_LOG,
+] = ALL_TABLES;
+
 //
 export const TABLE_SETTINGS_ID_CURRENT = `current`;
 
@@ -119,6 +138,11 @@ export const SIZE_KNN = read("SIZE_KNN", {
   cast: parseInt,
 });
 
+export const CHAR_LIMIT = read("CHAR_LIMIT", {
+  defaultValue: 2 ** 12,
+  cast: parseInt,
+});
+
 export const API_KEY_GROQ = read("API_KEY_GROQ");
 export const API_KEY_OPENAI = read("API_KEY_OPENAI");
 export const API_KEY_ANTHROPIC = read("API_KEY_ANTHROPIC");
@@ -208,6 +232,12 @@ export const SETTINGS_DEFAULT: Setting[] = [
     type: "select",
     options: ["sentence", "semantic", "agentic"],
     defaultValue: MODEL_EMBEDDING,
+  },
+  {
+    name: "charLimit",
+    label: "Character Limit",
+    type: "number",
+    defaultValue: CHAR_LIMIT,
   },
 ];
 
@@ -300,3 +330,20 @@ export const AI_SAYINGS: [string, string][] = [
   ["The early worm gets the gradient.", "Robin Williamson-Watanabe"],
   ["An apple a day keeps the model decay away.", "Sir Isaac Newural Network"],
 ];
+
+export const FS_ACCESS_KEY = read("FS_ACCESS_KEY", {
+  defaultValue: "minioadmin",
+});
+export const FS_SECRET_KEY = read("FS_SECRET_KEY", {
+  defaultValue: "minioadmin",
+});
+export const FS_ENDPOINT = read("FS_ENDPOINT", {
+  defaultValue: "localhost",
+});
+export const FS_BUCKET = read("FS_BUCKET", {
+  defaultValue: "files",
+});
+export const FS_PORT = read("FS_PORT", {
+  defaultValue: 9000,
+  cast: parseInt,
+});

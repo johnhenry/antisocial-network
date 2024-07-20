@@ -1,10 +1,3 @@
-// Please use the below type definitions below to synthesize a list of roughly 10 items that satsify PostExt, roughly 10 items that satisfy FileExt, and rougly 10 items that satisfy AgentExt.
-// Uses variety and creativity. Where items are optional, please include examples where the items are fulfilled and not.
-// Where items are list, please include examples where there are few items and where ther are multiple (up to 5).
-// Define each of these items as constants. Use created items in the definition of other items.
-
-// Once you've done that, collect each item type into an arrays and export them
-
 import type { BaseMessageChunk } from "@langchain/core/messages";
 import type { RecordId } from "surrealdb.js";
 
@@ -15,36 +8,64 @@ export type Post = {
   files?: File[];
   mentions?: Agent[];
   content?: string;
+  count?: number;
   hash?: string;
   target?: Post;
   source?: Agent;
-  tool?: string; // no spaces, \w characters, dashes, and colons
+  container?: File;
+  bibliography?: Post[];
+  tools?: string[]; // match:/\w[\w:-]*\w/
 };
 
 export type PostExt =
-  & Omit<Post, "id" | "embedding" | "files" | "mentions" | "target" | "source">
+  & Omit<
+    Post,
+    | "id"
+    | "embedding"
+    | "files"
+    | "mentions"
+    | "target"
+    | "source"
+    | "container"
+    | "bibliography"
+  >
   & {
     id: string; // e.g. post:i24y4ossr9er, post:aew482kngs9
     files?: FileExt[];
     mentions?: AgentExt[];
     target?: PostExt;
     source?: AgentExt;
+    container?: FileExt;
+    bibliography?: PostExt[];
   }; // content for PostEx is a textual summary of the content
 
 export type Agent = {
   id: RecordId;
   timestamp: number;
-  name: string;
+  name: string; // match:/\w[\w:-]*\w/
   description: string;
   content: string;
+  count: number;
   hash: string;
   embedding: number[];
   qualities: [string, string][];
-  combinedQualities: string;
+  combinedQualities?: string;
   parameters: AgentParameters;
-  image: string;
-  indexed: string;
+  image?: string;
+  indexed?: string;
 };
+
+// Agent with only: id, name, and embedding
+export type AgentTemp = Omit<
+  Agent,
+  | "timestamp"
+  | "description"
+  | "content"
+  | "count"
+  | "hash"
+  | "qualities"
+  | "parameters"
+>;
 
 export type AgentExt = Omit<Agent, "id" | "embedding"> & {
   id: string; // e.g. agent:6yweoaerserosr, agent:9nlanlj9adf
@@ -54,10 +75,11 @@ export type File = {
   id: RecordId;
   timestamp: number;
   content: string;
+  count: number;
   hash: string;
   type: string; // e.g image/jpeg, application/json
-  data: BinaryData;
   embedding: number[];
+  author?: string;
   publisher?: string;
   date?: string;
   name?: string;
@@ -66,13 +88,19 @@ export type File = {
 
 export type FileExt = Omit<File, "id" | "embedding" | "data" | "owner"> & {
   id: string; // e.g. file:y24ros245ser, file:nl6d3anlj9adff
-  data?: BinaryData;
   owner?: AgentExt;
 };
 
 export type FileProto = Omit<
   File,
-  "id" | "timestamp" | "embedding" | "data" | "hash" | "data" | "embedding"
+  | "id"
+  | "timestamp"
+  | "embedding"
+  | "data"
+  | "hash"
+  | "data"
+  | "embedding"
+  | "count"
 >;
 
 export type AgentParameters = {
@@ -89,6 +117,7 @@ export type AgentParameters = {
   mirostat?: number;
   mirostatEta?: number;
   mirostatTau?: number;
+  maxTokens?: number; // TODO: was this here before? Did I delete it on purpose?
   numBatch?: number;
   numCtx?: number;
   numGpu?: number;
@@ -139,3 +168,14 @@ export type LangchainGenerator = AsyncGenerator<
   void,
   unknown
 >;
+
+export type Log = {
+  id: RecordId;
+  timestamp: number;
+  content: string;
+  metadata?: JSON;
+};
+
+export type LogExt = Omit<Log, "id"> & {
+  id: string; // e.g. log:9y4o5sersr, log:9nlanlj9ad
+};

@@ -1,13 +1,13 @@
 "use server";
 
-import type { Agent, Post, PostExt, ProtoFile } from "@/types/mod";
+import type { Agent, FileProto, Post, PostExt } from "@/types/mod";
 
 import { StringRecordId } from "surrealdb.js";
 import { getDB } from "@/lib/db";
 
 import createPost from "@/lib/create/post";
 
-import { convertPostToExt } from "@/lib/util/convert-types";
+import { mapPostToPostExt } from "@/lib/util/convert-types";
 
 export const createPostExternal = async (
   content: string | undefined | false,
@@ -20,7 +20,7 @@ export const createPostExternal = async (
     depth = -1,
   }: {
     embedding?: number[];
-    files?: ProtoFile[];
+    files?: FileProto[];
     sourceId?: string;
     targetId?: string;
     streaming?: boolean;
@@ -44,7 +44,7 @@ export const createPostExternal = async (
       depth,
     });
     if (result) {
-      return convertPostToExt(result);
+      return mapPostToPostExt(result);
     }
   } finally {
     db.close();

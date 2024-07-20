@@ -12,10 +12,11 @@ import { OllamaFunctions } from "@langchain/community/experimental/chat_models/o
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { MODEL_FUNCTIONS, OLLAMA_LOCATION } from "@/config/mod";
 import { JsonOutputFunctionsParser } from "@langchain/core/output_parsers/openai_functions";
-import { getSettingsObject } from "@/lib/read";
-import genRandomString from "@/lib/util/gen-random-string";
+import { getSettingsObject } from "@/lib/create/settings";
 import { RunnableLike } from "@langchain/core/runnables";
 import { getEncoding } from "js-tiktoken";
+import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
+
 type FunctionDescriptor = {
   name: string;
   description: string;
@@ -128,7 +129,7 @@ export const respondFunc = async (
   );
 };
 
-export const embed = async (prompt: string = genRandomString()) => {
+export const embed = async (prompt: string = genRandSurrealQLString()) => {
   const settings = await getSettingsObject();
   const [source, model] = settings.modelembedding!.split("::");
   try {
@@ -190,12 +191,13 @@ export const PROMPTS_SUMMARIZE = {
 export const summarize = async (
   content: string,
   prompt: string = PROMPTS_SUMMARIZE.SUMMARY,
+  charLimit: number = 2 ** 12,
 ): Promise<string> => {
   const { content: output } = await respond(
     {
       messages: [["user", `${prompt}\n\n{content}`]],
       invocation: {
-        content,
+        content: content.substring(0, charLimit),
       },
     },
   ) as BaseMessageChunk;

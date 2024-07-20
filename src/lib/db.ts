@@ -106,17 +106,17 @@ const ensureRecordId = (id: RecordId | StringRecordId | string) => {
 };
 
 export const relate = async (
-  inn: string,
+  inn: RecordId,
   relationship: string,
-  out: string,
+  out: RecordId,
   data?: Record<string, any>,
 ) => {
   const db = await getDB();
   try {
     const result = await db.relate(
-      ensureRecordId(inn),
+      inn,
       relationship,
-      ensureRecordId(out),
+      out,
       data,
     );
     return result;
