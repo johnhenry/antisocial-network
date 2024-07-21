@@ -131,7 +131,6 @@ a,
 .a {
   text-decoration: none;
   &:hover {
-    font-weight: bold;
   }
   p > & {
     text-decoration: underline;
@@ -194,6 +193,13 @@ article {
     padding-right: inherit;
     padding-top: calc(var(--size-header) + var(--size-padding));
   }
+}
+
+h1 {
+  font-size: 1.75rem;
+}
+h2 {
+  font-size: 1.5rem;
 }
 
 body > main {
@@ -332,6 +338,35 @@ body > main {
     > button {
       background-color: black;
       color: green;
+    }
+  }
+}
+.settings-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  > label {
+    width: 100%;
+    border: 1px solid var(--color-text);
+    display: flex;
+    justify-content: space-between;
+    > span {
+      border: 1px dotted var(--color-midground);
+      display: inline-block;
+      padding: var(--size-gap-inner);
+      background-color: var(--color-text);
+      color: var(--color-midground);
+      width: 33%;
+      margin-right: auto;
+      &:hover {
+        filter: brightness(0.9);
+      }
+    }
+    > :not(span) {
+      height: 100%;
+      padding: 0;
+      width: 67%;
+      padding: 0.5rem;
     }
   }
 }

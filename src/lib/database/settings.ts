@@ -30,3 +30,23 @@ export const getSettingsObject = async (): Promise<
   }, {} as Record<string, string | undefined>);
   return settings || {};
 };
+
+export const updateSettings = async (
+  settings: Setting[],
+): Promise<Setting[]> => {
+  const db = await getDB();
+  try {
+    // Fetch current settings
+    await db.update(new StringRecordId("settings:current"), {
+      data: settings,
+      updated_at: new Date().toISOString(),
+    });
+    return settings;
+  } catch (error) {
+    console.error("Error updating settings:", error);
+    return [];
+  } finally {
+    // Close the connection
+    db.close();
+  }
+};
