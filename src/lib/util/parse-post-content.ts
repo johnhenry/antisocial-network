@@ -4,7 +4,7 @@ import { getDB } from "@/lib/db";
 import { replaceAndAccumulate } from "@/lib/util/replace-mentions";
 import replaceMentions from "@/lib/util/replace-mentions";
 import { TABLE_AGENT } from "@/config/mod";
-import { createTempAgent } from "@/lib/create/agent";
+import { createTempAgent } from "@/lib/database/agent";
 
 const getAgentIdByNameOrCreate = async (
   name: string,

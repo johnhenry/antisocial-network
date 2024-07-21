@@ -7,7 +7,7 @@ import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
 import { StringRecordId } from "surrealdb.js";
 import { RecordId } from "surrealdb.js";
 import removeValuesFromObject from "@/lib/util/removeValuesFromObject";
-import { createFiles } from "@/lib/create/file";
+import { createFiles } from "@/lib/database/file";
 
 export const nameExists = async (name: string): Promise<boolean> => {
   const db = await getDB();

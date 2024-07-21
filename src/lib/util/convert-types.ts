@@ -20,7 +20,17 @@ import {
   LogExt,
   Post,
   PostExt,
+  PostPlus,
+  PostPlusExt,
 } from "@/types/mod";
+
+export const mapLogToLogExt = (agent: Log): LogExt => {
+  const { id, ...rest } = agent;
+  return {
+    ...rest,
+    id: id.toString(),
+  };
+};
 
 export const mapAgentToAgentExt = (agent: Agent): AgentExt => {
   const { id, embedding, ...rest } = agent;
@@ -63,10 +73,19 @@ export const mapPostToPostExt = (post: Post): PostExt => {
   };
 };
 
-export const mapLogToLogExt = (agent: Log): LogExt => {
-  const { id, ...rest } = agent;
+export const mapPostPlusToPostPlusExt = (postPlus: PostPlus): PostPlusExt => {
+  const {
+    post,
+    before,
+    after,
+    elicits,
+    remembers,
+  } = postPlus;
   return {
-    ...rest,
-    id: id.toString(),
+    post: mapPostToPostExt(post),
+    before: before ? mapPostToPostExt(before) : undefined,
+    after: after ? mapPostToPostExt(after) : undefined,
+    elicits: elicits?.map(mapPostToPostExt),
+    remembers: remembers?.map(mapAgentToAgentExt),
   };
 };

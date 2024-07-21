@@ -17,6 +17,22 @@ export type Post = {
   tools?: string[]; // match:/\w[\w:-]*\w/
 };
 
+export type PostPlus = {
+  post: Post;
+  before?: Post;
+  after?: Post;
+  elicits?: Post[];
+  remembers?: Agent[];
+};
+
+export type PostPlusExt = {
+  post: PostExt;
+  before?: PostExt;
+  after?: PostExt;
+  elicits?: PostExt[];
+  remembers?: AgentExt[];
+};
+
 export type PostExt =
   & Omit<
     Post,
@@ -64,7 +80,7 @@ export type AgentTemp = Omit<
   | "count"
   | "hash"
   | "qualities"
-  | "parameters"
+  | "parameterfs"
 >;
 
 export type AgentExt = Omit<Agent, "id" | "embedding"> & {

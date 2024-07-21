@@ -343,6 +343,7 @@ body > main {
   display: flex;
   height: 100vh; /* functional: cannot be a percentage */
   flex-direction: column;
+  width: 100%;
   > * {
     overflow-y: auto;
     min-height: 125%;
@@ -406,7 +407,6 @@ ul:has(> :where(.post)) {
 article.logs {
   .infinite-scroller-window {
     background-color: black;
-    width: 100%;
   }
 }
 

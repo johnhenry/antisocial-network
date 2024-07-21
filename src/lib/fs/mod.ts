@@ -36,3 +36,16 @@ export const putObject = async (
     readableStream,
   );
 };
+
+export const getObject = async (id: string) => {
+  const minioClient = new Minio.Client({
+    endPoint: FS_ENDPOINT,
+    port: FS_PORT,
+    useSSL: false,
+    accessKey: FS_ACCESS_KEY,
+    secretKey: FS_SECRET_KEY,
+  });
+
+  const stream = minioClient.getObject(FS_BUCKET, id);
+  return stream;
+};

@@ -3,13 +3,13 @@
 import type { FC } from "react";
 import type { PostExt } from "@/types/mod";
 import { useEffect, useState } from "react";
-import { postExtArray } from "@/fake-data";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
+import { getPostsExternal } from "@/lib/database/mod";
 import InfiniteScroller from "@/components/infinite-scroller";
-
 import Post from "@/components/post";
 import InputBox from "@/components/input-box";
 type PageProps = {};
+const SIZE = 10;
 const Page: FC<PageProps> = ({}) => {
   const [searchText, setSearchText] = useState("");
   const [prependedItems, setPrepended] = useState<PostExt[]>([]);
@@ -26,15 +26,13 @@ const Page: FC<PageProps> = ({}) => {
     let offset = start;
     return async () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      const newItems = postExtArray.slice(offset, offset + 10);
-      offset += newItems.length;
-      return newItems;
+      const newItmes = await getPostsExternal(offset, SIZE);
+      offset += newItmes.length;
+      return newItmes;
     };
   };
 
   const postReady = (post: PostExt) => {
-    if (confirm(`navigate to /post/${post.id} ?`)) {
-    }
     setPrepended([post]);
     // TOOO: add post to scroll list?
     // can i add some method that allows me to prepend items to the list
@@ -51,14 +49,6 @@ const Page: FC<PageProps> = ({}) => {
 
   return (
     <article>
-      <details>
-        <summary>Previous Posts</summary>
-        <ul className="list-tight">
-          {postExtArray.map((post) => (
-            <Post key={post.id} Wrapper={"li"} className="post" {...post} />
-          ))}
-        </ul>
-      </details>
       <InputBox
         Wrapper={"div"}
         className="input-box"

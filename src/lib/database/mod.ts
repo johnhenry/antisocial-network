@@ -1,14 +1,29 @@
 "use server";
 
-import type { Agent, FileProto, Post, PostExt } from "@/types/mod";
+import type {
+  Agent,
+  FileProto,
+  LogExt,
+  Post,
+  PostExt,
+  PostPlusExt,
+} from "@/types/mod";
 
-import { StringRecordId } from "surrealdb.js";
+import { RecordId, StringRecordId } from "surrealdb.js";
 import { getDB } from "@/lib/db";
 
-import createPost from "@/lib/create/post";
-import { getLogs } from "@/lib/create/log";
+import createPost, {
+  getPost,
+  getPostPlus,
+  getPosts,
+} from "@/lib/database/post";
+import { getLogs } from "@/lib/database/log";
 
-import { mapLogToLogExt, mapPostToPostExt } from "@/lib/util/convert-types";
+import {
+  mapLogToLogExt,
+  mapPostPlusToPostPlusExt,
+  mapPostToPostExt,
+} from "@/lib/util/convert-types";
 
 export const createPostExternal = async (
   content: string | undefined | false,
@@ -55,12 +70,30 @@ export const createPostExternal = async (
 export const getLogsExternal = async (
   offset: number,
   limit: number,
+): Promise<LogExt[]> => {
+  const logs = await getLogs(offset, limit);
+  return logs.map(mapLogToLogExt);
+};
+
+export const getPostsExternal = async (
+  offset: number,
+  limit: number,
 ): Promise<PostExt[]> => {
-  const db = await getDB();
-  try {
-    const logs = await getLogs(offset, limit);
-    return logs.map(mapLogToLogExt);
-  } finally {
-    db.close();
-  }
+  const posts = await getPosts(offset, limit);
+  return posts.map(mapPostToPostExt);
+};
+
+export const getPostExternal = async (
+  id: string,
+): Promise<PostExt> => {
+  const post = await getPost(new StringRecordId(id));
+
+  return mapPostToPostExt(post);
+};
+
+export const getPostPlusExternal = async (
+  id: string,
+): Promise<PostPlusExt> => {
+  const postPlus = await getPostPlus(new StringRecordId(id));
+  return mapPostPlusToPostPlusExt(postPlus);
 };

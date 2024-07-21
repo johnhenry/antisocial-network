@@ -28,7 +28,7 @@ type InputBoxProps = {
 import { isSlashCommand } from "@/lib/util/command-format";
 import fileToBase64 from "@/lib/util/to-base64";
 
-import { createPostExternal } from "@/lib/create/mod";
+import { createPostExternal } from "@/lib/database/mod";
 
 const InputBox: FC<InputBoxProps> = ({
   Wrapper,
@@ -50,6 +50,8 @@ const InputBox: FC<InputBoxProps> = ({
   const removeFile = (index: number) =>
     setFiles(files.filter((_, i) => i !== index));
 
+  const ready = text.trim() || files.length;
+
   const setText = (text: string) => {
     doText(text);
     if (extractText) {
@@ -68,12 +70,25 @@ const InputBox: FC<InputBoxProps> = ({
     for (const file of files) {
       const content = await fileToBase64(file);
       const { name, type } = file;
-      addFile({ name, type, content });
+      addFile({ name, type, content, sourceId, targetId });
     }
     (event.target as HTMLInputElement).value = "";
   };
   const execute = async () => {
-    const post = await createPostExternal(text, { files });
+    setTimeout(() => {
+      if (textArea.current) {
+        textArea.current.value = "";
+        // const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        //   window.HTMLInputElement.prototype,
+        //   "value"
+        // ).set;
+        // nativeInputValueSetter.call(textArea.current, "");
+        const event = new Event("input", { bubbles: true });
+        textArea.current.dispatchEvent(event);
+        setFiles([]);
+      }
+    });
+    const post = await createPostExternal(text, { files, sourceId, targetId });
     if (post && postReady) {
       postReady(post);
     }
@@ -154,15 +169,17 @@ const InputBox: FC<InputBoxProps> = ({
           </div>
         ))}
       </fieldset>
-      <button onClick={execute}>
-        {isSlash ? "/" : buttonText}
-        {hasMention ? (
-          <>
-            {" "}
-            <HiOutlineSparkles />
-          </>
-        ) : null}
-      </button>
+      {ready ? (
+        <button onClick={execute}>
+          {isSlash ? "/" : buttonText}
+          {hasMention ? (
+            <>
+              {" "}
+              <HiOutlineSparkles />
+            </>
+          ) : null}
+        </button>
+      ) : null}
     </>
   );
 

@@ -2,7 +2,7 @@
 import type { FC, ComponentClass } from "react";
 import type { LogExt } from "@/types/mod";
 import InfiniteScroller from "@/components/infinite-scroller";
-import { getLogsExternal } from "@/lib/create/mod";
+import { getLogsExternal } from "@/lib/database/mod";
 import { usePathname } from "next/navigation";
 
 import Log from "@/components/log";

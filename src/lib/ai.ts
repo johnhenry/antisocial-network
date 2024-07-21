@@ -12,7 +12,7 @@ import { OllamaFunctions } from "@langchain/community/experimental/chat_models/o
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { MODEL_FUNCTIONS, OLLAMA_LOCATION } from "@/config/mod";
 import { JsonOutputFunctionsParser } from "@langchain/core/output_parsers/openai_functions";
-import { getSettingsObject } from "@/lib/create/settings";
+import { getSettingsObject } from "@/lib/database/settings";
 import { RunnableLike } from "@langchain/core/runnables";
 import { getEncoding } from "js-tiktoken";
 import { genRandSurrealQLString } from "@/lib/util/gen-random-string";

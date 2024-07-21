@@ -1,20 +1,28 @@
-import type { Agent, File, FileProto, Post, PostExt } from "@/types/mod";
+import type { Agent, File, FileProto, Post, PostPlus } from "@/types/mod";
 
-import { REL_ELICITS, REL_INSERTED, TABLE_POST } from "@/config/mod";
+import {
+  REL_ELICITS,
+  REL_INSERTED,
+  REL_PRECEDES,
+  REL_REMEMBERS,
+  TABLE_AGENT,
+  TABLE_POST,
+} from "@/config/mod";
 import { embed, tokenize } from "@/lib/ai";
 
 import { getDB, relate } from "@/lib/db";
 import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
 import parsePostContent from "@/lib/util/parse-post-content";
-import { createFiles } from "@/lib/create/file";
-import createLog from "@/lib/create/log";
-import { getAgent } from "@/lib/create/agent";
-
-import { RecordId } from "surrealdb.js";
+import { createFiles } from "@/lib/database/file";
+import createLog from "@/lib/database/log";
+import { getEntity, getLatest } from "@/lib/database/helpers";
+import { RecordId, StringRecordId } from "surrealdb.js";
 
 import hash from "@/lib/util/hash";
-
+import renderText from "@/lib/util/render-text";
+import { recordMatch } from "@/lib/util/match";
+import replaceMentions from "@/lib/util/replace-mentions";
 // map a list of post to messages
 const mapPostsToMessages = (posts: Post[]) => {
   const messages = [];
@@ -189,7 +197,7 @@ export const createPost = async (
       const content = contents.join("\n");
       [post] = await db.create(TABLE_POST, {
         timestamp: Date.now(),
-        content,
+        content: "",
         embedding: embedding ? embedding : await embed(content),
         count: tokenize(content).length,
         hash: hash(content),
@@ -260,6 +268,89 @@ export const updatePendingPost = async (
     }) as Post;
     await createFiles({ files, owner: source });
     return post;
+  } finally {
+    await db.close();
+  }
+};
+
+export const getPost = getEntity<Post>;
+export const getPosts = getLatest<Post>(TABLE_POST);
+
+export const replaceAgentIdWithName = async (
+  id: string,
+): Promise<string | null> => {
+  const db = await getDB();
+
+  try {
+    try {
+      const [[agent]]: Agent[][] = await db.query(
+        `SELECT name FROM ${TABLE_AGENT} WHERE id = $id`,
+        {
+          id: new StringRecordId(id),
+        },
+      );
+      return agent ? agent.name : id;
+    } catch (e) {
+      console.error(e);
+      return id;
+    }
+  } finally {
+    await db.close();
+  }
+};
+
+import { replaceContentWithLinks } from "@/lib/database/helpers";
+
+export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
+  const queries = [];
+  const ADDITIONAL_FIELDS =
+    `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source`;
+  // select target
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where id = $id`,
+  );
+  // select incoming relationships
+  // precedes
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where ->${REL_PRECEDES}->(post where id = $id)`,
+  );
+  // // select outgoing relationships
+  // // precedes
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_PRECEDES}<-(post where id = $id)`,
+  );
+  // // elicits
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_ELICITS}<-(post where id = $id)`,
+  );
+  // // remembers
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM agent where <-${REL_REMEMBERS}<-(post where id = $id)`,
+  );
+  const db = await getDB();
+  const [
+    [post],
+    [before],
+    [after],
+    elicits,
+    remembers,
+  ]: [[Post], [Post], [Post], Post[], Agent[]] = await db
+    .query(queries.join(";"), {
+      id,
+    });
+  const obj: PostPlus = {
+    post: await replaceContentWithLinks(post, true),
+    before: before ? await replaceContentWithLinks(before) : undefined,
+    after: after ? await replaceContentWithLinks(after) : undefined,
+    elicits: elicits
+      ? await Promise.all(
+        elicits.filter((x) => x).map((post) => replaceContentWithLinks(post)),
+      )
+      : undefined,
+    remembers,
+  };
+  try {
+    return obj;
   } finally {
     await db.close();
   }

@@ -14,7 +14,20 @@ type PostFileProps = {
 };
 
 const PostFile: FC<PostFileProps> = ({ file }) => {
-  return <img src="https://placedog.net/256/256/1" alt="A dog" />;
+  return file.type.startsWith("image/") ? (
+    <img
+      src={`/file/${file.id}/raw`}
+      width="256"
+      alt={file.content}
+      title={file.content}
+    ></img>
+  ) : (
+    <iframe
+      src={`/file/${file.id}/raw`}
+      width="256"
+      title={file.content}
+    ></iframe>
+  );
 };
 
 const Post: FC<PostProps> = ({
@@ -41,7 +54,12 @@ const Post: FC<PostProps> = ({
           </a>
         ) : null}
         <span className="timestamp">{timeAgo(timestamp)}</span>
-        <span className="content">{content}</span>
+        {content ? (
+          <span
+            className="content"
+            dangerouslySetInnerHTML={{ __html: content }}
+          ></span>
+        ) : null}
         <a href={`/post/${id}`} className="post-link">
           <RxExternalLink />
         </a>

@@ -87,9 +87,8 @@ const InfiniteScroller = ({
 
   const body = (
     <>
-      {items.map((item: HasId, index) => {
-        const { id, ...props } = item;
-        return <ChildRenderer key={id} {...childProps} {...props} />;
+      {items.map((item: HasId) => {
+        return <ChildRenderer key={item.id} {...childProps} {...item} />;
       })}
       <FinalItem ref={lastItemRef} disabled={loading ? null : true} />
     </>

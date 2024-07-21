@@ -3,7 +3,7 @@ import type { Log } from "@/types/mod";
 import { print as printToConsole } from "@/lib/util/logging";
 import { TABLE_LOG } from "@/config/mod";
 import { getDB } from "@/lib/db";
-
+import { getLatest } from "@/lib/database/helpers";
 export const createLog = async (
   target: string,
   { type = "created", content, metadata, print = true, drop = false }: {
@@ -35,25 +35,6 @@ export const createLog = async (
   }
 };
 
-export const getLogs = async (
-  offset: number,
-  limit: number,
-): Promise<Log[]> => {
-  const db = await getDB();
-  try {
-    const query = `
-            SELECT *
-            FROM ${TABLE_LOG}
-            ORDER BY timestamp DESC
-            LIMIT ${limit}
-            START ${offset}
-        `;
-
-    const [result] = await db.query(query) as Log[][];
-    return result;
-  } finally {
-    db.close();
-  }
-};
+export const getLogs = getLatest<Log>(TABLE_LOG);
 
 export default createLog;

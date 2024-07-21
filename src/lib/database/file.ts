@@ -13,7 +13,7 @@ import { getDB, relate } from "@/lib/db";
 
 import { RecordId } from "surrealdb.js";
 
-import { getSettingsObject } from "@/lib/create/settings";
+import { getSettingsObject } from "@/lib/database/settings";
 
 import semanticChunker from "@/lib/chunkers/semantic";
 import {
@@ -27,9 +27,13 @@ import hash from "@/lib/util/hash";
 import base64to from "@/lib/util/base64-to";
 import parsePDF from "@/lib/parsers/pdf";
 
-import { createPost } from "@/lib/create/post";
+import { createPost } from "@/lib/database/post";
 
 import { putObject } from "@/lib/fs/mod";
+
+import { getEntity } from "@/lib/database/helpers";
+
+export const getFile = getEntity<File>;
 
 export const createFiles = async (
   { files, owner }: { files: FileProto[]; owner?: Agent },
