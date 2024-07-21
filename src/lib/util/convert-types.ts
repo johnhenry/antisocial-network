@@ -14,8 +14,12 @@
 import {
   Agent,
   AgentExt,
+  AgentPlus,
+  AgentPlusExt,
   File,
   FileExt,
+  FilePlus,
+  FilePlusExt,
   Log,
   LogExt,
   Post,
@@ -40,12 +44,38 @@ export const mapAgentToAgentExt = (agent: Agent): AgentExt => {
   };
 };
 
+export const mapAgentPlusToAgentPlusExt = (
+  agentPlus: AgentPlus,
+): AgentPlusExt => {
+  const {
+    agent,
+    remembrances,
+    bookmarks,
+  } = agentPlus;
+  return {
+    agent: mapAgentToAgentExt(agent),
+    remembrances: remembrances ? remembrances.map(mapPostToPostExt) : undefined,
+    bookmarks: bookmarks ? bookmarks.map(mapFileToFileExt) : undefined,
+  };
+};
+
 export const mapFileToFileExt = (file: File): FileExt => {
   const { id, embedding, owner, ...rest } = file;
   return {
     ...rest,
     id: id.toString(),
     owner: owner ? mapAgentToAgentExt(owner) : undefined,
+  };
+};
+
+export const mapFilePlusToFilePlusExt = (filePlus: FilePlus): FilePlusExt => {
+  const {
+    file,
+    bookmarkers,
+  } = filePlus;
+  return {
+    file: mapFileToFileExt(file),
+    bookmarkers: bookmarkers?.map(mapAgentToAgentExt),
   };
 };
 

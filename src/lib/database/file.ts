@@ -1,6 +1,6 @@
 import exifr from "exifr";
 
-import { Agent, File, FileProto, Post } from "@/types/mod";
+import { Agent, File, FilePlus, FileProto, Post } from "@/types/mod";
 import { TABLE_FILE } from "@/config/mod";
 import {
   REL_BOOKMARKS,
@@ -8,10 +8,11 @@ import {
   REL_INSERTED,
   REL_PRECEDES,
 } from "@/config/mod";
+import { getEntity, getLatest } from "@/lib/database/helpers";
 
 import { getDB, relate } from "@/lib/db";
 
-import { RecordId } from "surrealdb.js";
+import { RecordId, StringRecordId } from "surrealdb.js";
 
 import { getSettingsObject } from "@/lib/database/settings";
 
@@ -31,9 +32,8 @@ import { createPost } from "@/lib/database/post";
 
 import { putObject } from "@/lib/fs/mod";
 
-import { getEntity } from "@/lib/database/helpers";
-
 export const getFile = getEntity<File>;
+export const getFiles = getLatest<File>(TABLE_FILE);
 
 export const createFiles = async (
   { files, owner }: { files: FileProto[]; owner?: Agent },
@@ -196,7 +196,7 @@ export const createFile = async (
 };
 
 export const updateFile = async (
-  id: RecordId,
+  id: StringRecordId,
   {
     name,
     author,
@@ -211,14 +211,47 @@ export const updateFile = async (
 ): Promise<File> => {
   const db = await getDB();
   try {
-    // get agent
-    const doc = await db.select(id) as File;
-    doc.name = name;
-    doc.author = author;
-    doc.publisher = publisher;
-    doc.date = date;
-    const newFile = await db.update(id, doc) as File;
+    // get file
+    const file = await db.select<File>(id);
+    file.name = name;
+    file.author = author;
+    file.publisher = publisher;
+    file.date = date;
+    const newFile = await db.update<File>(id, file);
     return newFile;
+  } finally {
+    await db.close();
+  }
+};
+
+export const getFilePlus = async (id: StringRecordId): Promise<FilePlus> => {
+  const queries = [];
+  const ADDITIONAL_FIELDS =
+    `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source`;
+  // select target
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM file where id = $id`,
+  );
+  // select incoming relationships
+  // precedes
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data from agent where ->${REL_BOOKMARKS}->(file where id = $id)`,
+  );
+
+  const db = await getDB();
+  try {
+    const [[file], bookmarkers]: [[File], Agent[]] = await db.query(
+      queries.join(";"),
+      {
+        id,
+      },
+    );
+    const obj = {
+      file,
+      bookmarkers,
+    };
+
+    return obj;
   } finally {
     await db.close();
   }

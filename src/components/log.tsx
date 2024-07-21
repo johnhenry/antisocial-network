@@ -17,7 +17,7 @@ const Log: FC<LogProps> = ({
   Wrapper = "li",
   ...props
 }) => {
-  const [targetType, targetId] = target.split(":");
+  const [targetType] = target.split(":");
 
   const body = (
     <>
@@ -27,7 +27,7 @@ const Log: FC<LogProps> = ({
           {new Date(timestamp).toLocaleString()}
         </span>
 
-        <a className="target" href={`${targetType}/${targetId}`}>
+        <a className="target" href={`${targetType}/${target}`}>
           {target}
           <RxExternalLink />
         </a>

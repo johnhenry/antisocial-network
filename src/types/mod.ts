@@ -71,6 +71,12 @@ export type Agent = {
   indexed?: string;
 };
 
+export type AgentPlus = {
+  agent: Agent;
+  remembrances?: Post[];
+  bookmarks?: File[];
+};
+
 // Agent with only: id, name, and embedding
 export type AgentTemp = Omit<
   Agent,
@@ -87,6 +93,12 @@ export type AgentExt = Omit<Agent, "id" | "embedding"> & {
   id: string; // e.g. agent:6yweoaerserosr, agent:9nlanlj9adf
 };
 
+export type AgentPlusExt = {
+  agent: AgentExt;
+  remembrances?: PostExt[];
+  bookmarks?: FileExt[];
+};
+
 export type File = {
   id: RecordId;
   timestamp: number;
@@ -100,6 +112,16 @@ export type File = {
   date?: string;
   name?: string;
   owner?: Agent;
+  metadata?: Record<string, any>;
+};
+
+export type FilePlus = {
+  file: File;
+  bookmarkers?: Agent[];
+};
+export type FilePlusExt = {
+  file: FileExt;
+  bookmarkers?: AgentExt[];
 };
 
 export type FileExt = Omit<File, "id" | "embedding" | "data" | "owner"> & {

@@ -14,7 +14,7 @@ type PostFileProps = {
 };
 
 const PostFile: FC<PostFileProps> = ({ file }) => {
-  return file.type.startsWith("image/") ? (
+  const body = file.type.startsWith("image/") ? (
     <img
       src={`/file/${file.id}/raw`}
       width="256"
@@ -28,6 +28,8 @@ const PostFile: FC<PostFileProps> = ({ file }) => {
       title={file.content}
     ></iframe>
   );
+
+  return <a href={`/file/${file.id}`}>{body}</a>;
 };
 
 const Post: FC<PostProps> = ({
@@ -44,7 +46,7 @@ const Post: FC<PostProps> = ({
     <>
       <header>
         {source ? (
-          <a className="agent-link" href={`/agent/${source.id}}`}>
+          <a className="agent-link" href={`/agent/${source.id}`}>
             <img
               alt={`Image for ${source.name}`}
               className="img"

@@ -1,5 +1,20 @@
-import type { Agent, AgentParameters, AgentTemp, FileProto } from "@/types/mod";
-import { DEFAULT_PARAMETERS_AGENT, TABLE_AGENT } from "@/config/mod";
+import type {
+  Agent,
+  AgentParameters,
+  AgentPlus,
+  AgentTemp,
+  File,
+  FileProto,
+  LangchainGenerator,
+  Post,
+} from "@/types/mod";
+import type { BaseMessageChunk } from "@langchain/core/messages";
+
+import {
+  DEFAULT_PARAMETERS_AGENT,
+  REL_BOOKMARKS,
+  TABLE_AGENT,
+} from "@/config/mod";
 import { getDB } from "@/lib/db";
 import { embed, PROMPTS_SUMMARIZE, summarize, tokenize } from "@/lib/ai";
 import hash from "@/lib/util/hash";
@@ -9,7 +24,8 @@ import { RecordId } from "surrealdb.js";
 import removeValuesFromObject from "@/lib/util/removeValuesFromObject";
 import { createFiles } from "@/lib/database/file";
 
-import { getEntity } from "@/lib/database/helpers";
+import { getEntity, getLatest } from "@/lib/database/helpers";
+import { respond } from "@/lib/ai";
 
 export const nameExists = async (name: string): Promise<boolean> => {
   const db = await getDB();
@@ -56,6 +72,7 @@ export const createTempAgent = async (
 // };
 
 export const getAgent = getEntity<Agent>;
+export const getAgents = getLatest<Agent>(TABLE_AGENT);
 
 export const createAgent = async ({
   name = "",
@@ -144,7 +161,7 @@ export const updateAgent = async (
   const db = await getDB();
   try {
     // get agent
-    const agent = await db.select(id) as Agent;
+    const agent = await db.select<Agent>(id) as Agent;
     // name is different
     if (name && agent.name !== name) {
       if (await nameExists(name)) {
@@ -169,6 +186,7 @@ export const updateAgent = async (
         ? await summarize(combinedQualities, PROMPTS_SUMMARIZE.LLM_PROMPT)
         : await summarize("", PROMPTS_SUMMARIZE.LLM_PROMPT_RANDOM);
       agent.content = content;
+      agent.hash = hash(content);
       agent.embedding = await embed(content as string);
       agent.qualities = qualities;
       agent.description = (description || "").trim();
@@ -178,9 +196,96 @@ export const updateAgent = async (
     agent.indexed = [agent.description, agent.content, agent.combinedQualities]
       .filter(Boolean)
       .join("\n ------------------ \n");
-    const updatedAgent = await db.update(id, agent) as Agent;
+    const updatedAgent = await db.update<Agent>(id, agent);
     return updatedAgent;
   } finally {
     db.close();
   }
+};
+
+export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
+  const queries = [];
+  const ADDITIONAL_FIELDS = `string::concat("", id) as id`;
+  // select target
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding FROM agent where id = $id`,
+  );
+  // select incoming relationships
+  // remembrances
+  // queries.push(
+  //   `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding from post where <-${REL_BOOKMARKS}<-(agent where id = $id)`,
+  // );
+  queries.push(`select * from post where id=NULL`);
+  // bookmarks
+  // queries.push(
+  //   `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding from file where <-${REL_BOOKMARKS}<-(agent where id = $id)`,
+  // );
+  queries.push(`select * from file where id=NULL`);
+
+  const db = await getDB();
+  try {
+    const [[agent], remembrances, bookmarks]: [[Agent], Post[], File[]] =
+      await db
+        .query(
+          queries.join(";"),
+          {
+            id,
+          },
+        );
+    const obj = {
+      agent,
+      remembrances,
+      bookmarks,
+    };
+
+    return obj;
+  } finally {
+    await db.close();
+  }
+};
+////////
+
+import {
+  generateSystemMessage,
+  mapPostsToMessages,
+} from "@/lib/templates/dynamic";
+
+// map a list of post to messages
+
+const mergeRelevant = async (posts: Post[]) => {
+  return [...posts]
+    .map(({ content }) => content)
+    .join("\n\n").trim();
+};
+
+export const agentResponse = async (
+  agent: Agent & { content: string },
+  { streaming = false, conversation = [], relevant = [] }: {
+    streaming?: boolean;
+    conversation?: Post[];
+    relevant?: Post[];
+  } = {},
+): Promise<LangchainGenerator | BaseMessageChunk> => {
+  const relevantKnowledge = await mergeRelevant(relevant);
+  const messages = mapPostsToMessages(conversation);
+  const systemMessage = [
+    "system",
+    await generateSystemMessage(Boolean(relevantKnowledge)),
+  ];
+  const results = await respond({
+    messages: [systemMessage].concat(messages) as [string, string][],
+    invocation: {
+      relevantKnowledge,
+      id: agent.id.toString(),
+      content: agent.content,
+    },
+    parameters: agent.parameters,
+    streaming,
+  });
+  if (streaming) {
+    // TODO: split iterator here an add callback above
+    return results as LangchainGenerator;
+  }
+  return results as BaseMessageChunk;
+  // return `response->${Date.now()}`;
 };

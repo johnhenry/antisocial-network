@@ -1,11 +1,22 @@
-import type { Agent, File, FileProto, Post, PostPlus } from "@/types/mod";
+import type {
+  Agent,
+  File,
+  FileProto,
+  LangchainGenerator,
+  Post,
+  PostPlus,
+} from "@/types/mod";
+import type { BaseMessageChunk } from "@langchain/core/messages";
 
 import {
+  REL_BOOKMARKS,
+  REL_CONTAINS,
   REL_ELICITS,
   REL_INSERTED,
   REL_PRECEDES,
   REL_REMEMBERS,
   TABLE_AGENT,
+  TABLE_FILE,
   TABLE_POST,
 } from "@/config/mod";
 import { embed, tokenize } from "@/lib/ai";
@@ -18,24 +29,14 @@ import { createFiles } from "@/lib/database/file";
 import createLog from "@/lib/database/log";
 import { getEntity, getLatest } from "@/lib/database/helpers";
 import { RecordId, StringRecordId } from "surrealdb.js";
+import { agentResponse, updateAgent } from "@/lib/database/agent";
+import { toolResponse } from "@/lib/database/tool";
+
+import { replaceContentWithLinks } from "@/lib/database/helpers";
 
 import hash from "@/lib/util/hash";
-import renderText from "@/lib/util/render-text";
-import { recordMatch } from "@/lib/util/match";
-import replaceMentions from "@/lib/util/replace-mentions";
-// map a list of post to messages
-const mapPostsToMessages = (posts: Post[]) => {
-  const messages = [];
-  for (const post of posts) {
-    messages.push([
-      "user",
-      (post.source ? `[${post.source.id.toString()}] :` : ``) + post.content,
-    ]);
-  }
-  return messages;
-};
 
-export const getPostWithHistory = async (
+export const getConversation = async (
   post?: Post,
   depth: number = -1,
 ): Promise<Post[]> => {
@@ -43,18 +44,98 @@ export const getPostWithHistory = async (
   if (!post) {
     return [];
   }
+
   try {
-    const posts = [post];
+    const posts = [];
     let currentPost = post;
-    while (currentPost.target) {
-      const [[target]] = await db.query(
+    let count = 0;
+    while (true) {
+      if (depth > -1 && count >= depth) {
+        break;
+      }
+      count++;
+      posts.push(currentPost);
+      if (!currentPost.target) {
+        break;
+      }
+      const [[target]] = await db.query<[[Post]]>(
         `SELECT * FROM ${TABLE_POST} WHERE id = $target`,
-        { target: currentPost.target },
-      ) as [[Post]];
-      posts.push(target);
+        { target: currentPost.target.id },
+      );
       currentPost = target;
     }
     return posts;
+  } finally {
+    await db.close();
+  }
+};
+
+import { vectorSum } from "@/lib/util/vector-sum";
+
+export const getRelevant = async ({
+  conversation,
+  agent,
+  limit = 8,
+  threshold = 0,
+  embeddingMethod = "concat",
+}: {
+  conversation: Post[];
+  agent: Agent;
+  limit?: number;
+  threshold?: number;
+  embeddingMethod?: string;
+}): Promise<Post[]> => {
+  const queries = [];
+  queries.push(
+    `SELECT content, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM ${TABLE_POST} WHERE <-${REL_CONTAINS}<-${TABLE_FILE}<-${REL_BOOKMARKS}<-(${TABLE_AGENT} WHERE id = $id) AND dist > $threshold ORDER BY dist DESC LIMIT $limit`,
+  );
+  queries.push(
+    `SELECT content, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM ${TABLE_POST} WHERE <-${REL_REMEMBERS}<-(${TABLE_AGENT} WHERE id = $id) AND dist > $threshold ORDER BY dist DESC LIMIT $limit`,
+  );
+
+  const db = await getDB();
+  try {
+    let embedded;
+    switch (embeddingMethod) {
+      case "concat":
+        embedded = await embed(
+          conversation
+            .map(({ content }) => content)
+            .join("\n\n"),
+        );
+        break;
+      case "sum":
+        embedded = vectorSum(conversation.map(({ embedding }) => embedding));
+        break;
+      case "sum-geometric-reduction":
+        // Each embeding is multiplied by a decreasing factor before summing
+        const factor = 0.9;
+        const embeddings = conversation.map(({ embedding }, i) =>
+          embedding.map((x) => x * Math.pow(factor, i))
+        );
+        break;
+      case "sum-weighted":
+        embedded = vectorSum(
+          conversation.map(({ embedding }, i, conversation) =>
+            embedding.map((x) =>
+              x * (conversation.length - i + 1) / (conversation.length)
+            )
+          ),
+        );
+        break;
+    }
+    // TODO: what's a better way to get an embedding for a conversation?
+    // Would we instead extract the embeddingd and add them?
+    const [bookmarked, remembered] = await db.query<[Post[], Post[]]>(
+      queries.join(";"),
+      {
+        id: agent.id,
+        embedded,
+        limit,
+        threshold,
+      },
+    );
+    return [...bookmarked, ...remembered];
   } finally {
     await db.close();
   }
@@ -76,9 +157,11 @@ const recursiveDescendants = async (
 
   const db = await getDB();
   try {
-    const descendants: Post[] = await db.query(recursiveQuery, { id: post.id });
+    const [descendants] = await db.query<Post[][]>(recursiveQuery, {
+      id: post.id,
+    });
     const results: RecursiveDescendantResult[] = await Promise.all(
-      descendants.map(async (descendant) =>
+      descendants.map(async (descendant: Post) =>
         recursiveDescendants(descendant, depth === -1 ? -1 : depth - 1)
       ),
     );
@@ -166,27 +249,50 @@ export const createPost = async (
       }) as Post[];
     } else if (content === false) {
       // content will be generated by a tool or an agent.
-      throw new Error("TODO: Implement");
-      // const history = await getPostWithHistory(target, -1);
-      // let content;
-      // if (tool) {
-      //   content = await toolResponse(tool, history);
-      // } else if (source) {
-      //   if (!source.content) {
-      //     source = await updateAgent(source.id);
-      //   }
-      //   content = await agentResponse(source, history);
-      // }
 
-      // [post] = await db.create(TABLE_POST, {
-      //   timestamp: Date.now(),
-      //   content,
-      //   embedding: await embed(content),
-      //   count: tokenize(content).length,
-      //   hash: hash(content),
-      //   source,
-      //   tool,
-      // }) as Post[];
+      const conversation = await getConversation(target, -1);
+      let relevant: Post[] = [];
+      let content;
+      if (tool) {
+        content = await toolResponse(tool, {
+          streaming,
+          conversation,
+        });
+      } else if (source) {
+        let relevant = await getRelevant(
+          { conversation, agent: source },
+        );
+        if (!source.content) {
+          source = await updateAgent(source.id);
+        }
+        const out = await agentResponse(source, {
+          streaming,
+          conversation,
+          relevant,
+        });
+        if (streaming) {
+          const chunks = [];
+          for await (const chunk of out as LangchainGenerator) {
+            chunks.push(chunk);
+          }
+          content = chunks.join("\n");
+        } else {
+          const chunk = out as BaseMessageChunk;
+          content = chunk.content as string;
+        }
+      }
+
+      [post] = await db.create(TABLE_POST, {
+        timestamp: Date.now(),
+        content,
+        embedding: await embed(content),
+        count: tokenize(content!).length,
+        hash: hash(content!),
+        source,
+        target,
+        tool,
+        bibliography: conversation.concat(relevant),
+      }) as Post[];
     } else if (!content) {
       // Content undefined, but files possibly provided.
       if (!files.length) {
@@ -298,8 +404,6 @@ export const replaceAgentIdWithName = async (
     await db.close();
   }
 };
-
-import { replaceContentWithLinks } from "@/lib/database/helpers";
 
 export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
   const queries = [];
