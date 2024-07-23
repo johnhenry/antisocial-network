@@ -21,7 +21,6 @@ const Page: FC<PageProps> = ({ params }) => {
   useEffect(() => {
     const load = async () => {
       const postPlus = await getPostPlusExternal(identifier);
-      console.log({ postPlus });
       const { post, elicits } = postPlus;
       setPost(post);
       setElicits(elicits || []);
@@ -29,8 +28,27 @@ const Page: FC<PageProps> = ({ params }) => {
     load();
     return () => {};
   }, []);
-  const postReady = (post: PostExt) => {
-    setElicits((elicits) => [post, ...elicits]);
+  const entityReady = (entity: PostExt | void) => {
+    console.log({ entity });
+    if (!entity) {
+      return;
+    }
+
+    const [type, id] = entity.id.split(":");
+    if (type === "post") {
+      if (entity.target?.id === identifier)
+        setElicits((elicits) => [entity, ...elicits]);
+      return;
+    }
+    switch (type) {
+      case "post":
+      case "file":
+      case "agent":
+        if (confirm(`navigate to new ${type}? (${id})`)) {
+          router.push(`/${type}/${entity.id}`);
+        }
+        break;
+    }
   };
 
   return (
@@ -49,7 +67,7 @@ const Page: FC<PageProps> = ({ params }) => {
       <InputBox
         Wrapper={"div"}
         className="input-box"
-        postReady={postReady}
+        entityReady={entityReady}
         buttonText="Reply"
         targetId={post?.id}
       />

@@ -5,6 +5,8 @@ import type {
   AgentExt,
   AgentPlus,
   AgentPlusExt,
+  Entity,
+  EntityExt,
   FileExt,
   FilePlusExt,
   FileProto,
@@ -55,7 +57,7 @@ export const createPostExternal = async (
     streaming?: boolean;
     depth?: number;
   } = {},
-): Promise<PostExt | void> => {
+): Promise<EntityExt | void> => {
   const db = await getDB();
   try {
     const source: Agent | undefined = sourceId
@@ -64,7 +66,7 @@ export const createPostExternal = async (
     const target: Post | undefined = targetId
       ? await db.select<Post>(new StringRecordId(targetId))
       : undefined;
-    const result = await createPost(content, {
+    const result: Entity | void = await createPost(content, {
       embedding,
       files,
       source,
@@ -73,8 +75,25 @@ export const createPostExternal = async (
       depth,
     });
     if (result) {
+      let mapper: (entity: Entity) => EntityExt;
+      switch (result.id.tb) {
+        case "post": {
+          mapper = mapPostToPostExt as (entity: Entity) => EntityExt;
+          break;
+        }
+        case "file": {
+          mapper = mapFileToFileExt as (entity: Entity) => EntityExt;
+          break;
+        }
+        case "agent": {
+          mapper = mapAgentToAgentExt as (entity: Entity) => EntityExt;
+          break;
+        }
+        default:
+          throw new Error(`Unknown type ${result.id.tb}`);
+      }
       return await replaceContentWithLinks(
-        mapPostToPostExt(result),
+        mapper(result),
         true,
       );
     }

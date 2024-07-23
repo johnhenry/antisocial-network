@@ -7,6 +7,7 @@ import { TABLE_AGENT } from "@/config/mod";
 import renderText from "@/lib/util/render-text";
 import { recordMatch } from "@/lib/util/match";
 import replaceMentions from "@/lib/util/replace-mentions";
+import { embed } from "../ai";
 
 export const replaceAgentIdWithName = async (
   id: string,
@@ -67,20 +68,44 @@ export const getEntity = async <
 export const getLatest =
   <T extends { [x: string]: unknown; content?: string }>(table: string) =>
   async (
-    offset: number,
+    start: number,
     limit: number,
+    search: string = "",
   ): Promise<T[]> => {
     const db = await getDB();
     try {
-      const query = `
+      let result;
+      if (search) {
+        const embedded = await embed(search);
+        const query = `
             SELECT *
-            FROM ${table}
+            FROM type::table($table)
+            WHERE content LIKE $search
             ORDER BY timestamp DESC
-            LIMIT ${limit}
-            START ${offset}
+            ORDER BY vector::similarity::cosine(embedding, $embedded) DESC
+            LIMIT $limit
+            START $start
         `;
-
-      const [result] = await db.query(query) as T[][];
+        [result] = await db.query(query, {
+          table,
+          embedded,
+          limit,
+          start,
+        }) as T[][];
+      } else {
+        const query = `
+            SELECT *
+            FROM type::table($table)
+            ORDER BY timestamp DESC
+            LIMIT $limit
+            START $start
+        `;
+        [result] = await db.query(query, {
+          table,
+          limit,
+          start,
+        }) as T[][];
+      }
       return Promise.all(
         result.map((item) => replaceContentWithLinks<T>(item)),
       );

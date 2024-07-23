@@ -8,15 +8,14 @@ import type {
   KeyboardEventHandler,
 } from "react";
 import { useRef, useState } from "react";
-import { CgAttachment } from "react-icons/cg";
+import { IconFile, IconAI } from "@/components/icons";
 import Image from "next/image";
 import obfo from "obfo";
 import { mentionMatch } from "@/lib/util/match";
-import { HiOutlineSparkles } from "react-icons/hi";
 import type { PostExt } from "@/types/mod";
 type InputBoxProps = {
   Wrapper?: ComponentClass<any> | string;
-  postReady: (post: PostExt) => void;
+  entityReady: (post: PostExt) => void;
   extractText?: (s: string) => void;
   className?: string;
   sourceId?: string;
@@ -32,7 +31,7 @@ import { createPostExternal } from "@/lib/database/mod";
 
 const InputBox: FC<InputBoxProps> = ({
   Wrapper,
-  postReady,
+  entityReady,
   extractText,
   sourceId,
   targetId,
@@ -40,6 +39,7 @@ const InputBox: FC<InputBoxProps> = ({
   buttonText = "Post",
   ...props
 }) => {
+  const [stashedText, setStashedText] = useState("");
   const [text, doText] = useState("");
   const isSlash = isSlashCommand(text);
   const hasMention = !isSlash && mentionMatch.test(text);
@@ -75,8 +75,12 @@ const InputBox: FC<InputBoxProps> = ({
     (event.target as HTMLInputElement).value = "";
   };
   const execute = async () => {
+    if (!(text.trim() || files.length)) {
+      return;
+    }
     setTimeout(() => {
       if (textArea.current) {
+        setStashedText(text);
         textArea.current.value = "";
         // const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
         //   window.HTMLInputElement.prototype,
@@ -85,15 +89,24 @@ const InputBox: FC<InputBoxProps> = ({
         // nativeInputValueSetter.call(textArea.current, "");
         const event = new Event("input", { bubbles: true });
         textArea.current.dispatchEvent(event);
+        setText("");
         setFiles([]);
       }
     });
+
     const post = await createPostExternal(text, { files, sourceId, targetId });
-    if (post && postReady) {
-      postReady(post);
+
+    if (post && entityReady) {
+      entityReady(post);
     }
   };
   const keyDown: KeyboardEventHandler = (event) => {
+    if (event.key === "ArrowUp" && !text.trim() && stashedText) {
+      textArea.current!.value = stashedText;
+      setText(stashedText);
+      setStashedText("");
+      return;
+    }
     if (!event.metaKey) {
       return;
     }
@@ -132,7 +145,7 @@ const InputBox: FC<InputBoxProps> = ({
       ></textarea>
       <fieldset>
         <label className="label-file">
-          <CgAttachment />
+          <IconFile />
           <input
             title="hidden file picker"
             ref={filePicker}
@@ -175,7 +188,7 @@ const InputBox: FC<InputBoxProps> = ({
           {hasMention ? (
             <>
               {" "}
-              <HiOutlineSparkles />
+              <IconAI />
             </>
           ) : null}
         </button>

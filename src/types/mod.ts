@@ -132,6 +132,11 @@ export type FileExt = Omit<File, "id" | "embedding" | "data" | "owner"> & {
 export type Entity = Agent | File | Post;
 export type EntityExt = AgentExt | FileExt | PostExt;
 
+export type EntToExt =
+  | ((entity: Agent) => AgentExt)
+  | ((entity: File) => FileExt)
+  | ((entity: Post) => PostExt);
+
 export type FileProto = Omit<
   File,
   | "id"

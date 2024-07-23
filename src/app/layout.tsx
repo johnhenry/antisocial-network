@@ -3,13 +3,17 @@ import type { Metadata } from "next";
 import { readFile } from "fs/promises";
 import { fileURLToPath } from "url";
 import path from "path";
-import { FaUsers } from "react-icons/fa";
-import { PiFilesFill } from "react-icons/pi";
-import { FaTools } from "react-icons/fa";
-import { IoIosClock } from "react-icons/io";
-import { FaGears } from "react-icons/fa6";
-import { HiMiniPencilSquare } from "react-icons/hi2";
-import { IoIosHelpCircle } from "react-icons/io";
+
+import {
+  IconAgent,
+  IconFile,
+  IconTool,
+  IconSchedule,
+  IconSetting,
+  IconLog,
+  IconHelp,
+} from "@/components/icons";
+
 import "./globals.css";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -45,45 +49,33 @@ const Page: FC<Props> = async ({ children }: Props) => {
               </a>
             </h1>
             <nav>
-              <a href="/agents">
-                <span className="menu-icon">
-                  <FaUsers />
-                </span>
-                <span className="collapse-text-portrait">Agents</span>
-              </a>
-              <a href="/files">
-                <span className="menu-icon">
-                  <PiFilesFill />
-                </span>
-                <span className="collapse-text-portrait">Files</span>
-              </a>
               <a href="/tools">
                 <span className="menu-icon">
-                  <FaTools />
+                  <IconTool />
                 </span>
                 <span className="collapse-text-portrait">Tools</span>
               </a>
               <a href="/schedule">
                 <span className="menu-icon">
-                  <IoIosClock />
+                  <IconSchedule />
                 </span>
-                <span className="collapse-text-portrait">Scheule</span>
+                <span className="collapse-text-portrait">Schedule</span>
               </a>
               <a href="/settings">
                 <span className="menu-icon">
-                  <FaGears />
+                  <IconSetting />
                 </span>
                 <span className="collapse-text-portrait">Settings</span>
               </a>
               <a href="/logs">
                 <span className="menu-icon">
-                  <HiMiniPencilSquare />
+                  <IconLog />
                 </span>
                 <span className="collapse-text-portrait">Logs</span>
               </a>
               <a href="/settings">
                 <span className="menu-icon">
-                  <IoIosHelpCircle />
+                  <IconHelp />
                 </span>
                 <span className="collapse-text-portrait">Help</span>
               </a>

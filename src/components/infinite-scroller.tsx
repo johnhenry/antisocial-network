@@ -12,6 +12,7 @@ import React, {
 import { set } from "zod";
 
 type HasId = any & { id: string };
+type HasTimestamp = any & { timestamp: number };
 
 interface InfiniteScrollerProps {
   ChildRenderer?: ComponentType<any> | string;
@@ -24,6 +25,26 @@ interface InfiniteScrollerProps {
   FinalItem: ComponentType<any> | string;
   Wrapper?: ComponentClass<any> | string;
 }
+
+const removeDeplicatesById = (items: HasId[]) => {
+  const ids = new Set();
+  return items.filter((item) => {
+    if (ids.has(item.id)) {
+      return false;
+    } else {
+      ids.add(item.id);
+      return true;
+    }
+  });
+};
+
+const orderByTimestamp = (items: HasTimestamp[]) => {
+  return items.sort((a, b) => b.timestamp - a.timestamp);
+};
+const doItems = (items: HasId[], size = -1) => {
+  const updatedItems = orderByTimestamp(removeDeplicatesById(items));
+  return size === -1 ? updatedItems : updatedItems.slice(-size);
+};
 
 const InfiniteScroller = ({
   ChildRenderer = "li" as ComponentType<HasId> | string,
@@ -38,6 +59,7 @@ const InfiniteScroller = ({
   ...props
 }: InfiniteScrollerProps) => {
   const [items, setItems] = useState<HasId[]>([]);
+
   const [loading, setLoading] = useState(false);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
   const loadMoreItems = async () => {
@@ -47,12 +69,10 @@ const InfiniteScroller = ({
     setLoading(true);
     try {
       const newItems = await fetchChildren();
-
       if (newItems.length === 0) {
       } else {
         setItems((prevItems) => {
-          const updatedItems = [...prevItems, ...newItems];
-          return size === -1 ? updatedItems : updatedItems.slice(-size);
+          return doItems([...prevItems, ...newItems], size);
         });
       }
     } catch (error) {
@@ -65,15 +85,14 @@ const InfiniteScroller = ({
   useEffect(() => {
     if (prependedItems.length) {
       setItems((prevItems) => {
-        const updatedItems = [...prependedItems, ...prevItems];
-        return size === -1 ? updatedItems : updatedItems.slice(-size);
+        return doItems([...prependedItems, ...prevItems], size);
       });
       resetPrepended();
     }
   }, [prependedItems]);
 
   useEffect(() => {
-    if (lastItemRef) {
+    if (lastItemRef && FinalItem) {
       const options = {
         // root: rootRef.current,
         rootMargin: "0px",
@@ -83,14 +102,16 @@ const InfiniteScroller = ({
       observer.observe(lastItemRef.current as Element);
       return () => observer.disconnect();
     }
-  }, [lastItemRef]);
+  }, [lastItemRef, FinalItem]);
 
   const body = (
     <>
       {items.map((item: HasId) => {
         return <ChildRenderer key={item.id} {...childProps} {...item} />;
       })}
-      <FinalItem ref={lastItemRef} disabled={loading ? null : true} />
+      {FinalItem ? (
+        <FinalItem ref={lastItemRef} disabled={loading ? null : true} />
+      ) : null}
     </>
   );
 

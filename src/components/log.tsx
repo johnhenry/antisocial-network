@@ -1,7 +1,7 @@
 "use client";
 import type { FC, ComponentClass } from "react";
 import type { LogExt } from "@/types/mod";
-import { RxExternalLink } from "react-icons/rx";
+import { IconLink } from "@/components/icons";
 
 type LogProps = LogExt & {
   Wrapper?: ComponentClass<any> | string;
@@ -29,7 +29,7 @@ const Log: FC<LogProps> = ({
 
         <a className="target" href={`${targetType}/${target}`}>
           {target}
-          <RxExternalLink />
+          <IconLink />
         </a>
       </header>
       <main>{content}</main>

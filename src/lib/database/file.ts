@@ -15,6 +15,7 @@ import { getDB, relate } from "@/lib/db";
 import { RecordId, StringRecordId } from "surrealdb.js";
 
 import { getSettingsObject } from "@/lib/database/settings";
+import createLog from "@/lib/database/log";
 
 import semanticChunker from "@/lib/chunkers/semantic";
 import {
@@ -189,6 +190,7 @@ export const createFile = async (
       );
     }
     await putObject(buff, { id: newFile.id.id as string });
+    createLog(newFile.id.toString());
     return newFile;
   } finally {
     await db.close();
