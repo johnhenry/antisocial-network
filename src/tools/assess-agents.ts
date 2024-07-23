@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { TABLE_AGENT } from "@/settings";
+import { TABLE_AGENT } from "@/config/mod";
 const schema = z.object({
   scores: z
     .array(

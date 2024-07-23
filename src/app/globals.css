@@ -378,7 +378,6 @@ body > main {
   display: flex;
   height: 100vh; /* functional: cannot be a percentage */
   flex-direction: column;
-  width: 100%;
   > * {
     overflow-y: auto;
     min-height: 125%;
@@ -733,4 +732,51 @@ article.logs {
     width: 100%;
     padding: var(--size-gap-inner);
   }
+}
+.search-options {
+  width: 100%;
+  text-align: center;
+  padding: var(--size-padding);
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  button {
+    padding: var(--size-gap-inner);
+    background-color: var(--color-text);
+    color: var(--color-background);
+    border-radius: 0;
+
+    &:last-of-type {
+      border-start-end-radius: var(--size-corner);
+      border-end-end-radius: var(--size-corner);
+    }
+
+    &:hover {
+      filter: brightness(0.9);
+    }
+    &:hover,
+    &.active {
+      color: var(--color-inverse);
+      background-color: var(--background-color-inverse);
+    }
+  }
+  input {
+    width: 50%;
+    margin-left: auto;
+  }
+  > footer {
+    padding: var(--size-padding);
+    display: flex;
+  }
+}
+
+dd > dl,
+ol > ol,
+dd > ol,
+ol > dl {
+  padding-left: 1rem;
+}
+
+ul {
+  width: 100%;
 }

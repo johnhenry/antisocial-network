@@ -219,7 +219,7 @@ export const processCommand = async (
     case "post":
       return post(tokens, args, options);
     default:
-      throw new Error("Not implemented");
+      throw new Error(`Not implemented: ${root}`);
   }
 };
 

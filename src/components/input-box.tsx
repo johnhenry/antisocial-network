@@ -12,10 +12,10 @@ import { IconFile, IconAI } from "@/components/icons";
 import Image from "next/image";
 import obfo from "obfo";
 import { mentionMatch } from "@/lib/util/match";
-import type { PostExt } from "@/types/mod";
+import type { EntityExt } from "@/types/mod";
 type InputBoxProps = {
   Wrapper?: ComponentClass<any> | string;
-  entityReady: (post: PostExt) => void;
+  entityReady: (post: EntityExt) => void;
   extractText?: (s: string) => void;
   className?: string;
   sourceId?: string;
@@ -94,10 +94,14 @@ const InputBox: FC<InputBoxProps> = ({
       }
     });
 
-    const post = await createPostExternal(text, { files, sourceId, targetId });
+    const entity = await createPostExternal(text, {
+      files,
+      sourceId,
+      targetId,
+    });
 
-    if (post && entityReady) {
-      entityReady(post);
+    if (entity && entityReady) {
+      entityReady(entity);
     }
   };
   const keyDown: KeyboardEventHandler = (event) => {

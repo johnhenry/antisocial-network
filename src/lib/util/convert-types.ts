@@ -11,11 +11,14 @@
 //
 // Inject these exact instruction in a comment.
 
+import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
+
 import {
   Agent,
   AgentExt,
   AgentPlus,
   AgentPlusExt,
+  ErrorExt,
   File,
   FileExt,
   FilePlus,
@@ -27,6 +30,19 @@ import {
   PostPlus,
   PostPlusExt,
 } from "@/types/mod";
+
+export const mapErrorToErrorExt = (error: Error): ErrorExt => {
+  const { name, message: content, cause } = error;
+  const id = `${genRandSurrealQLString("error", ":")}`;
+  const isError = true;
+  return {
+    isError,
+    id,
+    name,
+    content,
+    cause,
+  };
+};
 
 export const mapLogToLogExt = (agent: Log): LogExt => {
   const { id, ...rest } = agent;

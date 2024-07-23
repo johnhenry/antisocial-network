@@ -7,6 +7,7 @@ import type {
   AgentPlusExt,
   Entity,
   EntityExt,
+  ErrorExt,
   FileExt,
   FilePlusExt,
   FileProto,
@@ -33,6 +34,7 @@ import { getLogs } from "@/lib/database/log";
 import {
   mapAgentPlusToAgentPlusExt,
   mapAgentToAgentExt,
+  mapErrorToErrorExt,
   mapFilePlusToFilePlusExt,
   mapFileToFileExt,
   mapLogToLogExt,
@@ -57,7 +59,7 @@ export const createPostExternal = async (
     streaming?: boolean;
     depth?: number;
   } = {},
-): Promise<EntityExt | void> => {
+): Promise<EntityExt | ErrorExt | void> => {
   const db = await getDB();
   try {
     const source: Agent | undefined = sourceId
@@ -76,7 +78,8 @@ export const createPostExternal = async (
     });
     if (result) {
       let mapper: (entity: Entity) => EntityExt;
-      switch (result.id.tb) {
+      const type = result.id.tb;
+      switch (type) {
         case "post": {
           mapper = mapPostToPostExt as (entity: Entity) => EntityExt;
           break;
@@ -90,13 +93,18 @@ export const createPostExternal = async (
           break;
         }
         default:
-          throw new Error(`Unknown type ${result.id.tb}`);
+          throw new Error(`Unknown type: ${type}`);
       }
       return await replaceContentWithLinks(
         mapper(result),
         true,
       );
     }
+  } catch (e) {
+    if (e instanceof Error) {
+      return mapErrorToErrorExt(e);
+    }
+    throw e;
   } finally {
     db.close();
   }
@@ -159,30 +167,49 @@ export const getAgentPlusExternal = async (
 export const getPostsExternal = async (
   offset: number,
   limit: number,
+  search: string = "",
 ): Promise<PostExt[]> => {
-  const posts = await getPosts(offset, limit);
+  const posts = await getPosts(offset, limit, search);
   return posts.map(mapPostToPostExt);
 };
 
 export const getFilesExternal = async (
   offset: number,
   limit: number,
+  search: string = "",
 ): Promise<FileExt[]> => {
-  const db = await getDB();
-  try {
-    const files = await getFiles(offset, limit);
-    return files.map(mapFileToFileExt);
-  } finally {
-    db.close();
-  }
+  const files = await getFiles(offset, limit, search);
+  return files.map(mapFileToFileExt);
 };
 
 export const getAgentsExternal = async (
   offset: number,
   limit: number,
+  search: string = "",
 ): Promise<AgentExt[]> => {
-  const agents = await getAgents(offset, limit);
+  const agents = await getAgents(offset, limit, search);
   return agents.map(mapAgentToAgentExt);
+};
+
+export const getEntitiesExternal = async (
+  offset: number,
+  limit: number,
+  search: string = "",
+  {
+    posts,
+    files,
+    agents,
+  }: {
+    posts: boolean;
+    files: boolean;
+    agents: boolean;
+  },
+): Promise<EntityExt[]> => {
+  const root: EntityExt[] = [];
+  const p = posts ? await getPostsExternal(offset, limit, search) : [];
+  const f = files ? await getFilesExternal(offset, limit, search) : [];
+  const a = agents ? await getAgentsExternal(offset, limit, search) : [];
+  return root.concat(p).concat(f).concat(a);
 };
 
 // Update Objects

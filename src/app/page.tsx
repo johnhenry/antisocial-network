@@ -1,20 +1,106 @@
 "use client";
 
-import type { FC } from "react";
+import type { FC, ComponentClass } from "react";
 import type { PostExt, EntityExt } from "@/types/mod";
 import { useEffect, useState } from "react";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
 import { getPostsExternal } from "@/lib/database/mod";
 import InfiniteScroller from "@/components/infinite-scroller";
-import Post from "@/components/post";
+import Entity from "@/components/entity";
 import InputBox from "@/components/input-box";
 import { useRouter } from "next/navigation";
 type PageProps = {};
 const SIZE = 10;
+import { getEntitiesExternal } from "@/lib/database/mod";
+
+const SearchOptions = ({
+  searchCount,
+  setSearchCount,
+  searchPosts,
+  setSearchPosts,
+  searchFiles,
+  setSearchFiles,
+  searchAgents,
+  setSearchAgents,
+  Wrapper = "div",
+  searchMin,
+  searchMax,
+  ...props
+}: {
+  searchCount: number;
+  setSearchCount: (value: number) => void;
+  searchPosts: boolean;
+  setSearchPosts: (value: boolean) => void;
+  searchFiles: boolean;
+  setSearchFiles: (value: boolean) => void;
+  searchAgents: boolean;
+  setSearchAgents: (value: boolean) => void;
+  Wrapper?: ComponentClass<any> | string;
+  searchMin: number;
+  searchMax: number;
+}) => {
+  const body = (
+    <>
+      {searchPosts || searchFiles || searchAgents ? (
+        <>
+          <button
+            onClick={() => setSearchPosts(!searchPosts)}
+            className={searchPosts ? "active" : ""}
+          >
+            posts
+          </button>
+          <button
+            onClick={() => setSearchFiles(!searchFiles)}
+            className={searchFiles ? "active" : ""}
+          >
+            files
+          </button>
+          <button
+            onClick={() => setSearchAgents(!searchAgents)}
+            className={searchAgents ? "active" : ""}
+          >
+            agents
+          </button>
+          <input
+            title="search count"
+            type="range"
+            min={searchMin}
+            max={searchMax}
+            value={searchCount}
+            onChange={(event) => {
+              setSearchCount(parseInt(event.target.value));
+            }}
+          ></input>
+        </>
+      ) : (
+        <button onClick={() => setSearchPosts(true)}>Advanced Search</button>
+      )}
+    </>
+  );
+  return <Wrapper {...props}>{body}</Wrapper>;
+};
+
+const fetchChildren = (start = 0) => {
+  let offset = start;
+  return async () => {
+    // TODO: restore after testing
+    // return [];
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const newItmes = await getPostsExternal(offset, SIZE);
+    offset += newItmes.length;
+    return newItmes;
+  };
+};
+
 const Page: FC<PageProps> = ({}) => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
   const [prependedItems, setPrepended] = useState<PostExt[]>([]);
+  const [searchCount, setSearchCount] = useState(8);
+  const [searchPosts, setSearchPosts] = useState(false);
+  const [searchFiles, setSearchFiles] = useState(false);
+  const [searchAgents, setSearchAgents] = useState(false);
+  const [searchResults, setSearchResults] = useState<EntityExt[]>([]);
   const resetPrepended = () => setPrepended([]);
   useEffect(() => {
     const load = () => {
@@ -24,16 +110,6 @@ const Page: FC<PageProps> = ({}) => {
     return () => {};
   }, []);
 
-  const fetchChildren = (start = 0) => {
-    let offset = start;
-    return async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      const newItmes = await getPostsExternal(offset, SIZE);
-      offset += newItmes.length;
-      return newItmes;
-    };
-  };
-
   const entityReady = (entity: EntityExt | void) => {
     if (!entity) {
       return;
@@ -41,6 +117,9 @@ const Page: FC<PageProps> = ({}) => {
     const [type, id] = entity.id.split(":");
 
     switch (type) {
+      case "error":
+        alert(`Error: ${entity.content}`);
+        break;
       case "post":
         const post = entity as PostExt;
         setPrepended([post]);
@@ -55,13 +134,38 @@ const Page: FC<PageProps> = ({}) => {
     // TOOO: add post to scroll list?
     // can i add some method that allows me to prepend items to the list
   };
-  const search = console.log;
+  const search = async (
+    searchText: string,
+    searchCount: number,
+    searchPosts: boolean,
+    searchFiles: boolean,
+    searchAgents: boolean
+  ) => {
+    if (!searchText.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    console.log(searchText, !searchText.trim());
+    const searchResults = await getEntitiesExternal(
+      0,
+      searchCount,
+      searchText,
+      {
+        posts: searchPosts,
+        files: searchFiles,
+        agents: searchAgents || !(searchPosts || searchFiles),
+      }
+    );
+    console.log({ searchText }, { searchResults });
+
+    setSearchResults(searchResults);
+  };
 
   useDebouncedEffect(
     () => {
-      search(searchText);
+      search(searchText, searchCount, searchPosts, searchFiles, searchAgents);
     },
-    [searchText],
+    [searchText, searchCount, searchPosts, searchFiles, searchAgents],
     750
   );
 
@@ -73,16 +177,39 @@ const Page: FC<PageProps> = ({}) => {
         extractText={setSearchText}
         entityReady={entityReady}
       />
-      <div className="infinite-scroller-window">
-        <InfiniteScroller
-          ChildRenderer={Post}
-          fetchChildren={fetchChildren(0)}
-          prependedItems={prependedItems}
-          resetPrepended={resetPrepended}
-          childProps={{ className: "post" }}
-          FinalItem={({ children, ...props }) => <li {...props}>{children}</li>}
-        />
-      </div>
+      <SearchOptions
+        searchCount={searchCount}
+        setSearchCount={setSearchCount}
+        searchMin={1}
+        searchMax={100}
+        searchPosts={searchPosts}
+        setSearchPosts={setSearchPosts}
+        searchFiles={searchFiles}
+        setSearchFiles={setSearchFiles}
+        searchAgents={searchAgents}
+        setSearchAgents={setSearchAgents}
+        className="search-options"
+      />
+      {searchResults.length ? (
+        <ul>
+          {searchResults.map((entity) => {
+            return <Entity key={entity.id} {...entity} />;
+          })}
+        </ul>
+      ) : (
+        <div className="infinite-scroller-window">
+          <InfiniteScroller
+            ChildRenderer={Entity}
+            fetchChildren={fetchChildren(0)}
+            prependedItems={prependedItems}
+            resetPrepended={resetPrepended}
+            childProps={{ className: "post" }}
+            FinalItem={({ children, ...props }) => (
+              <li {...props}>{children}</li>
+            )}
+          />
+        </div>
+      )}
     </article>
   );
 };

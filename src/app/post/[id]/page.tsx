@@ -35,6 +35,10 @@ const Page: FC<PageProps> = ({ params }) => {
     }
 
     const [type, id] = entity.id.split(":");
+    if (type === "error") {
+      alert(`Error: ${entity.content}`);
+    }
+
     if (type === "post") {
       if (entity.target?.id === identifier)
         setElicits((elicits) => [entity, ...elicits]);

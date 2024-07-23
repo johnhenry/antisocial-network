@@ -1,6 +1,14 @@
 import type { BaseMessageChunk } from "@langchain/core/messages";
 import type { RecordId } from "surrealdb.js";
 
+export type ErrorExt = {
+  id: string;
+  isError: true;
+  name: string;
+  content: string;
+  cause?: unknown;
+};
+
 export type Post = {
   id: RecordId;
   timestamp: number;
@@ -130,7 +138,7 @@ export type FileExt = Omit<File, "id" | "embedding" | "data" | "owner"> & {
 };
 
 export type Entity = Agent | File | Post;
-export type EntityExt = AgentExt | FileExt | PostExt;
+export type EntityExt = AgentExt | FileExt | PostExt | ErrorExt;
 
 export type EntToExt =
   | ((entity: Agent) => AgentExt)
