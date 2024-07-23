@@ -7,3 +7,7 @@ export { HiMiniPencilSquare as IconLog } from "react-icons/hi2";
 export { IoIosHelpCircle as IconHelp } from "react-icons/io";
 export { RxExternalLink as IconLink } from "react-icons/rx";
 export { HiOutlineSparkles as IconAI } from "react-icons/hi";
+export { FaMasksTheater as IconMask } from "react-icons/fa6";
+export { FaRegBookmark as IconBookmark } from "react-icons/fa";
+export { LuLightbulb as IconMemory } from "react-icons/lu";
+export { SlSpeech as IconPost } from "react-icons/sl";

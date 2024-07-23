@@ -1,37 +1,20 @@
 import type { FC, ReactNode, ComponentClass } from "react";
-import type { PostExt, FileExt } from "@/types/mod";
+import type { PostExt, FileExt, AgentExt } from "@/types/mod";
 import imageFromString from "@/lib/util/image-from-string";
 import timeAgo from "@/lib/util/time-ago";
-import { IconLink } from "@/components/icons";
+import { IconPost } from "@/components/icons";
 import Image from "next/image";
 
 type PostProps = PostExt & {
   Wrapper?: ComponentClass<any> | string;
   children?: ReactNode;
   className?: string;
-};
-type PostFileProps = {
-  file: FileExt;
+  masquerade?: AgentExt;
 };
 
-const PostFile: FC<PostFileProps> = ({ file }) => {
-  const body = file.type.startsWith("image/") ? (
-    <img
-      src={`/file/${file.id}/raw`}
-      width="256"
-      alt={file.content}
-      title={file.content}
-    ></img>
-  ) : (
-    <iframe
-      src={`/file/${file.id}/raw`}
-      width="256"
-      title={file.content}
-    ></iframe>
-  );
+import { IconMemory } from "@/components/icons";
 
-  return <a href={`/file/${file.id}`}>{body}</a>;
-};
+import Attachment from "@/components/attachment";
 
 const Post: FC<PostProps> = ({
   id,
@@ -41,6 +24,7 @@ const Post: FC<PostProps> = ({
   Wrapper = "li",
   files,
   children,
+  masquerade,
   ...props
 }) => {
   const body = (
@@ -65,18 +49,25 @@ const Post: FC<PostProps> = ({
             dangerouslySetInnerHTML={{ __html: content }}
           ></span>
         ) : null}
-        <a title={`open ${id}`} href={`/post/${id}`} className="post-link">
-          <IconLink />
+        <a title={`open ${id}`} href={`/post/${id}`} className="entity-link">
+          <IconPost />
         </a>
       </header>
       {files ? (
         <span className="attachments">
           {files.map((file) => (
-            <PostFile file={file} key={file.id} />
+            <Attachment file={file} key={file.id} />
           ))}
         </span>
       ) : null}
       {children}
+      {masquerade ? (
+        <footer>
+          <button>
+            <IconMemory />
+          </button>
+        </footer>
+      ) : null}
     </>
   );
 

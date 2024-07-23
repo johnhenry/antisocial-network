@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import { getFile } from "@/lib/database/file";
 import { getObject } from "@/lib/fs/mod";
 

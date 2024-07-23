@@ -1,22 +1,24 @@
 import type { FC, ComponentClass, ReactNode } from "react";
-import type { EntityExt, PostExt } from "@/types/mod";
+import type { EntityExt, PostExt, AgentExt, FileExt } from "@/types/mod";
 import Post from "@/components/post";
-
+import File from "@/components/file";
+import Agent from "@/components/agent";
 type EntityProps = EntityExt & {
   Wrapper?: ComponentClass<any> | string;
   children?: ReactNode;
   className?: string;
+  masquerade?: AgentExt;
 };
 
 const Entity: FC<EntityProps> = (entity) => {
   const [type, id] = entity.id.split(":");
   switch (type) {
     case "post":
-      return <Post {...(entity as PostExt)} className="post" />;
+      return <Post {...(entity as PostExt)} className="entity post" />;
     case "file":
-    // return <File file={entity} />;
+      return <File {...(entity as FileExt)} className="entity file" />;
     case "agent":
-    // return <Agent agent={entity} />;
+      return <Agent {...(entity as AgentExt)} className="entity agent" />;
     default:
       return <div className="post">Unknown entity type: {type}</div>;
   }

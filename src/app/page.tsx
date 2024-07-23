@@ -92,6 +92,8 @@ const fetchChildren = (start = 0) => {
   };
 };
 
+import { agent1 } from "@/fake-data";
+
 const Page: FC<PageProps> = ({}) => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
@@ -101,6 +103,7 @@ const Page: FC<PageProps> = ({}) => {
   const [searchFiles, setSearchFiles] = useState(false);
   const [searchAgents, setSearchAgents] = useState(false);
   const [searchResults, setSearchResults] = useState<EntityExt[]>([]);
+  const masquerade = agent1;
   const resetPrepended = () => setPrepended([]);
   useEffect(() => {
     const load = () => {
@@ -145,7 +148,6 @@ const Page: FC<PageProps> = ({}) => {
       setSearchResults([]);
       return;
     }
-    console.log(searchText, !searchText.trim());
     const searchResults = await getEntitiesExternal(
       0,
       searchCount,
@@ -156,8 +158,6 @@ const Page: FC<PageProps> = ({}) => {
         agents: searchAgents || !(searchPosts || searchFiles),
       }
     );
-    console.log({ searchText }, { searchResults });
-
     setSearchResults(searchResults);
   };
 
@@ -193,7 +193,9 @@ const Page: FC<PageProps> = ({}) => {
       {searchResults.length ? (
         <ul>
           {searchResults.map((entity) => {
-            return <Entity key={entity.id} {...entity} />;
+            return (
+              <Entity key={entity.id} {...entity} masquerade={masquerade} />
+            );
           })}
         </ul>
       ) : (
@@ -203,7 +205,7 @@ const Page: FC<PageProps> = ({}) => {
             fetchChildren={fetchChildren(0)}
             prependedItems={prependedItems}
             resetPrepended={resetPrepended}
-            childProps={{ className: "post" }}
+            childProps={{ masquerade }}
             FinalItem={({ children, ...props }) => (
               <li {...props}>{children}</li>
             )}
