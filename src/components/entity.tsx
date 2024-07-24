@@ -1,5 +1,11 @@
 import type { FC, ComponentClass, ReactNode } from "react";
-import type { EntityExt, PostExt, AgentExt, FileExt } from "@/types/mod";
+import type {
+  EntityExt,
+  PostExt,
+  AgentExt,
+  FileExt,
+  AgentPlusExt,
+} from "@/types/mod";
 import Post from "@/components/post";
 import File from "@/components/file";
 import Agent from "@/components/agent";
@@ -7,7 +13,8 @@ type EntityProps = EntityExt & {
   Wrapper?: ComponentClass<any> | string;
   children?: ReactNode;
   className?: string;
-  masquerade?: AgentExt;
+  masquerade?: AgentPlusExt;
+  setMasquerade?: (masquerade: AgentPlusExt | null) => void;
 };
 
 const Entity: FC<EntityProps> = (entity) => {

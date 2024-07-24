@@ -14,6 +14,7 @@ import {
   DEFAULT_PARAMETERS_AGENT,
   REL_BOOKMARKS,
   REL_ELICITS,
+  REL_REMEMBERS,
   TABLE_AGENT,
   TABLE_POST,
 } from "@/config/mod";
@@ -147,7 +148,7 @@ export const createAgent = async ({
 };
 
 export const updateAgent = async (
-  id: RecordId,
+  id: StringRecordId,
   {
     name = null,
     description = null,
@@ -165,7 +166,7 @@ export const updateAgent = async (
   const db = await getDB();
   try {
     // get agent
-    const agent = await db.select<Agent>(id) as Agent;
+    const agent = await db.select<Agent>(id);
     // name is different
     if (name && agent.name !== name) {
       if (await nameExists(name)) {
@@ -176,7 +177,7 @@ export const updateAgent = async (
     if (agent.image !== image) {
       agent.image = image;
     }
-
+    agent.timestamp = Date.now();
     const combinedQualities = (
       description +
       "\n\n" +
@@ -216,20 +217,18 @@ export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
     `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding FROM agent where id = $id`,
   );
   // select incoming relationships
-  // remembrances
-  // queries.push(
-  //   `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding from post where <-${REL_BOOKMARKS}<-(agent where id = $id)`,
-  // );
-  queries.push(`select * from post where id=NULL`);
-  // bookmarks
-  // queries.push(
-  //   `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding from file where <-${REL_BOOKMARKS}<-(agent where id = $id)`,
-  // );
-  queries.push(`select * from file where id=NULL`);
+  // remembered
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding from post where <-${REL_REMEMBERS}<-(agent where id = $id)`,
+  );
+  // bookmarked
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding from file where <-${REL_BOOKMARKS}<-(agent where id = $id)`,
+  );
 
   const db = await getDB();
   try {
-    const [[agent], remembrances, bookmarks]: [[Agent], Post[], File[]] =
+    const [[agent], remembered, bookmarked]: [[Agent], Post[], File[]] =
       await db
         .query(
           queries.join(";"),
@@ -239,8 +238,8 @@ export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
         );
     const obj = {
       agent,
-      remembrances,
-      bookmarks,
+      remembered,
+      bookmarked,
     };
 
     return obj;

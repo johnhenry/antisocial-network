@@ -81,8 +81,8 @@ export type Agent = {
 
 export type AgentPlus = {
   agent: Agent;
-  remembrances?: Post[];
-  bookmarks?: File[];
+  remembered?: Post[];
+  bookmarked?: File[];
 };
 
 // Agent with only: id, name, and embedding
@@ -103,8 +103,8 @@ export type AgentExt = Omit<Agent, "id" | "embedding"> & {
 
 export type AgentPlusExt = {
   agent: AgentExt;
-  remembrances?: PostExt[];
-  bookmarks?: FileExt[];
+  remembered?: PostExt[];
+  bookmarked?: FileExt[];
 };
 
 export type File = {
@@ -234,4 +234,17 @@ export type Log = {
 
 export type LogExt = Omit<Log, "id"> & {
   id: string; // e.g. log:9y4o5sersr, log:9nlanlj9ad
+};
+
+export type Relation = {
+  id: RecordId;
+  in: RecordId;
+  out: RecordId;
+  data?: Record<string, any>;
+};
+
+export type RelationExt = Omit<Relation, "id" | "in" | "out"> & {
+  id: string;
+  in: string;
+  out: string;
 };

@@ -70,6 +70,7 @@ export const ALL_RELATIONSHIPS = [
 
 //
 export const MASQUERADE_KEY = "masquerade";
+export const SEARCH_KEY = "search";
 
 // an agent bookmarks a file
 ////

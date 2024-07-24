@@ -1,4 +1,4 @@
-import type { Post } from "@/types/mod";
+import type { Relation } from "@/types/mod";
 
 import { RecordId, StringRecordId, Surreal } from "surrealdb.js";
 
@@ -106,19 +106,19 @@ const ensureRecordId = (id: RecordId | StringRecordId | string) => {
 };
 
 export const relate = async (
-  inn: RecordId,
+  inn: RecordId | StringRecordId,
   relationship: string,
-  out: RecordId,
+  out: RecordId | StringRecordId,
   data?: Record<string, any>,
-) => {
+): Promise<Relation> => {
   const db = await getDB();
   try {
-    const result = await db.relate(
+    const [result] = await db.relate(
       inn,
       relationship,
       out,
       data,
-    );
+    ) as Relation[];
     return result;
   } finally {
     await db.close();
@@ -126,22 +126,26 @@ export const relate = async (
 };
 
 export const unrelate = async (
-  inn: RecordId | StringRecordId | string,
+  inn: RecordId | StringRecordId,
   relationship: string,
-  out: RecordId | StringRecordId | string,
+  out: RecordId | StringRecordId,
 ): Promise<boolean> => {
   const db = await getDB();
   try {
-    const [[rel]] = await db.query(
+    const [rel] = await db.query(
       `SELECT * FROM type::table($relationship) WHERE in = ${inn} AND out = ${out}`,
       {
         relationship,
       },
-    ) as any[][]; // TODO: find the type returned by Surreal DB query
-    if (!rel) {
+    ) as any[][];
+
+    if (!rel.length) {
       return false;
     }
-    await db.delete(rel.id);
+    // TODO: find the type returned by Surreal DB query
+    for (const relationship of rel) {
+      await db.delete(relationship.id);
+    }
     return true;
   } finally {
     await db.close();

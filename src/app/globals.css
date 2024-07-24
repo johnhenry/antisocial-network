@@ -62,7 +62,7 @@
 :root {
   --size-font: 16px;
 
-  --size-padding: 16px;
+  --size-padding: 1rem;
   --size-padding-inner: calc(var(--size-padding) / 2);
   --size-padding-inside: calc(var(--size-padding) / 4);
 
@@ -165,11 +165,14 @@ label.label-file,
 label.label-checkbox,
 label.label-radio {
   display: inline-block;
-  padding: var(--size-padding-inside);
+  padding: var(--size-padding-inner);
   background-color: var(--color-background);
   color: var(--color-foreground);
   border-radius: var(--size-corner-inner);
   cursor: pointer;
+  &:hover {
+    filter: brightness(0.9);
+  }
 }
 svg {
   display: inline;
@@ -402,6 +405,9 @@ body > main {
     }
   }
 }
+.infinite-scroller-window:has(> ul) {
+  width: 100%;
+}
 
 ul:has(> .entity) {
   display: flex;
@@ -573,6 +579,44 @@ article.logs {
     justify-content: center;
     padding: var(--size-padding-inner);
     border-top: 1px solid currentColor;
+    button {
+      /*.inverted colors*/
+      color: var(--color-background);
+      background-color: var(--color-background-inverse);
+    }
+    button.bookmarked,
+    button.rememberance {
+      background-color: var(--color-background);
+      color: var(--color-background-inverse);
+    }
+  }
+}
+
+.agent-masquerade {
+  border-style: solid;
+  border-width: 1px;
+  width: 80%;
+  border-radius: 1.5rem;
+  height: 2rem;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  overflow: hidden;
+  padding: 0.25rem;
+  /* padding-left: 1rem; */
+  p {
+    flex: 1;
+    text-align: center;
+  }
+  button {
+    /* margin-left: auto; */
+    padding: 0;
+    font-size: 0.6rem;
+    border-radius: 50%;
+    aspect-ratio: 1/1;
+    &:first-child {
+      font-size: 0.6rem;
+    }
   }
 }
 
@@ -673,6 +717,17 @@ article.logs {
     display: flex;
     flex-direction: var(--column-direction);
     gap: var(--size-gap);
+    label {
+      button {
+        /*.inverted colors*/
+        color: var(--color-background);
+        background-color: var(--color-background-inverse);
+      }
+      button.masquerade {
+        background-color: var(--color-background);
+        color: var(--color-background-inverse);
+      }
+    }
     > * {
       border-radius: var(--size-radius);
       overflow: hidden;
@@ -704,7 +759,7 @@ article.logs {
       gap: var(--size-gap-inner);
       padding: var(--size-gap-inner);
     }
-    > footer {
+    > aside {
       flex: 1;
       > .agent-qualities {
         display: flex;

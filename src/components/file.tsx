@@ -1,15 +1,21 @@
 import type { FC, ReactNode, ComponentClass } from "react";
-import type { PostExt, FileExt, AgentExt } from "@/types/mod";
+import type { PostExt, FileExt, AgentExt, AgentPlusExt } from "@/types/mod";
 import imageFromString from "@/lib/util/image-from-string";
 import timeAgo from "@/lib/util/time-ago";
-import { IconFile, IconBookmark } from "@/components/icons";
+import { IconFile, IconBookmark, IconMask } from "@/components/icons";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+
+import { relateExt, unrelateExt } from "@/lib/database/mod";
+
+import { REL_BOOKMARKS } from "@/config/mod";
 
 type PostProps = FileExt & {
   Wrapper?: ComponentClass<any> | string;
   children?: ReactNode;
   className?: string;
-  masquerade?: AgentExt;
+  masquerade?: AgentPlusExt;
+  setMasquerade?: (masquerade: AgentPlusExt | null) => void;
 };
 import Attachment from "@/components/attachment";
 
@@ -25,8 +31,44 @@ const Post: FC<PostProps> = ({
   hash,
   name,
   masquerade,
+  setMasquerade,
   ...props
 }) => {
+  const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const loadBookmarks = async () => {
+      const bookmarks =
+        masquerade?.bookmarked?.map(({ id }) => {
+          return id;
+        }) || [];
+      setBookmarked(new Set(bookmarks));
+    };
+    loadBookmarks();
+    return () => {
+      setBookmarked(new Set());
+    };
+  }, [masquerade]);
+
+  const toggleBookmarked = async () => {
+    const newBookmarked = new Set(bookmarked);
+    if (bookmarked.has(id)) {
+      await unrelateExt(masquerade!.agent.id, REL_BOOKMARKS, id);
+      newBookmarked.delete(id);
+    } else {
+      await relateExt(masquerade!.agent.id, REL_BOOKMARKS, id);
+      newBookmarked.add(id);
+    }
+    setBookmarked(() => {
+      return newBookmarked;
+    });
+    if (masquerade && setMasquerade) {
+      setMasquerade({
+        ...masquerade,
+        bookmarked: [...newBookmarked].map((id) => ({ id } as FileExt)),
+      });
+    }
+  };
+
   const body = (
     <>
       <header>
@@ -47,7 +89,12 @@ const Post: FC<PostProps> = ({
       {children}
       {masquerade ? (
         <footer>
-          <button>
+          <button
+            title="toggle bookmarks"
+            className={bookmarked.has(id) ? "bookmarked" : ""}
+            onClick={() => toggleBookmarked()}
+          >
+            <IconMask />
             <IconBookmark />
           </button>
         </footer>

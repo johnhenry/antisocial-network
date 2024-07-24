@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC, ComponentClass } from "react";
-import type { PostExt, EntityExt } from "@/types/mod";
+import type { PostExt, EntityExt, AgentPlusExt } from "@/types/mod";
 import { useEffect, useState } from "react";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
 import { getPostsExternal } from "@/lib/database/mod";
@@ -12,6 +12,9 @@ import { useRouter } from "next/navigation";
 type PageProps = {};
 const SIZE = 10;
 import { getEntitiesExternal } from "@/lib/database/mod";
+import useLocalStorage from "@/lib/hooks/use-localstorage";
+import { MASQUERADE_KEY } from "@/config/mod";
+import Masquerade from "@/components/masquerade";
 
 const SearchOptions = ({
   searchCount,
@@ -92,8 +95,6 @@ const fetchChildren = (start = 0) => {
   };
 };
 
-import { agent1 } from "@/fake-data";
-
 const Page: FC<PageProps> = ({}) => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
@@ -103,11 +104,14 @@ const Page: FC<PageProps> = ({}) => {
   const [searchFiles, setSearchFiles] = useState(false);
   const [searchAgents, setSearchAgents] = useState(false);
   const [searchResults, setSearchResults] = useState<EntityExt[]>([]);
-  const masquerade = agent1;
+  const [masquerade, setMasquerade] = useLocalStorage<AgentPlusExt | null>(
+    MASQUERADE_KEY,
+    null // TODO: can this be undefined? I think there may be some wiere interactions with local storage.
+  );
   const resetPrepended = () => setPrepended([]);
   useEffect(() => {
     const load = () => {
-      setSearchText("");
+      setSearchText(searchText);
     };
     load();
     return () => {};
@@ -171,10 +175,16 @@ const Page: FC<PageProps> = ({}) => {
 
   return (
     <article>
+      <Masquerade
+        masquerade={masquerade}
+        setMasquerade={setMasquerade}
+        className="agent-masquerade"
+      />
       <InputBox
         Wrapper={"div"}
         className="input-box"
         extractText={setSearchText}
+        sourceId={masquerade?.agent.id}
         entityReady={entityReady}
       />
       <SearchOptions
@@ -194,7 +204,12 @@ const Page: FC<PageProps> = ({}) => {
         <ul>
           {searchResults.map((entity) => {
             return (
-              <Entity key={entity.id} {...entity} masquerade={masquerade} />
+              <Entity
+                key={entity.id}
+                {...entity}
+                masquerade={masquerade}
+                setMasquerade={setMasquerade}
+              />
             );
           })}
         </ul>
@@ -205,7 +220,7 @@ const Page: FC<PageProps> = ({}) => {
             fetchChildren={fetchChildren(0)}
             prependedItems={prependedItems}
             resetPrepended={resetPrepended}
-            childProps={{ masquerade }}
+            childProps={{ masquerade, setMasquerade }}
             FinalItem={({ children, ...props }) => (
               <li {...props}>{children}</li>
             )}

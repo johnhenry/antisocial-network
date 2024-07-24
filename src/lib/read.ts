@@ -1,3 +1,4 @@
+//TODO: I think I can delete this?
 "use server";
 import type { Agent, Post, Setting } from "@/types/mod";
 import { RecordId, StringRecordId } from "surrealdb.js";
@@ -153,7 +154,7 @@ export const getFullFile = async (id: string): Promise<any> => {
   try {
     const [
       [file],
-      bookmarks,
+      bookmarked,
     ]: [[File], Agent[]] = await db.query(
       queries.join(";"),
       {
@@ -165,7 +166,7 @@ export const getFullFile = async (id: string): Promise<any> => {
     }
     const obj = {
       file,
-      bookmarks,
+      bookmarked,
     };
 
     return obj;

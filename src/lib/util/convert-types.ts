@@ -29,6 +29,8 @@ import {
   PostExt,
   PostPlus,
   PostPlusExt,
+  Relation,
+  RelationExt,
 } from "@/types/mod";
 
 export const mapErrorToErrorExt = (error: Error): ErrorExt => {
@@ -65,13 +67,13 @@ export const mapAgentPlusToAgentPlusExt = (
 ): AgentPlusExt => {
   const {
     agent,
-    remembrances,
-    bookmarks,
+    remembered,
+    bookmarked,
   } = agentPlus;
   return {
     agent: mapAgentToAgentExt(agent),
-    remembrances: remembrances ? remembrances.map(mapPostToPostExt) : undefined,
-    bookmarks: bookmarks ? bookmarks.map(mapFileToFileExt) : undefined,
+    remembered: remembered ? remembered.map(mapPostToPostExt) : undefined,
+    bookmarked: bookmarked ? bookmarked.map(mapFileToFileExt) : undefined,
   };
 };
 
@@ -133,5 +135,17 @@ export const mapPostPlusToPostPlusExt = (postPlus: PostPlus): PostPlusExt => {
     after: after ? mapPostToPostExt(after) : undefined,
     elicits: elicits?.map(mapPostToPostExt),
     remembers: remembers?.map(mapAgentToAgentExt),
+  };
+};
+
+export const mapRelationToRelationExt = (
+  relation: Relation,
+): RelationExt => {
+  const { id, in: inn, out, data } = relation;
+  return {
+    id: id.toString(),
+    in: inn.toString(),
+    out: out.toString(),
+    data,
   };
 };

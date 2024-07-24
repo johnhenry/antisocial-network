@@ -7,7 +7,7 @@ import type {
   ChangeEventHandler,
   KeyboardEventHandler,
 } from "react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { IconFile, IconAI } from "@/components/icons";
 import Image from "next/image";
 import obfo from "obfo";
@@ -22,12 +22,15 @@ type InputBoxProps = {
   targetId?: string;
   children?: ReactNode;
   buttonText?: string;
+  localStorageKey?: string;
 };
+import useLocalStorage from "@/lib/hooks/use-localstorage";
 
 import { isSlashCommand } from "@/lib/util/command-format";
 import fileToBase64 from "@/lib/util/to-base64";
 
 import { createPostExternal } from "@/lib/database/mod";
+import { useSearchParams } from "next/navigation";
 
 const InputBox: FC<InputBoxProps> = ({
   Wrapper,
@@ -37,10 +40,12 @@ const InputBox: FC<InputBoxProps> = ({
   targetId,
   children,
   buttonText = "Post",
+  localStorageKey = "input",
   ...props
 }) => {
+  const searchParams = useSearchParams();
   const [stashedText, setStashedText] = useState("");
-  const [text, doText] = useState("");
+  const [text, setText] = useState("");
   const isSlash = isSlashCommand(text);
   const hasMention = !isSlash && mentionMatch.test(text);
   const [files, setFiles] = useState<any[]>([]);
@@ -49,11 +54,19 @@ const InputBox: FC<InputBoxProps> = ({
   const addFile = (file: any) => setFiles((files) => [...files, file]);
   const removeFile = (index: number) =>
     setFiles(files.filter((_, i) => i !== index));
+  const [storedText, setStoredText] = useLocalStorage<string | undefined>(
+    localStorageKey,
+    "" // TODO: can this be undefined? I think there may be some wiere interactions with local storage.
+  );
 
   const ready = text.trim() || files.length;
 
-  const setText = (text: string) => {
-    doText(text);
+  const doText = (text: string) => {
+    setText(text);
+    setStoredText(text);
+    // if (textArea!.current.value !== text) {
+    //   textArea!.current.value = text;
+    // }
     if (extractText) {
       extractText(text);
     }
@@ -89,7 +102,7 @@ const InputBox: FC<InputBoxProps> = ({
         // nativeInputValueSetter.call(textArea.current, "");
         const event = new Event("input", { bubbles: true });
         textArea.current.dispatchEvent(event);
-        setText("");
+        doText("");
         setFiles([]);
       }
     });
@@ -107,7 +120,7 @@ const InputBox: FC<InputBoxProps> = ({
   const keyDown: KeyboardEventHandler = (event) => {
     if (event.key === "ArrowUp" && !text.trim() && stashedText) {
       textArea.current!.value = stashedText;
-      setText(stashedText);
+      doText(stashedText);
       setStashedText("");
       return;
     }
@@ -126,7 +139,7 @@ const InputBox: FC<InputBoxProps> = ({
         } else {
           textArea.current!.value = "/" + text;
         }
-        setText(textArea.current!.value);
+        doText(textArea.current!.value);
         return;
       }
       case "f":
@@ -135,6 +148,7 @@ const InputBox: FC<InputBoxProps> = ({
         break;
     }
   };
+  useEffect(() => {}, []);
 
   const body = (
     <>
@@ -142,10 +156,13 @@ const InputBox: FC<InputBoxProps> = ({
         className={isSlash ? "slash-command" : ""}
         placeholder="Type your message here"
         onChange={(event) => {
-          setText(event.target.value);
+          doText(event.target.value);
         }}
         ref={textArea}
         onKeyDown={keyDown}
+        defaultValue={
+          decodeURIComponent(searchParams.get("q") || "") || storedText
+        }
       ></textarea>
       <fieldset>
         <label className="label-file">

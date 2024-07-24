@@ -15,11 +15,12 @@ import type {
   Post,
   PostExt,
   PostPlusExt,
+  RelationExt,
 } from "@/types/mod";
 import { replaceContentWithLinks } from "@/lib/database/helpers";
 
-import { RecordId, StringRecordId } from "surrealdb.js";
-import { getDB } from "@/lib/db";
+import { StringRecordId } from "surrealdb.js";
+import { getDB, relate, unrelate } from "@/lib/db";
 
 import createPost, {
   getPost,
@@ -27,7 +28,12 @@ import createPost, {
   getPosts,
 } from "@/lib/database/post";
 import { getFile, getFilePlus, getFiles } from "@/lib/database/file";
-import { getAgent, getAgentPlus, getAgents } from "@/lib/database/agent";
+import {
+  getAgent,
+  getAgentPlus,
+  getAgents,
+  updateAgent,
+} from "@/lib/database/agent";
 import { updateFile } from "@/lib/database/file";
 import { getLogs } from "@/lib/database/log";
 
@@ -40,6 +46,7 @@ import {
   mapLogToLogExt,
   mapPostPlusToPostPlusExt,
   mapPostToPostExt,
+  mapRelationToRelationExt,
 } from "@/lib/util/convert-types";
 
 export const createPostExternal = async (
@@ -130,13 +137,8 @@ export const getPostExternal = async (
 export const getFileExternal = async (
   id: string,
 ): Promise<FileExt> => {
-  const db = await getDB();
-  try {
-    const file = await getFile(new StringRecordId(id));
-    return mapFileToFileExt(file);
-  } finally {
-    db.close();
-  }
+  const file = await getFile(new StringRecordId(id));
+  return mapFileToFileExt(file);
 };
 
 // Get Singular Objects with Relationships
@@ -227,39 +229,63 @@ export const updateFileExternal = async (
     publisher?: string;
     date?: string;
   },
-): Promise<FileExt> => {
-  const file = await updateFile(new StringRecordId(id), {
-    name,
-    author,
-    publisher,
-    date,
-  });
-  return mapFileToFileExt(file);
+): Promise<FileExt | ErrorExt> => {
+  try {
+    const indeitifier = new StringRecordId(id);
+    const file = await getFile(indeitifier);
+    const newFile = await updateFile(indeitifier, {
+      ...file,
+      name,
+      author,
+      publisher,
+      date,
+    });
+    return mapFileToFileExt(newFile);
+  } catch (e) {
+    if (e instanceof Error) {
+      return mapErrorToErrorExt(e);
+    }
+    throw e;
+  }
 };
 
 export const updateAgentExternal = async (
   id: string,
-  {
-    name,
-    email,
-    avatar,
-  }: {
-    name?: string;
-    email?: string;
-    avatar?: string;
-  },
-): Promise<AgentExt> => {
-  const db = await getDB();
+  options: any,
+): Promise<AgentExt | ErrorExt> => {
   try {
-    const agent = await db.update(new StringRecordId(id), {
-      name,
-      email,
-      avatar,
+    const identifier = new StringRecordId(id);
+    const agent = await getAgent(identifier);
+    const updatedAgent = await updateAgent(identifier, {
+      ...agent,
+      ...options,
     }) as Agent;
-    return mapAgentToAgentExt(agent);
-  } finally {
-    db.close();
+    return mapAgentToAgentExt(updatedAgent);
+  } catch (e) {
+    if (e instanceof Error) {
+      return mapErrorToErrorExt(e);
+    }
+    throw e;
   }
 };
 
 // Delete Singular Objects with
+
+export const relateExt = async (
+  inn: string,
+  rel: string,
+  out: string,
+  data?: Record<any, any>,
+): Promise<RelationExt> => {
+  const result = await relate(
+    new StringRecordId(inn),
+    rel,
+    new StringRecordId(out),
+    data,
+  );
+  return mapRelationToRelationExt(result);
+};
+
+export const unrelateExt = (inn: string, rel: string, out: string) => {
+  return unrelate(new StringRecordId(inn), rel, new StringRecordId(out));
+};
