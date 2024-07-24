@@ -37,7 +37,7 @@ const Page: FC<Props> = ({ params }) => {
     };
   };
   const update = async () => {
-    const data = obfo(formRef.current);
+    const data = obfo<AgentExt>(formRef.current!);
     data.qualities = data.qualities.filter(
       ([name, description]: [string, string]) =>
         name.trim() && description.trim()

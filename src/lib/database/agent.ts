@@ -148,7 +148,7 @@ export const createAgent = async ({
 };
 
 export const updateAgent = async (
-  id: StringRecordId,
+  id: StringRecordId | RecordId,
   {
     name = null,
     description = null,
@@ -344,7 +344,7 @@ const recursiveDescendants = async (
  * @param {number} prefixLength - The length of the prefix for subsequent lines.
  * @returns {string} The formatted line.
  */
-const formatLine = (line, prefix, prefixLength) => {
+const formatLine = (line: string, prefix: string, prefixLength: number) => {
   const words = line.split(" ");
   let result = prefix + words[0];
   let currentLineLength = prefix.length + words[0].length;

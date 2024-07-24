@@ -1,6 +1,6 @@
 export type MentionCallback = (
   mention: string,
-) => Promise<string | [string, any]>;
+) => Promise<string | [string, any]> | string | [string, any];
 
 const defaultCallback: MentionCallback = (mention) => mention;
 const replaceMentions = async (

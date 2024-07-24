@@ -1,8 +1,9 @@
+import type { Descriptor } from "@/types/tools";
 import * as tools from "@/tools";
-import { Fragment } from "react";
+import { Fragment, ReactNode } from "react";
 
-const JsonToHtmlMapper = ({ data }) => {
-  const renderValue = (value, key) => {
+const JsonToHtmlMapper = ({ data }: { data: Descriptor }) => {
+  const renderValue = (value: Descriptor, key: string): ReactNode => {
     if (typeof value === "object" && value !== null) {
       if (Array.isArray(value)) {
         return (
@@ -15,12 +16,14 @@ const JsonToHtmlMapper = ({ data }) => {
       } else {
         return (
           <dl className={key}>
-            {Object.entries(value).map(([subKey, subValue]) => (
-              <Fragment key={subKey}>
-                <dt>{subKey}</dt>
-                <dd>{renderValue(subValue, subKey)}</dd>
-              </Fragment>
-            ))}
+            {Object.entries(value).map(
+              ([subKey, subValue]: [string, Descriptor]) => (
+                <Fragment key={subKey}>
+                  <dt>{subKey}</dt>
+                  <dd>{renderValue(subValue, subKey)}</dd>
+                </Fragment>
+              )
+            )}
           </dl>
         );
       }
@@ -29,7 +32,7 @@ const JsonToHtmlMapper = ({ data }) => {
     }
   };
 
-  return renderValue(data);
+  return renderValue(data, "");
 };
 
 const Page = () => {
@@ -37,19 +40,22 @@ const Page = () => {
     <article>
       <h2>Tools</h2>
       <dl>
-        {Object.entries(tools).map(([key, { descriptor }]) => (
-          <>
-            <dt>{key}</dt>
-            <dd>
-              <details>
-                <summary></summary>
-                <JsonToHtmlMapper data={descriptor} />
-              </details>
-            </dd>
-          </>
-        ))}
+        {Object.entries(tools).map(
+          ([key, { descriptor }]: [string, { descriptor: Descriptor }]) => (
+            <Fragment key={key}>
+              <dt>{key}</dt>
+              <dd>
+                <details>
+                  <summary></summary>
+                  <JsonToHtmlMapper data={descriptor} />
+                </details>
+              </dd>
+            </Fragment>
+          )
+        )}
       </dl>
     </article>
   );
 };
+
 export default Page;

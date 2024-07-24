@@ -39,6 +39,7 @@ const SearchOptions = ({
   searchAgents: boolean;
   setSearchAgents: (value: boolean) => void;
   Wrapper?: ComponentClass<any> | string;
+  className?: string;
   searchMin: number;
   searchMax: number;
 }) => {

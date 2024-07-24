@@ -65,8 +65,7 @@ const Page = () => {
 
   const settingsFormRef = useRef(null);
   const submitUpdateSettings = async () => {
-    // @ts-ignore
-    const data = obfo(settingsFormRef.current);
+    const data = obfo<Record<string, any>>(settingsFormRef.current!);
     settings.forEach((setting) => {
       const { name } = setting;
       if (data.hasOwnProperty(name)) {

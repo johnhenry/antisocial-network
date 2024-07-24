@@ -3,8 +3,9 @@ import React, { useState, useEffect, useCallback } from "react";
 
 type PropsQuoteCycler = {
   sayings: [string, string][];
-  interval: number;
-  random: booleana;
+  interval?: number;
+  random: boolean;
+  className?: string;
 };
 
 const QuoteCycler: FC<PropsQuoteCycler> = ({

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { TABLE_AGENT } from "@/config/mod";
+import type { Descriptor, Handler, Tool } from "@/types/tools";
+
 const schema = z.object({
   scores: z
     .array(
@@ -12,7 +14,7 @@ const schema = z.object({
     .describe("The list of agents and their scores."),
 });
 
-const descriptor = {
+const descriptor: Descriptor = {
   name: "assessAgents",
   description: "assign scores to agents",
   parameters: {
@@ -21,15 +23,15 @@ const descriptor = {
   },
 };
 
-const handler = async ({
+const handler: Handler = async ({
   scores,
 }: {
   scores: { agent: string; score: number }[];
-}): Promise<number> => {
-  return 0;
+}): Promise<string> => {
+  return String(0);
 };
 
-const tool = {
+const tool: Tool = {
   descriptor,
   handler,
 };

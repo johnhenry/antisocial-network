@@ -24,21 +24,20 @@ export const metadata: Metadata = {
   title: "The Anitsocial Network",
   description: "Social Networking, but without the people",
 };
-
+import { Suspense } from "react";
 const Page: FC<Props> = async ({ children }: Props) => {
   const cssFilePath = path.join(__dirname, "critical.css");
   const criticalCSS = await readFile(cssFilePath, "utf-8");
   return (
     <html lang="en-us">
       <head>
-        <title>My First Web Page</title>
         <meta name="charset" content="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style dangerouslySetInnerHTML={{ __html: criticalCSS }} />
       </head>
       <body>
         <main>
-          {children}
+          <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
           <header className="inverted-colors">
             <h1>
               <a href="/">

@@ -28,7 +28,7 @@ const Page: FC<Props> = ({ params }) => {
     fetchFile();
   }, [indetifier]);
   const update = async () => {
-    const data = obfo(formRef.current);
+    const data = obfo(formRef.current!);
     await updateFileExternal(indetifier, data);
     alert("File updated!");
   };
@@ -97,13 +97,10 @@ const Page: FC<Props> = ({ params }) => {
             open
           </a>
           {file.type.startsWith("image/") ? (
-            <img
-              alt={file.content}
-              src={`/file/${file.id}/raw`}
-              width="256"
-            ></img>
+            <img alt={file.content} src={`/file/${file.id}/raw`} width="256" />
           ) : (
             <iframe
+              title={`${file.name || file.id}`}
               name=" document"
               src={`/file/${file.id}/raw`}
               width="256"

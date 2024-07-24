@@ -1,3 +1,5 @@
+import type { Descriptor, Handler, Tool } from "@/types/tools";
+
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
@@ -8,7 +10,7 @@ const schema = z.object({
   subtrahend: z.string().describe("The number to be subtracted from another."),
 });
 
-const descriptor = {
+const descriptor: Descriptor = {
   name: "subtraction",
   description: "subtract two numbers",
   parameters: {
@@ -17,17 +19,17 @@ const descriptor = {
   },
 };
 
-const handler = async ({
+const handler: Handler = async ({
   minuend,
   subtrahend,
 }: {
   minuend: number;
   subtrahend: number;
-}): Promise<number> => {
-  return minuend - subtrahend;
+}): Promise<string> => {
+  return String(minuend - subtrahend);
 };
 
-const tool = {
+const tool: Tool = {
   descriptor,
   handler,
 };

@@ -1,15 +1,41 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, ReactNode } from "react";
 
-const ToastNotification = ({ duration = 5000, Spinner, ...props }) => {
-  const [notifications, setNotifications] = useState([]);
+interface Message {
+  text: string;
+  url?: string;
+}
 
-  const removeNotification = useCallback((id) => {
+interface Notification {
+  id: number;
+  message: string;
+  url?: string;
+  createdAt: number;
+  expiresAt: number;
+  isPaused: boolean;
+  pausedAt?: number;
+  onRemove?: () => void;
+}
+
+interface ToastNotificationProps {
+  duration?: number;
+  Spinner?: React.ComponentType;
+  message?: Message;
+}
+
+const ToastNotification: React.FC<ToastNotificationProps> = ({
+  duration = 5000,
+  Spinner,
+  ...props
+}) => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const removeNotification = useCallback((id: number) => {
     setNotifications((prev) =>
       prev.filter((notification) => notification.id !== id)
     );
   }, []);
 
-  const pauseTimer = useCallback((id) => {
+  const pauseTimer = useCallback((id: number) => {
     setNotifications((prev) =>
       prev.map((notification) =>
         notification.id === id
@@ -19,11 +45,11 @@ const ToastNotification = ({ duration = 5000, Spinner, ...props }) => {
     );
   }, []);
 
-  const resumeTimer = useCallback((id) => {
+  const resumeTimer = useCallback((id: number) => {
     setNotifications((prev) =>
       prev.map((notification) => {
         if (notification.id === id && notification.isPaused) {
-          const pauseDuration = Date.now() - notification.pausedAt;
+          const pauseDuration = Date.now() - notification.pausedAt!;
           return {
             ...notification,
             isPaused: false,
@@ -37,7 +63,7 @@ const ToastNotification = ({ duration = 5000, Spinner, ...props }) => {
 
   useEffect(() => {
     if (props.message) {
-      const newNotification = {
+      const newNotification: Notification = {
         id: Date.now(),
         message: props.message.text,
         url: props.message.url,

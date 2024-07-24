@@ -13,7 +13,7 @@ type EntityProps = EntityExt & {
   Wrapper?: ComponentClass<any> | string;
   children?: ReactNode;
   className?: string;
-  masquerade?: AgentPlusExt;
+  masquerade?: AgentPlusExt | null;
   setMasquerade?: (masquerade: AgentPlusExt | null) => void;
 };
 

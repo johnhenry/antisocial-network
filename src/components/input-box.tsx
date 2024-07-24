@@ -7,7 +7,7 @@ import type {
   ChangeEventHandler,
   KeyboardEventHandler,
 } from "react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, Suspense } from "react";
 import { IconFile, IconAI } from "@/components/icons";
 import Image from "next/image";
 import obfo from "obfo";
@@ -76,7 +76,7 @@ const InputBox: FC<InputBoxProps> = ({
     // @ts-ignore
     // Type error: This expression is not callable.
     //  Type 'typeof import("obfo")' has no call signatures.
-    const files = obfo(filePicker.current);
+    const files = obfo<FileProto[]>(filePicker.current);
     if (!files || !files.length) {
       return;
     }

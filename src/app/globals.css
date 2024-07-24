@@ -227,16 +227,18 @@ body > main {
         gap: var(--size-gap);
         justify-content: center;
         align-items: center;
-        img[alt="logo"] {
+        [alt="logo"] {
           display: inline;
+          -webkit-mask-size: 100%;
           mask-size: 100%;
           -webkit-mask-repeat: no-repeat;
           mask-repeat: no-repeat;
+          -webkit-mask-position: center;
           mask-position: center;
           width: 2rem;
           aspect-ratio: 1;
+          -webkit-mask-image: url(/logo.svg);
           mask-image: url(/logo.svg);
-          -webkig-mask-image: url(/logo.svg);
           background-color: currentColor;
         }
       }
@@ -258,6 +260,7 @@ body > main {
       }
       @media (orientation: landscape) {
         width: fit-content;
+        width: -moz-fit-content;
       }
     }
     &:hover,

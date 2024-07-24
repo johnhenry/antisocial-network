@@ -42,7 +42,7 @@ export const toolResponse = async (
   } = {},
 ): Promise<string> => {
   throw new Error("TODO: Implement");
-  const messages = mapPostsToMessages(posts);
+  const messages = mapPostsToMessages(conversation);
 
   return `response->${Date.now()}`;
 };
