@@ -37,17 +37,27 @@ export const getFile = getEntity<File>;
 export const getFiles = getLatest<File>(TABLE_FILE);
 
 export const createFiles = async (
-  { files, owner }: { files: FileProto[]; owner?: Agent },
+  { files, owner, chunk = true, logChunk = false }: {
+    files: FileProto[];
+    owner?: Agent;
+    chunk?: boolean;
+    logChunk?: boolean;
+  },
 ): Promise<File[]> => {
   const ids: File[] = [];
   for (const file of files) {
-    ids.push(await createFile({ file, owner }));
+    ids.push(await createFile({ file, owner, chunk, logChunk }));
   }
   return ids;
 };
 
 export const createFile = async (
-  { file, owner }: { file: FileProto; owner?: Agent },
+  { file, owner, chunk = true, logChunk = false }: {
+    file: FileProto;
+    owner?: Agent;
+    chunk?: boolean;
+    logChunk?: boolean;
+  },
 ): Promise<File> => {
   const db = await getDB();
   const { type, name, author, publisher, date, content } = file;
@@ -103,20 +113,23 @@ export const createFile = async (
             owner,
           }) as File[];
 
-          let previousPostId;
-          // embed chunks
-          for await (const { chunk, embedding } of chunker(text)) {
-            const post = await createPost(chunk, {
-              embedding,
-              container: newFile,
-            }) as Post;
-            await relate(newFile.id, REL_CONTAINS, post.id);
-            if (previousPostId) {
-              await relate(previousPostId, REL_PRECEDES, post.id, {
+          if (chunk) {
+            let previousPostId;
+            // embed chunks
+            for await (const { chunk, embedding } of chunker(text)) {
+              const post = await createPost(chunk, {
+                embedding,
                 container: newFile,
-              });
+                dropLog: !logChunk,
+              }) as Post;
+              await relate(newFile.id, REL_CONTAINS, post.id);
+              if (previousPostId) {
+                await relate(previousPostId, REL_PRECEDES, post.id, {
+                  container: newFile,
+                });
+              }
+              previousPostId = post.id;
             }
-            previousPostId = post.id;
           }
         }
         break;
@@ -190,7 +203,7 @@ export const createFile = async (
       );
     }
     await putObject(buff, { id: newFile.id.id as string });
-    createLog(newFile.id.toString());
+    createLog(newFile.id.toString(), drop);
     return newFile;
   } finally {
     await db.close();

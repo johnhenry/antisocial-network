@@ -1,9 +1,21 @@
-"use server";
-import type { Log } from "@/types/mod";
+import type { Log, LogExt } from "@/types/mod";
 import { print as printToConsole } from "@/lib/util/logging";
 import { TABLE_LOG } from "@/config/mod";
 import { getDB } from "@/lib/db";
 import { getLatest } from "@/lib/database/helpers";
+import { mapLogToLogExt } from "../util/convert-types";
+
+export const sendNotification = (log: Log) => {
+  const HOST = "http://localhost:3000";
+  fetch(`${HOST}/api/notifications`, {
+    body: JSON.stringify(mapLogToLogExt(log)),
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+};
+
 export const createLog = async (
   target: string,
   { type = "created", content, metadata, print = true, drop = false }: {
@@ -29,6 +41,8 @@ export const createLog = async (
     if (print) {
       printToConsole(log);
     }
+    sendNotification(log);
+
     return log;
   } finally {
     db.close();

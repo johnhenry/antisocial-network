@@ -10,6 +10,7 @@ type PostProps = AgentExt & {
   children?: ReactNode;
   className?: string;
   masquerade?: AgentExt;
+  setMasquerade?: (masquerade: AgentExt | null) => void;
 };
 type PostFileProps = {
   file: FileExt;
@@ -34,7 +35,7 @@ const PostFile: FC<PostFileProps> = ({ file }) => {
   return <a href={`/file/${file.id}`}>{body}</a>;
 };
 
-const Post: FC<PostProps> = ({
+const Agent: FC<PostProps> = ({
   id,
   timestamp,
   content,
@@ -78,4 +79,4 @@ const Post: FC<PostProps> = ({
     return body;
   }
 };
-export default Post;
+export default Agent;

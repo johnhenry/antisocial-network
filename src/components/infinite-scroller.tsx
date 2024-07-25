@@ -9,7 +9,6 @@ import React, {
   ReactNode,
   ComponentClass,
 } from "react";
-import { set } from "zod";
 
 type HasId = any & { id: string };
 type HasTimestamp = any & { timestamp: number };
@@ -26,23 +25,10 @@ interface InfiniteScrollerProps {
   Wrapper?: ComponentClass<any> | string;
 }
 
-const removeDeplicatesById = (items: HasId[]) => {
-  const ids = new Set();
-  return items.filter((item) => {
-    if (ids.has(item.id)) {
-      return false;
-    } else {
-      ids.add(item.id);
-      return true;
-    }
-  });
-};
+import orderByTimeStampAndRemoveDuplicates from "@/lib/util/order-and-remove-duplicates";
 
-const orderByTimestamp = (items: HasTimestamp[]) => {
-  return items.sort((a, b) => b.timestamp - a.timestamp);
-};
 const doItems = (items: HasId[], size = -1) => {
-  const updatedItems = orderByTimestamp(removeDeplicatesById(items));
+  const updatedItems = orderByTimeStampAndRemoveDuplicates(items);
   return size === -1 ? updatedItems : updatedItems.slice(-size);
 };
 
@@ -90,6 +76,15 @@ const InfiniteScroller = ({
       resetPrepended();
     }
   }, [prependedItems]);
+  // useEffect(() => {
+  //   const timer = setInterval(() => {
+  //     loadMoreItems();
+  //   }, 30000);
+
+  //   return () => {
+  //     clearInterval(timer);
+  //   };
+  // }, []);
 
   useEffect(() => {
     if (lastItemRef && FinalItem) {

@@ -63,7 +63,6 @@ const Page: FC<Props> = ({ params }) => {
   useEffect(() => {
     const loadAgent = async () => {
       const agentPlus = await getAgentPlusExternal(identifier);
-      console.log({ agentPlus });
       setAgentPlus(agentPlus);
       const { agent } = agentPlus;
       setQualities(agent.qualities.length ? agent.qualities : [["", ""]]);

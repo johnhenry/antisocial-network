@@ -175,7 +175,7 @@ export const generatePost = async (
       }
 
       if (!source.content) {
-        source = await updateAgent(source.id);
+        source = await updateAgent(source.id, source);
       }
       const out = await agentResponse(source, {
         streaming,
@@ -221,7 +221,7 @@ export const aggregatePostReplies = async (
   const db = await getDB();
   try {
     if (!source.content) {
-      source = await updateAgent(source.id);
+      source = await updateAgent(source.id, source);
     }
     const out = await aggregateResponse(source, target, { streaming });
     let content;
@@ -261,6 +261,7 @@ export const createPost = async (
     tool,
     depth = -1,
     container,
+    dropLog = false,
   }: {
     embedding?: number[];
     source?: Agent;
@@ -270,6 +271,7 @@ export const createPost = async (
     tool?: string;
     depth?: number;
     container?: File;
+    dropLog?: boolean;
   } = {},
 ): Promise<Entity | void> => {
   const db = await getDB();
@@ -286,6 +288,7 @@ export const createPost = async (
           files,
           target,
           source,
+          dropLog,
         });
       } else {
         // create a post
@@ -352,7 +355,7 @@ export const createPost = async (
     } else {
       throw new Error("Invalid content provided.");
     }
-    createLog(post.id.toString());
+    createLog(post.id.toString(), { drop: dropLog });
     if (source) {
       await relate(source.id, REL_INSERTED, post.id);
     }
@@ -490,6 +493,44 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
   };
   try {
     return obj;
+  } finally {
+    await db.close();
+  }
+};
+const CLONE_FORBIDDEN_KEYS = ["id", "timestamp"];
+
+export type Keeper = "mentions" | "tools" | "source" | "target" | "container";
+
+export const clonePost = async (
+  post: Post,
+  keep?: Keeper[],
+  update: Partial<Post> = {},
+): Promise<Post> => {
+  const props: Omit<Post, "id" | "timestamp"> = {
+    content: post.content,
+    embedding: post.embedding,
+    count: post.count,
+    hash: post.hash,
+  };
+  for (const k of keep || []) {
+    if (CLONE_FORBIDDEN_KEYS.includes(k)) {
+      throw new Error(`Cannot keep$ ${k} in clone.`);
+    }
+    if (!(k in post)) {
+      throw new Error(`Property ${k} not found in post.`);
+    }
+    props[k] = post[k] as any;
+  }
+  if (update.source) {
+    props.source = update.source;
+  }
+  const db = await getDB();
+  try {
+    const [clone] = await db.create(TABLE_POST, {
+      timestamp: Date.now(),
+      ...props,
+    }) as Post[];
+    return clone;
   } finally {
     await db.close();
   }

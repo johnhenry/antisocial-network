@@ -77,6 +77,7 @@ export type Agent = {
   parameters: AgentParameters;
   image?: string;
   indexed?: string;
+  lastupdated?: number;
 };
 
 export type AgentPlus = {

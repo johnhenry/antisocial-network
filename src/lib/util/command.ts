@@ -5,6 +5,7 @@ import { createAgent } from "@/lib/database/agent";
 import { createFile } from "@/lib/database/file";
 import {
   aggregatePostReplies,
+  clonePost,
   createPost,
   generatePost,
   getPost,
@@ -69,6 +70,7 @@ const file = async (
           publisher: args.publisher,
           date: args.date,
         },
+        chunk: args.chunk,
         owner: args.owner ? await getAgent(args.owner) : source,
       });
       await Promise.all(
@@ -85,13 +87,22 @@ const file = async (
       break;
   }
 };
+import type { Keeper } from "@/lib/database/post";
 
 const post = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
-  { files, target, source, streaming }: CommandOptions,
+  { files, target, source, streaming, keep }: CommandOptions,
 ): Promise<Post | void> => {
   switch (command) {
+    case "clone":
+      source = args.source
+        ? (await getAgent(new StringRecordId(args.source)))
+        : source;
+      target = args.target
+        ? (await getPost(new StringRecordId(args.target)))
+        : target;
+      return await clonePost(target as Post, keep, { source });
     case "create":
       return await createPost(args.content, {
         source,
@@ -159,6 +170,8 @@ type CommandOptions = {
   target?: Post;
   source?: Agent;
   streaming?: boolean;
+  keep?: Keeper[];
+  dropLog?: boolean;
 };
 /**
  * Options for the parser.
@@ -176,9 +189,10 @@ const parserOptions: parser.Options = {
     "owner",
     "source",
     "target",
+    "chunk",
   ],
-  boolean: ["delete"],
-  array: ["quality", "bookmarker"],
+  boolean: ["delete", "chunk"],
+  array: ["quality", "bookmarker", "keep"],
   default: {
     "delete": false,
     parameters: {},
@@ -186,7 +200,10 @@ const parserOptions: parser.Options = {
     bookmarker: [],
     content: "",
     type: "text/plain",
+    keep: [],
+    chunk: true,
   },
+
   alias: {
     "description": ["d"],
     "name": ["n"],
@@ -199,6 +216,8 @@ const parserOptions: parser.Options = {
     "bookmarker": ["b"],
     "source": ["s"],
     "target": ["t"],
+    "keep": ["k"],
+    "chunk": ["C"],
   },
 };
 export const processCommand = async (

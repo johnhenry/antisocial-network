@@ -54,6 +54,7 @@ export const createTempAgent = async (
     const id = new RecordId(TABLE_AGENT, genRandSurrealQLString());
     const embedding = await embed(name + id.toString());
     const [agent] = await db.create(TABLE_AGENT, {
+      timestamp: Date.now(),
       id,
       name,
       embedding,
@@ -78,64 +79,101 @@ export const createTempAgent = async (
 export const getAgent = getEntity<Agent>;
 export const getAgents = getLatest<Agent>(TABLE_AGENT);
 
+const combineQualities = (
+  description: string = "",
+  qualities: [string, string][],
+): string => {
+  return description +
+    "\n\n" +
+    qualities.map(([k, v]) => `- ${k}\n  - ${v}`).join("\n").trim();
+};
+
+const genCharacter = async ({
+  name,
+  parameters = DEFAULT_PARAMETERS_AGENT,
+  description = "",
+  qualities = [],
+  image,
+}: {
+  name?: string;
+  parameters?: AgentParameters;
+  description?: string;
+  qualities?: [string, string][];
+  image?: string;
+} = {}) => {
+  const combinedQualities = combineQualities(description, qualities);
+  let content;
+  if (combinedQualities.trim()) {
+    // description or qualitis is provided
+    // description + qualities -> content
+    content = await summarize(combinedQualities, PROMPTS_SUMMARIZE.LLM_PROMPT);
+  } else if (name) {
+    // only name provided
+    // name -> description -> content
+    content = await summarize(
+      description = await summarize(
+        name,
+        PROMPTS_SUMMARIZE.LLM_DESCRIPTION,
+      ),
+      PROMPTS_SUMMARIZE.LLM_PROMPT,
+    );
+  } else {
+    // nothing is provided
+    // * -> content -> name
+    content = await summarize("", PROMPTS_SUMMARIZE.LLM_PROMPT_RANDOM);
+    name = (await summarize(content, PROMPTS_SUMMARIZE.LLM_NAMES))
+      .split(",")[Math.floor(Math.random() * 5)].split(" ")
+      .join("");
+  }
+
+  const indexed = [description, content, combinedQualities]
+    .filter(Boolean)
+    .join("\n ------------------ \n");
+
+  const embedding = await embed(content as string);
+  return {
+    name,
+    content,
+    hash: hash(content),
+    combinedQualities,
+    parameters,
+    description,
+    qualities,
+    image,
+    embedding,
+    indexed,
+  };
+};
+
 export const createAgent = async ({
   name = "",
   parameters = DEFAULT_PARAMETERS_AGENT,
   description = "",
   qualities = [],
-  image = null,
+  image,
   files = [],
 }: {
   name?: string;
   parameters?: AgentParameters;
   description?: string;
   qualities?: [string, string][];
-  image?: string | null;
+  image?: string;
   files?: FileProto[];
 } = {}): Promise<Agent> => {
+  description = description?.trim() || "";
+  name = name?.trim() || "";
+  parameters = removeValuesFromObject(parameters, undefined, "");
   const db = await getDB();
   try {
-    const combinedQualities = (
-      description.trim() +
-      "\n\n" +
-      qualities.map(([k, v]) => `- ${k}\n  - ${v}`).join("\n")
-    ).trim();
-    const giveName = name.trim();
-    const content = combinedQualities
-      ? await summarize(combinedQualities, PROMPTS_SUMMARIZE.LLM_PROMPT)
-      : giveName
-      ? await summarize(
-        description = await summarize(
-          giveName,
-          PROMPTS_SUMMARIZE.LLM_DESCRIPTION,
-        ),
-        PROMPTS_SUMMARIZE.LLM_PROMPT,
-      )
-      : await summarize("", PROMPTS_SUMMARIZE.LLM_PROMPT_RANDOM);
-
-    const generatedName = giveName
-      ? giveName
-      : (await summarize(content, PROMPTS_SUMMARIZE.LLM_NAMES))
-        .split(",")[Math.floor(Math.random() * 5)].split(" ")
-        .join(""); // Split and Join to remove any spaces
-
-    const indexed = [description, content, combinedQualities]
-      .filter(Boolean)
-      .join("\n ------------------ \n");
-
-    const embedding = await embed(content as string);
     const [agent] = await db.create(TABLE_AGENT, {
       timestamp: Date.now(),
-      name: generatedName,
-      content,
-      hash: hash(content),
-      combinedQualities,
-      parameters: removeValuesFromObject(parameters, undefined, ""),
-      description: description.trim(),
-      qualities,
-      image,
-      embedding,
-      indexed,
+      ...await genCharacter({
+        name,
+        parameters,
+        description,
+        qualities,
+        image,
+      }),
     }) as Agent[];
     createLog(agent.id.toString());
     if (files) {
@@ -150,19 +188,20 @@ export const createAgent = async ({
 export const updateAgent = async (
   id: StringRecordId | RecordId,
   {
-    name = null,
-    description = null,
+    name,
+    description,
     qualities = [],
-    image,
     parameters = DEFAULT_PARAMETERS_AGENT,
   }: {
-    name?: string | null;
-    description?: string | null;
+    name?: string;
+    description?: string;
     qualities?: [string, string][];
-    image?: string;
     parameters?: AgentParameters;
   } = {},
 ): Promise<Agent> => {
+  description = description?.trim() || "";
+  name = name?.trim() || "";
+  parameters = removeValuesFromObject(parameters, undefined, "");
   const db = await getDB();
   try {
     // get agent
@@ -172,36 +211,34 @@ export const updateAgent = async (
       if (await nameExists(name)) {
         throw new Error(`Agent with name: ${name} exists`);
       }
-      agent.name = name;
     }
-    if (agent.image !== image) {
-      agent.image = image;
-    }
-    agent.timestamp = Date.now();
-    const combinedQualities = (
-      description +
-      "\n\n" +
-      qualities.map(([k, v]) => `- ${k}\n  - ${v}`).join("\n")
-    ).trim();
-
+    const combinedQualities = combineQualities(description, qualities);
     // regenerate content if qualities or description have changed
+    let newCharacter;
     if (agent.combinedQualities !== combinedQualities) {
-      // update system prompt, description and combinedQualities
-      const content = combinedQualities
-        ? await summarize(combinedQualities, PROMPTS_SUMMARIZE.LLM_PROMPT)
-        : await summarize("", PROMPTS_SUMMARIZE.LLM_PROMPT_RANDOM);
-      agent.content = content;
-      agent.hash = hash(content);
-      agent.embedding = await embed(content as string);
-      agent.qualities = qualities;
-      agent.description = (description || "").trim();
-      agent.combinedQualities = combinedQualities;
+      newCharacter = {
+        ...agent,
+        ...await genCharacter({
+          name,
+          parameters,
+          description,
+          qualities,
+        }),
+      };
+    } else {
+      newCharacter = {
+        ...agent,
+        name,
+        parameters,
+        description,
+        qualities,
+      };
     }
-    agent.parameters = removeValuesFromObject(parameters, undefined, "");
-    agent.indexed = [agent.description, agent.content, agent.combinedQualities]
-      .filter(Boolean)
-      .join("\n ------------------ \n");
-    const updatedAgent = await db.update<Agent>(id, agent);
+    const updatedAgent = await db.update(id as StringRecordId, {
+      ...newCharacter,
+      timestamp: agent.timestamp,
+      lastupdated: Date.now(),
+    }) as Agent;
     createLog(agent.id.toString(), { type: "update" });
     return updatedAgent;
   } finally {
@@ -228,7 +265,7 @@ export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
 
   const db = await getDB();
   try {
-    const [[agent], remembered, bookmarked]: [[Agent], Post[], File[]] =
+    const [[protoAgent], remembered, bookmarked]: [[Agent], Post[], File[]] =
       await db
         .query(
           queries.join(";"),
@@ -236,6 +273,10 @@ export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
             id,
           },
         );
+    let agent = protoAgent;
+    if (agent && !agent.content) {
+      agent = await updateAgent(agent.id, agent);
+    }
     const obj = {
       agent,
       remembered,

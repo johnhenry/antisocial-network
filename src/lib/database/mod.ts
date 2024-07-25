@@ -255,11 +255,7 @@ export const updateAgentExternal = async (
 ): Promise<AgentExt | ErrorExt> => {
   try {
     const identifier = new StringRecordId(id);
-    const agent = await getAgent(identifier);
-    const updatedAgent = await updateAgent(identifier, {
-      ...agent,
-      ...options,
-    }) as Agent;
+    const updatedAgent = await updateAgent(identifier, options) as Agent;
     return mapAgentToAgentExt(updatedAgent);
   } catch (e) {
     if (e instanceof Error) {

@@ -13,6 +13,7 @@ import {
   IconLog,
   IconHelp,
 } from "@/components/icons";
+import Notifier from "@/components/notifier";
 
 import "./globals.css";
 
@@ -37,7 +38,11 @@ const Page: FC<Props> = async ({ children }: Props) => {
       </head>
       <body>
         <main>
-          <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
+          <Suspense fallback={<div>Loading...</div>}>
+            <Notifier />
+            {children}
+          </Suspense>
+          ;
           <header className="inverted-colors">
             <h1>
               <a href="/">

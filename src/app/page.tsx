@@ -10,7 +10,7 @@ import Entity from "@/components/entity";
 import InputBox from "@/components/input-box";
 import { useRouter } from "next/navigation";
 type PageProps = {};
-const SIZE = 10;
+const SIZE = 4;
 import { getEntitiesExternal } from "@/lib/database/mod";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import { MASQUERADE_KEY } from "@/config/mod";
@@ -87,14 +87,13 @@ const SearchOptions = ({
 const fetchChildren = (start = 0) => {
   let offset = start;
   return async () => {
-    // TODO: restore after testing
-    // return [];
-    await new Promise((resolve) => setTimeout(resolve, 2000));
     const newItmes = await getPostsExternal(offset, SIZE);
     offset += newItmes.length;
     return newItmes;
   };
 };
+
+import { removeDeplicatesById } from "@/lib/util/order-and-remove-duplicates";
 
 const Page: FC<PageProps> = ({}) => {
   const router = useRouter();
@@ -142,6 +141,9 @@ const Page: FC<PageProps> = ({}) => {
     // TOOO: add post to scroll list?
     // can i add some method that allows me to prepend items to the list
   };
+  const finiteScroll =
+    searchText.trim() || searchPosts || searchFiles || searchAgents;
+
   const search = async (
     searchText: string,
     searchCount: number,
@@ -149,21 +151,21 @@ const Page: FC<PageProps> = ({}) => {
     searchFiles: boolean,
     searchAgents: boolean
   ) => {
-    if (!searchText.trim()) {
-      setSearchResults([]);
-      return;
-    }
+    // if (!searchText.trim()) {
+    //   setSearchResults([]);
+    //   return;
+    // }
     const searchResults = await getEntitiesExternal(
       0,
       searchCount,
       searchText,
       {
-        posts: searchPosts,
+        posts: searchPosts || !(searchAgents || searchFiles),
         files: searchFiles,
-        agents: searchAgents || !(searchPosts || searchFiles),
+        agents: searchAgents,
       }
     );
-    setSearchResults(searchResults);
+    setSearchResults(removeDeplicatesById(searchResults));
   };
 
   useDebouncedEffect(
@@ -201,7 +203,7 @@ const Page: FC<PageProps> = ({}) => {
         setSearchAgents={setSearchAgents}
         className="search-options"
       />
-      {searchResults.length ? (
+      {finiteScroll ? (
         <ul>
           {searchResults.map((entity) => {
             return (
@@ -223,7 +225,9 @@ const Page: FC<PageProps> = ({}) => {
             resetPrepended={resetPrepended}
             childProps={{ masquerade, setMasquerade }}
             FinalItem={({ children, ...props }) => (
-              <li {...props}>{children}</li>
+              <li {...props}>
+                <span className="spinner" />
+              </li>
             )}
           />
         </div>
