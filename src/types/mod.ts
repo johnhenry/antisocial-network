@@ -1,5 +1,12 @@
 import type { BaseMessageChunk } from "@langchain/core/messages";
 import type { RecordId } from "surrealdb.js";
+// https://stackoverflow.com/a/54178819
+import type { JSONExtendedObject } from "@/types/json-extended";
+//https://stackoverflow.com/questions/43159887/make-a-single-property-optional-in-typescript
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type RequiredWith<T, K extends keyof T> =
+  & Omit<T, K>
+  & Required<Pick<T, K>>;
 
 export type ErrorExt = {
   id: string;
@@ -138,8 +145,9 @@ export type FileExt = Omit<File, "id" | "embedding" | "data" | "owner"> & {
   owner?: AgentExt;
 };
 
-export type Entity = Agent | File | Post;
-export type EntityExt = AgentExt | FileExt | PostExt | ErrorExt;
+export type Entity = Agent | File | Post | Error | Log;
+// `Error is a built in type`
+export type EntityExt = AgentExt | FileExt | PostExt | ErrorExt | LogExt;
 
 export type EntToExt =
   | ((entity: Agent) => AgentExt)
@@ -224,13 +232,19 @@ export type LangchainGenerator = AsyncGenerator<
   unknown
 >;
 
+export type RecordIdEphemeral = {
+  tb: string;
+  id: "";
+  toString: () => string;
+};
+
 export type Log = {
-  id: RecordId;
+  id: RecordId | RecordIdEphemeral;
   timestamp: number;
-  target: string; // TODO: change to entity and
+  target: string; // TODO: change to entity...maybe?
   type: string;
   content: string;
-  metadata?: JSON;
+  metadata?: JSONExtendedObject;
 };
 
 export type LogExt = Omit<Log, "id"> & {

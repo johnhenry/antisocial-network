@@ -16,7 +16,7 @@ export type JSONExtendedPlain<T = never> =
   | JSONExt<T>[];
 
 export interface JSONExtendedObject<T = never> {
-  [k: string]: JSONExtended;
+  [k: string]: JSONExtended<T>;
 }
 export interface JSONExtendedArray<T = never> extends Array<JSONExtended<T>> {}
 

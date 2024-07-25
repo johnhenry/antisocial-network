@@ -39,7 +39,7 @@ const Page: FC<Props> = async ({ children }: Props) => {
       <body>
         <main>
           <Suspense fallback={<div>Loading...</div>}>
-            <Notifier />
+            <Notifier className="toast-notification" />
             {children}
           </Suspense>
           ;

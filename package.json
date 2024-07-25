@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "surreal": "surreal start memory -A --auth --user root --pass root",
+    "surreal": "surreal start file://./.surreal -A --auth --user root --pass root",
+    "surreal:mem": "surreal start memory -A --auth --user root --pass root",
     "deno:run": "deno run --importmap=import_map.json --unstable-sloppy-imports --allow-env --allow-read --allow-net",
     "env:vars": "npm run deno:run -s src/script/show-config.ts",
-    "minio": "minio server ./.minio"
+    "minio": "minio server ./.minio",
+    "destroy": "rm -rf ./.minio && rm -rf ./.surreal"
   },
   "dependencies": {
     "@langchain/anthropic": "^0.2.3",

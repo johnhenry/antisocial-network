@@ -1,7 +1,13 @@
 "use client";
 
 import type { FC, ComponentClass } from "react";
-import type { PostExt, EntityExt, AgentPlusExt } from "@/types/mod";
+import type {
+  PostExt,
+  EntityExt,
+  AgentPlusExt,
+  RequiredWith,
+  LogExt,
+} from "@/types/mod";
 import { useEffect, useState } from "react";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
 import { getPostsExternal } from "@/lib/database/mod";
@@ -15,6 +21,7 @@ import { getEntitiesExternal } from "@/lib/database/mod";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import { MASQUERADE_KEY } from "@/config/mod";
 import Masquerade from "@/components/masquerade";
+import { IconFile, IconAgent, IconPost, IconSearch } from "@/components/icons";
 
 const SearchOptions = ({
   searchCount,
@@ -51,19 +58,19 @@ const SearchOptions = ({
             onClick={() => setSearchPosts(!searchPosts)}
             className={searchPosts ? "active" : ""}
           >
-            posts
+            <IconPost />
           </button>
           <button
             onClick={() => setSearchFiles(!searchFiles)}
             className={searchFiles ? "active" : ""}
           >
-            files
+            <IconFile />
           </button>
           <button
             onClick={() => setSearchAgents(!searchAgents)}
             className={searchAgents ? "active" : ""}
           >
-            agents
+            <IconAgent />
           </button>
           <input
             title="search count"
@@ -77,14 +84,16 @@ const SearchOptions = ({
           ></input>
         </>
       ) : (
-        <button onClick={() => setSearchPosts(true)}>Advanced Search</button>
+        <button title="advanced search" onClick={() => setSearchPosts(true)}>
+          <IconSearch />
+        </button>
       )}
     </>
   );
   return <Wrapper {...props}>{body}</Wrapper>;
 };
 
-const fetchChildren = (start = 0) => {
+const getFetchChildren = (start = 0) => {
   let offset = start;
   return async () => {
     const newItmes = await getPostsExternal(offset, SIZE);
@@ -104,6 +113,7 @@ const Page: FC<PageProps> = ({}) => {
   const [searchFiles, setSearchFiles] = useState(false);
   const [searchAgents, setSearchAgents] = useState(false);
   const [searchResults, setSearchResults] = useState<EntityExt[]>([]);
+  const [fetchChildren, setFetchChildren] = useState(() => getFetchChildren(0));
   const [masquerade, setMasquerade] = useLocalStorage<AgentPlusExt | null>(
     MASQUERADE_KEY,
     null // TODO: can this be undefined? I think there may be some wiere interactions with local storage.
@@ -117,6 +127,18 @@ const Page: FC<PageProps> = ({}) => {
     return () => {};
   }, []);
 
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    const reload = () => {
+      setFetchChildren(() => getFetchChildren(0));
+      timeout = setTimeout(reload, 10000);
+    };
+    reload();
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
+
   const entityReady = (entity: EntityExt | void) => {
     if (!entity) {
       return;
@@ -124,6 +146,23 @@ const Page: FC<PageProps> = ({}) => {
     const [type, id] = entity.id.split(":");
 
     switch (type) {
+      case "log":
+        const {
+          type: logType,
+          metadata: { force, url },
+        } = entity as LogExt & { metadata: { force: boolean; url: string } };
+        switch (logType) {
+          case "redirect": {
+            if (!force && !confirm(`Navigate to ${url}?`)) {
+              return;
+            }
+            if (url.startsWith("http://" || url.startsWith("https://"))) {
+              return (window.location.href = url as string);
+            }
+            return router.push(url as string);
+          }
+        }
+        return;
       case "error":
         alert(`Error: ${entity.content}`);
         break;
@@ -220,7 +259,7 @@ const Page: FC<PageProps> = ({}) => {
         <div className="infinite-scroller-window">
           <InfiniteScroller
             ChildRenderer={Entity}
-            fetchChildren={fetchChildren(0)}
+            fetchChildren={fetchChildren}
             prependedItems={prependedItems}
             resetPrepended={resetPrepended}
             childProps={{ masquerade, setMasquerade }}

@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, ReactNode } from "react";
+import { useState, useEffect, useCallback, FC, ComponentType } from "react";
 
-interface Message {
+export type Message = {
   text: string;
   url?: string;
-}
+};
 
-interface Notification {
+type Notification = {
   id: number;
   message: string;
   url?: string;
@@ -14,17 +14,17 @@ interface Notification {
   isPaused: boolean;
   pausedAt?: number;
   onRemove?: () => void;
-}
+};
 
-interface ToastNotificationProps {
+type Props = {
   duration?: number;
-  Spinner?: React.ComponentType;
   message?: Message;
-}
+  className?: string;
+};
 
-const ToastNotification: React.FC<ToastNotificationProps> = ({
+const ToastNotification: FC<Props> = ({
   duration = 5000,
-  Spinner,
+  className,
   ...props
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -94,8 +94,7 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({
   }, []);
 
   return (
-    <div className="toast-notification" {...props}>
-      {Spinner ? <Spinner /> : null}
+    <div className={className} {...props}>
       {notifications.map((notification) => (
         <div
           key={notification.id}

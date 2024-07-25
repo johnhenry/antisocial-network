@@ -83,7 +83,16 @@ export const getLatest =
     const db = await getDB();
     try {
       let result;
-      if (search) {
+      if (limit < 0) {
+        const query =
+          `SELECT * FROM type::table($table) ORDER BY timestamp DESC`;
+        // return all
+        [
+          result,
+        ] = await db.query(query, {
+          table,
+        });
+      } else if (search) {
         const embedded = await embed(search);
         // const query = `SELECT *
         //     FROM type::table($table)

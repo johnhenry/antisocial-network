@@ -7,7 +7,6 @@ class WriterManager {
   #writers: Record<string, any> = {};
   constructor() {
     this.id = Math.random();
-    console.log({ constructed: this.id });
   }
   setWriter(writer: any) {
     const name = genRandomIntString();

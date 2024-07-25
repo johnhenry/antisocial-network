@@ -1,7 +1,13 @@
 "use client";
 
 import type { FC } from "react";
-import type { PostExt, AgentPlusExt, EntityExt, ErrorExt } from "@/types/mod";
+import type {
+  PostExt,
+  AgentPlusExt,
+  EntityExt,
+  ErrorExt,
+  LogExt,
+} from "@/types/mod";
 import { useEffect, useState } from "react";
 import Post from "@/components/post";
 import InputBox from "@/components/input-box";
@@ -36,7 +42,6 @@ const Page: FC<PageProps> = ({ params }) => {
     return () => {};
   }, []);
   const entityReady = (entity: EntityExt | void) => {
-    console.log({ entity });
     if (!entity) {
       return;
     }
@@ -52,6 +57,23 @@ const Page: FC<PageProps> = ({ params }) => {
       return;
     }
     switch (type) {
+      case "log":
+        const {
+          type: logType,
+          metadata: { force, url },
+        } = entity as LogExt & { metadata: { force: boolean; url: string } };
+        switch (logType) {
+          case "redirect": {
+            if (!force && !confirm(`Navigate to ${url}?`)) {
+              return;
+            }
+            if (url.startsWith("http://" || url.startsWith("https://"))) {
+              return (window.location.href = url as string);
+            }
+            return router.push(url as string);
+          }
+        }
+        return;
       case "post":
       case "file":
       case "agent":

@@ -31,7 +31,7 @@ import fileToBase64 from "@/lib/util/to-base64";
 
 import { createPostExternal } from "@/lib/database/mod";
 import { useSearchParams } from "next/navigation";
-
+import TextareaWithPopup from "@/components/text-pop";
 const InputBox: FC<InputBoxProps> = ({
   Wrapper,
   entityReady,
@@ -45,7 +45,11 @@ const InputBox: FC<InputBoxProps> = ({
 }) => {
   const searchParams = useSearchParams();
   const [stashedText, setStashedText] = useState("");
-  const [text, setText] = useState("");
+  const [storedText, setStoredText] = useLocalStorage<string | undefined>(
+    localStorageKey,
+    "" // TODO: can this be undefined? I think there may be some wiere interactions with local storage.
+  );
+  const [text, setText] = useState(storedText);
   const isSlash = isSlashCommand(text);
   const hasMention = !isSlash && mentionMatch.test(text);
   const [files, setFiles] = useState<any[]>([]);
@@ -54,10 +58,6 @@ const InputBox: FC<InputBoxProps> = ({
   const addFile = (file: any) => setFiles((files) => [...files, file]);
   const removeFile = (index: number) =>
     setFiles(files.filter((_, i) => i !== index));
-  const [storedText, setStoredText] = useLocalStorage<string | undefined>(
-    localStorageKey,
-    "" // TODO: can this be undefined? I think there may be some wiere interactions with local storage.
-  );
 
   const ready = text.trim() || files.length;
 
@@ -148,11 +148,16 @@ const InputBox: FC<InputBoxProps> = ({
         break;
     }
   };
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const text = decodeURIComponent(searchParams.get("q") || "") || storedText!;
+    if (text) {
+      doText(text);
+    }
+  }, [searchParams, storedText]);
 
   const body = (
     <>
-      <textarea
+      {/* <textarea
         className={isSlash ? "slash-command" : ""}
         placeholder="Type your message here"
         onChange={(event) => {
@@ -163,7 +168,21 @@ const InputBox: FC<InputBoxProps> = ({
         defaultValue={
           decodeURIComponent(searchParams.get("q") || "") || storedText
         }
-      ></textarea>
+      ></textarea> */}
+      <TextareaWithPopup
+        className={isSlash ? "slash-command" : ""}
+        placeholder="Type your message here"
+        onChange={(event) => {
+          doText(event.target.value);
+        }}
+        ref={textArea}
+        onKeyDown={keyDown}
+        // defaultValue={
+        //   decodeURIComponent(searchParams.get("q") || "") || storedText
+        // }
+        value={text}
+        setValue={doText}
+      ></TextareaWithPopup>
       <fieldset>
         <label className="label-file">
           <IconFile />

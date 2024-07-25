@@ -66,7 +66,7 @@ export const createPostExternal = async (
     streaming?: boolean;
     depth?: number;
   } = {},
-): Promise<EntityExt | ErrorExt | void> => {
+): Promise<EntityExt | void> => {
   const db = await getDB();
   try {
     const source: Agent | undefined = sourceId
@@ -97,6 +97,10 @@ export const createPostExternal = async (
         }
         case "agent": {
           mapper = mapAgentToAgentExt as (entity: Entity) => EntityExt;
+          break;
+        }
+        case "log": {
+          mapper = mapLogToLogExt as (entity: Entity) => EntityExt;
           break;
         }
         default:
@@ -284,4 +288,9 @@ export const relateExt = async (
 
 export const unrelateExt = (inn: string, rel: string, out: string) => {
   return unrelate(new StringRecordId(inn), rel, new StringRecordId(out));
+};
+
+export const getAllAgentNames = async (): Promise<string[]> => {
+  const agents = await getAgents(0, -1);
+  return agents.map((agent) => agent.name);
 };

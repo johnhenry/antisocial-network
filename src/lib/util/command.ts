@@ -1,6 +1,13 @@
 import parser from "yargs-parser";
 import createLog from "@/lib/database/log";
-import { Agent, Entity, FileProto, Post } from "@/types/mod";
+import {
+  Agent,
+  Entity,
+  FileProto,
+  Log,
+  Post,
+  RecordIdEphemeral,
+} from "@/types/mod";
 import { createAgent } from "@/lib/database/agent";
 import { createFile } from "@/lib/database/file";
 import {
@@ -93,7 +100,7 @@ const post = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
   { files, target, source, streaming, keep }: CommandOptions,
-): Promise<Post | void> => {
+): Promise<Entity | void> => {
   switch (command) {
     case "clone":
       source = args.source
@@ -165,6 +172,37 @@ const post = async (
   }
 };
 
+const generateEphemeralId = (tb = "log"): RecordIdEphemeral => ({
+  tb,
+  id: "",
+  toString() {
+    return `${tb}:`;
+  },
+});
+
+const debug = async (
+  [command, ...tokens]: (string | number)[],
+  args: { [x: string]: any },
+  { files, target, source, streaming, keep }: CommandOptions,
+): Promise<Log | void> => {
+  switch (command) {
+    case "redirect":
+      return {
+        id: generateEphemeralId("log"),
+        timestamp: Date.now(),
+        type: "redirect",
+        target: "",
+        metadata: {
+          url: tokens[0],
+          force: args.force,
+        },
+        content: args.content,
+      };
+    default:
+      break;
+  }
+};
+
 type CommandOptions = {
   files?: FileProto[];
   target?: Post;
@@ -191,7 +229,7 @@ const parserOptions: parser.Options = {
     "target",
     "chunk",
   ],
-  boolean: ["delete", "chunk"],
+  boolean: ["delete", "chunk", "force"],
   array: ["quality", "bookmarker", "keep"],
   default: {
     "delete": false,
@@ -202,6 +240,7 @@ const parserOptions: parser.Options = {
     type: "text/plain",
     keep: [],
     chunk: true,
+    force: false,
   },
 
   alias: {
@@ -218,6 +257,7 @@ const parserOptions: parser.Options = {
     "target": ["t"],
     "keep": ["k"],
     "chunk": ["C"],
+    "force": ["F"],
   },
 };
 export const processCommand = async (
@@ -237,6 +277,10 @@ export const processCommand = async (
       return file(tokens, args, options);
     case "post":
       return post(tokens, args, options);
+    case "debug":
+      const d = await debug(tokens, args, options);
+
+      return d;
     default:
       throw new Error(`Not implemented: ${root}`);
   }

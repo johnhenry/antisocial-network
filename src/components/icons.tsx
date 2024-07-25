@@ -11,3 +11,4 @@ export { FaMasksTheater as IconMask } from "react-icons/fa6";
 export { FaRegBookmark as IconBookmark } from "react-icons/fa";
 export { LuLightbulb as IconMemory } from "react-icons/lu";
 export { SlSpeech as IconPost } from "react-icons/sl";
+export { PiMagnifyingGlassPlusBold as IconSearch } from "react-icons/pi";

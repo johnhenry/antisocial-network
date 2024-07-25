@@ -1,13 +1,23 @@
 "use client";
 
+import type { FC, ComponentClass } from "react";
+import type { Message } from "@/components/toast-notification";
 import ToastNotification from "@/components/toast-notification";
 import { useState, useEffect } from "react";
 
 const { error } = console;
+type Props = {
+  className?: string;
+  duration?: number;
+};
 
-const Notifier = (props: any) => {
-  const [message, setMessage] = useState<{ text: string; url?: string }>(null);
-  const [spinner, setSpinner] = useState(null);
+const Notifier: FC<Props> = ({
+  className = "toast-notification",
+  duration,
+  ...props
+}) => {
+  const [message, setMessage] = useState<Message>();
+  const [active, setActive] = useState<boolean>(false);
   const showNotification = (text: string, url?: string) => {
     setMessage({ text, url });
   };
@@ -25,20 +35,27 @@ const Notifier = (props: any) => {
       }
     };
     eventSource.onerror = (e) => {
-      setSpinner(null);
+      setActive(false);
       error("SSE error:", e);
       eventSource.close();
     };
-    setSpinner(() => () => (<div className="spinner" />) as any);
+    setActive(true);
     return () => {
       try {
-        setSpinner(null);
+        setActive(false);
         eventSource.close();
       } catch (e) {
         error(e);
       }
     };
   }, []);
-  return <ToastNotification {...props} message={message} Spinner={spinner} />;
+  return (
+    <ToastNotification
+      {...props}
+      duration={duration}
+      message={message}
+      className={[active ? "active" : "", className].join(" ")}
+    />
+  );
 };
 export default Notifier;
