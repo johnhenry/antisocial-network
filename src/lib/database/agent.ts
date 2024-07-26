@@ -57,6 +57,7 @@ export const createTempAgent = async (
       timestamp: Date.now(),
       id,
       name,
+      hash: hash(),
       embedding,
     }) as AgentTemp[];
     createLog(agent.id.toString(), { type: "create-temp" });
@@ -275,7 +276,7 @@ export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
         );
     let agent = protoAgent;
     if (agent && !agent.content) {
-      agent = await updateAgent(agent.id, agent);
+      agent = await updateAgent(id, agent);
     }
     const obj = {
       agent,

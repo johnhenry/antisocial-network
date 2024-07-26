@@ -184,6 +184,7 @@ article {
   /* self control */
   padding-top: var(--size-padding);
   padding-right: calc(var(--size-header) + var(--space-side-header));
+  padding-left: calc(var(--space-side-header));
   min-height: 100vh;
   width: 100vw;
   align-content: center;
@@ -693,6 +694,16 @@ article.logs {
   &:hover {
   }
 }
+.post-single {
+  .target {
+    width: 100%;
+  }
+  .post {
+    width: 100%;
+  }
+  .elicits {
+  }
+}
 
 .file-single {
   > h2 {
@@ -909,56 +920,58 @@ ul {
 
 .toast-notification {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
+  bottom: var(--size-gap-inner);
+  left: var(--size-gap-inner);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   z-index: 1000;
   background-color: transparent;
-  .toast-item {
-    background-color: white;
-    color: red;
-    padding: 12px 20px;
+  min-width: 128px;
+  max-width: 75%;
+  gap: var(--size-gap-inner);
+
+  > * {
+    margin-top: -0px;
+
+    opacity: 0.5;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    padding: var(--size-padding);
     border-radius: 4px;
-    margin-bottom: 10px;
-    max-width: 300px;
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
     animation: fadeOutToastNotification 0.5s ease-out forwards;
-    animation-delay: calc(var(--duration, 3000ms) - 500ms);
-  }
-
-  .toast-item:hover {
-    animation-play-state: paused;
-  }
-
-  .toast-item > a {
-    text-decoration: none;
-    margin-right: 10px;
-  }
-
-  .toast-item > a:hover {
-    text-decoration: underline;
-  }
-
-  .toast-item > button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    margin-left: 10px;
-    visibility: hidden;
-
-    &::before {
-      visibility: visible;
-      content: "×";
+    animation-delay: calc(var(--duration, 5000ms) - 500ms);
+    position: relative;
+    > a {
+      text-decoration: none;
     }
-  }
 
-  .toast-item > button:hover {
-    color: white;
+    > a:hover {
+      text-decoration: underline;
+    }
+
+    > button.close {
+      position: absolute;
+      right: 0;
+      top: 0;
+      visibility: hidden;
+      &::before {
+        visibility: visible;
+        content: "×";
+      }
+    }
+
+    > button:hover {
+    }
+    &:hover {
+      animation-play-state: paused;
+      transition: opacity 0.5s;
+      opacity: 1;
+    }
   }
 }
 

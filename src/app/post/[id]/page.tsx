@@ -85,27 +85,24 @@ const Page: FC<PageProps> = ({ params }) => {
   };
 
   return (
-    <article>
+    <article className="post-single">
       <Masquerade
         masquerade={masquerade}
         setMasquerade={setMasquerade}
         className="agent-masquerade"
       />
       {post?.target ? (
-        <details className="w-full">
-          <summary>Previous Posts</summary>
-          <ul className="list-tight">
-            {[post.target].map((post) => (
-              <Post
-                key={post.id}
-                Wrapper={"li"}
-                className="post"
-                {...post}
-                masquerade={masquerade}
-              />
-            ))}
-          </ul>
-        </details>
+        <>
+          {[post.target].map((post) => (
+            <Post
+              key={post.id}
+              Wrapper={"span"}
+              className="target"
+              {...post}
+              masquerade={masquerade}
+            />
+          ))}
+        </>
       ) : null}
       {post ? <Post Wrapper="div" className="post" {...post} /> : null}
       <InputBox
@@ -119,7 +116,7 @@ const Page: FC<PageProps> = ({ params }) => {
       {elicits && elicits.length ? (
         <ul className="list-tight">
           {elicits.map((post) => (
-            <Post key={post.id} Wrapper={"li"} className="post" {...post} />
+            <Post key={post.id} Wrapper={"li"} className="elicits" {...post} />
           ))}
         </ul>
       ) : null}

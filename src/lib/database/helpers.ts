@@ -1,4 +1,4 @@
-import type { Agent } from "@/types/mod";
+import type { Agent, Post } from "@/types/mod";
 
 import { getDB } from "@/lib/db";
 import { StringRecordId } from "surrealdb.js";
@@ -32,23 +32,24 @@ export const replaceAgentIdWithName = async (
   }
 };
 
-export const replaceContentWithLinks = async <T extends { content?: string }>(
+export const replaceContentWithLinks = <
+  T extends { content?: string; mentions?: Post[] },
+>(
   item: T,
   render: boolean = false,
-): Promise<T> => {
-  const content = render
-    ? await renderText(item?.content || "")
-    : item?.content || "";
+): T => {
+  item.content = render ? renderText(item?.content || "") : item?.content || "";
 
-  item.content = await replaceMentions(content, async (mention: string) => {
-    if (recordMatch.test(mention)) {
-      const id = mention.slice(1);
-      const [type] = id.split(":");
-      const name = await replaceAgentIdWithName(id);
-      return `<a href="/${type}/${id}">${mention[0]}${name}</a>`;
+  if (item.content && item.mentions && item.mentions.length > 0) {
+    for (const mention of item.mentions as Agent[]) {
+      const { id: rId, name } = mention;
+      const id = rId.toString();
+      item.content = item.content.replaceAll(
+        new RegExp(`@${id}`, "g"),
+        `<a href="/agent/${id}">@${name}</a>`,
+      );
     }
-    return mention;
-  });
+  }
   return item;
 };
 
@@ -131,7 +132,7 @@ export const getLatest =
         }) as T[][];
       }
       return Promise.all(
-        result.map((item) => replaceContentWithLinks<T>(item)),
+        result.map((item) => replaceContentWithLinks<T>(item, true)),
       );
     } finally {
       db.close();

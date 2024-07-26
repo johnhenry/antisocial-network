@@ -106,7 +106,7 @@ export const createPostExternal = async (
         default:
           throw new Error(`Unknown type: ${type}`);
       }
-      return await replaceContentWithLinks(
+      return replaceContentWithLinks(
         mapper(result),
         true,
       );

@@ -7,7 +7,7 @@ const md = markdownit({
   typographer: true,
 });
 md.linkify.set({ fuzzyEmail: false });
-const renderText = async (
+const renderText = (
   str: string,
 ) => {
   return sanitizeHtml(

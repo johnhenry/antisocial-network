@@ -2,13 +2,14 @@ import parser from "yargs-parser";
 import createLog from "@/lib/database/log";
 import {
   Agent,
+  AgentTemp,
   Entity,
   FileProto,
   Log,
   Post,
   RecordIdEphemeral,
 } from "@/types/mod";
-import { createAgent } from "@/lib/database/agent";
+import { createAgent, createTempAgent } from "@/lib/database/agent";
 import { createFile } from "@/lib/database/file";
 import {
   aggregatePostReplies,
@@ -36,27 +37,28 @@ import { getAgent } from "@/lib/database/agent";
  * @returns void.
  */
 
-const agent = (
+const agent = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
   { files, target, source, streaming }: CommandOptions,
-) => {
+): Promise<Agent | AgentTemp | void> => {
   switch (command) {
-    case "create":
-      {
-        return createAgent({
-          name: args.name,
-          description: args.description,
-          qualities: args.quality.map((quality: string) => {
-            return quality.split(":");
-          }),
-          files,
-          parameters: { DEFAULT_PARAMETERS_AGENT, ...args.parameters },
-        });
+    case "create": {
+      if (args.temporary) {
+        return createTempAgent({ name: args.name });
       }
-      break;
-    case "":
-      {}
+
+      return createAgent({
+        name: args.name,
+        description: args.description,
+        qualities: args.quality.map((quality: string) => {
+          return quality.split(":");
+        }),
+        files,
+        parameters: { DEFAULT_PARAMETERS_AGENT, ...args.parameters },
+      });
+    }
+    default:
       break;
   }
 };
@@ -230,7 +232,7 @@ const parserOptions: parser.Options = {
     "chunk",
   ],
   boolean: ["delete", "chunk", "force"],
-  array: ["quality", "bookmarker", "keep"],
+  array: ["quality", "bookmarker", "keep", "temporary"],
   default: {
     "delete": false,
     parameters: {},
@@ -241,6 +243,7 @@ const parserOptions: parser.Options = {
     keep: [],
     chunk: true,
     force: false,
+    temporary: true,
   },
 
   alias: {
@@ -255,6 +258,7 @@ const parserOptions: parser.Options = {
     "bookmarker": ["b"],
     "source": ["s"],
     "target": ["t"],
+    "temporary": ["T"],
     "keep": ["k"],
     "chunk": ["C"],
     "force": ["F"],
@@ -278,9 +282,7 @@ export const processCommand = async (
     case "post":
       return post(tokens, args, options);
     case "debug":
-      const d = await debug(tokens, args, options);
-
-      return d;
+      return await debug(tokens, args, options);
     default:
       throw new Error(`Not implemented: ${root}`);
   }

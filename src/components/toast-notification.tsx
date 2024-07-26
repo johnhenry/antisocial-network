@@ -3,12 +3,14 @@ import { useState, useEffect, useCallback, FC, ComponentType } from "react";
 export type Message = {
   text: string;
   url?: string;
+  type?: string;
 };
 
 type Notification = {
   id: number;
-  message: string;
+  text: string;
   url?: string;
+  type?: string;
   createdAt: number;
   expiresAt: number;
   isPaused: boolean;
@@ -20,11 +22,13 @@ type Props = {
   duration?: number;
   message?: Message;
   className?: string;
+  Wrapper?: ComponentType<any> | string;
 };
 
 const ToastNotification: FC<Props> = ({
   duration = 5000,
   className,
+  Wrapper = "div",
   ...props
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -65,8 +69,9 @@ const ToastNotification: FC<Props> = ({
     if (props.message) {
       const newNotification: Notification = {
         id: Date.now(),
-        message: props.message.text,
+        text: props.message.text,
         url: props.message.url,
+        type: props.message.type,
         createdAt: Date.now(),
         expiresAt: Date.now() + duration,
         isPaused: false,
@@ -94,25 +99,31 @@ const ToastNotification: FC<Props> = ({
   }, []);
 
   return (
-    <div className={className} {...props}>
+    <Wrapper className={className} {...props}>
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`toast-item ${notification.isPaused ? "paused" : ""}`}
+          className={[
+            notification.isPaused ? "paused" : "",
+            notification.type || "",
+          ].join(" ")}
           onMouseEnter={() => pauseTimer(notification.id)}
           onMouseLeave={() => resumeTimer(notification.id)}
         >
           {notification.url ? (
-            <a href={notification.url}>{notification.message}</a>
+            <a href={notification.url}>{notification.text}</a>
           ) : (
-            notification.message
+            notification.text
           )}
-          <button onClick={() => removeNotification(notification.id)}>
-            Close
+          <button
+            title="close"
+            onClick={() => removeNotification(notification.id)}
+          >
+            x
           </button>
         </div>
       ))}
-    </div>
+    </Wrapper>
   );
 };
 

@@ -480,13 +480,18 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
     .query(queries.join(";"), {
       id,
     });
+  if (post.target) {
+    post.target = replaceContentWithLinks(post.target);
+  }
   const obj: PostPlus = {
-    post: await replaceContentWithLinks(post, true),
-    before: before ? await replaceContentWithLinks(before) : undefined,
-    after: after ? await replaceContentWithLinks(after) : undefined,
+    post: replaceContentWithLinks(post, true),
+    before: before ? replaceContentWithLinks(before, true) : undefined,
+    after: after ? replaceContentWithLinks(after, true) : undefined,
     elicits: elicits
       ? await Promise.all(
-        elicits.filter((x) => x).map((post) => replaceContentWithLinks(post)),
+        elicits.filter((x) => x).map((post) =>
+          replaceContentWithLinks(post, true)
+        ),
       )
       : undefined,
     remembers,
