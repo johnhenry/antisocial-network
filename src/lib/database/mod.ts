@@ -17,7 +17,6 @@ import type {
   PostPlusExt,
   RelationExt,
 } from "@/types/mod";
-import { replaceContentWithLinks } from "@/lib/database/helpers";
 
 import { StringRecordId } from "surrealdb.js";
 import { getDB, relate, unrelate } from "@/lib/db";
@@ -85,7 +84,7 @@ export const createPostExternal = async (
     });
     if (result) {
       let mapper: (entity: Entity) => EntityExt;
-      const type = result.id.tb;
+      const type = (result as Exclude<Entity, Error>).id.tb;
       switch (type) {
         case "post": {
           mapper = mapPostToPostExt as (entity: Entity) => EntityExt;
@@ -106,10 +105,7 @@ export const createPostExternal = async (
         default:
           throw new Error(`Unknown type: ${type}`);
       }
-      return replaceContentWithLinks(
-        mapper(result),
-        true,
-      );
+      return mapper(result);
     }
   } catch (e) {
     if (e instanceof Error) {

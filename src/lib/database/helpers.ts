@@ -83,7 +83,7 @@ export const getLatest =
   ): Promise<T[]> => {
     const db = await getDB();
     try {
-      let result;
+      let result: T[];
       if (limit < 0) {
         const query =
           `SELECT * FROM type::table($table) ORDER BY timestamp DESC`;

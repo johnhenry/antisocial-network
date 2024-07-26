@@ -205,7 +205,7 @@ export const generatePost = async (
       tool,
       bibliography: conversation.concat(relevant),
     }) as Post[];
-    return post;
+    return replaceContentWithLinks(post);
   } finally {
     db.close();
   }
@@ -244,7 +244,7 @@ export const aggregatePostReplies = async (
       source,
       target,
     }) as Post[];
-    return post;
+    return replaceContentWithLinks(post);
   } finally {
     db.close();
   }
@@ -375,7 +375,7 @@ export const createPost = async (
       }
     };
     next(depth);
-    return post;
+    return replaceContentWithLinks(post);
   } finally {
     await db.close();
   }
@@ -411,7 +411,7 @@ export const updatePendingPost = async (
       source,
     }) as Post;
     await createFiles({ files, owner: source });
-    return post;
+    return replaceContentWithLinks(post);
   } finally {
     await db.close();
   }
@@ -535,7 +535,7 @@ export const clonePost = async (
       timestamp: Date.now(),
       ...props,
     }) as Post[];
-    return clone;
+    return replaceContentWithLinks(clone);
   } finally {
     await db.close();
   }

@@ -52,9 +52,10 @@ const Page: FC<PageProps> = ({ params }) => {
     }
 
     if (type === "post") {
-      if ((entity as PostExt).target?.id === identifier)
+      if ((entity as PostExt).target?.id === identifier) {
         setElicits((elicits) => [entity as PostExt, ...elicits]);
-      return;
+        return;
+      }
     }
     switch (type) {
       case "log":
