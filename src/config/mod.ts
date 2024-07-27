@@ -34,6 +34,7 @@ export const ALL_TABLES = [
   "post",
   "tool",
   "log",
+  "cron",
 ];
 export const [
   TABLE_SETTINGS,
@@ -42,6 +43,7 @@ export const [
   TABLE_POST,
   TABLE_TOOL,
   TABLE_LOG,
+  TABLE_CRON,
 ] = ALL_TABLES;
 
 //

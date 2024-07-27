@@ -12,7 +12,6 @@ export const GET = (request: Request) => {
   const writer = ts.writable.getWriter();
   const writeManager = getWriteManager();
   const writerId = writeManager.setWriter(writer);
-  console.log("Writer set", writerId);
   request.signal.onabort = async () => {
     await writeManager.deleteWriter(writerId);
   };

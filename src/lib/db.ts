@@ -1,7 +1,7 @@
 import type { Relation } from "@/types/mod";
 
 import { RecordId, StringRecordId, Surreal } from "surrealdb.js";
-
+import { cronitialize } from "@/lib/database/cron";
 import {
   ALL_TABLES,
   DB_DATABASE,
@@ -19,7 +19,7 @@ import {
 } from "@/config/mod";
 
 const { log } = console;
-const initialize = async (db: Surreal): Promise<void> => {
+export const initialize = async (db: Surreal): Promise<void> => {
   // Define settings table
   try {
     await db.create(TABLE_SETTINGS, {
@@ -76,7 +76,7 @@ export const getDB = async ({
     username: dbUsername,
     password: dbPassword,
   });
-
+  cronitialize(db);
   if (!(await db.select(new StringRecordId("settings:current")))) {
     await initialize(db);
   }

@@ -1,6 +1,8 @@
-import type { ChangeEventHandler, FC } from "react";
+import type { ChangeEventHandler, FC, RefObject, LegacyRef } from "react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { getAllAgentNames } from "@/lib/database/mod";
+import * as TOOLS from "@/tools/mod";
+
 const defaultTheme = {
   textarea: "w-full p-2 border border-gray-300 rounded",
   popup:
@@ -10,16 +12,12 @@ const defaultTheme = {
   optionHover: "hover:bg-gray-100",
   loadingText: "px-4 py-2 text-gray-500",
 };
-import * as TOOLS from "@/tools/mod";
-const ToolOptions = Object.keys(TOOLS).map((name, id) => ({
-  id,
-  name,
-}));
 
 type Option = {
   id: number;
   name: string;
   avatar?: string;
+  symbol?: string;
 };
 
 type Trigger = {
@@ -48,7 +46,10 @@ const DEFAULT_TRIGGERS: Record<string, Trigger> = {
   "#": {
     pattern: /(?:^|\s)#([\w-]*)$/,
     fetchOptions: (search) => {
-      const tags = ToolOptions;
+      const tags = Object.keys(TOOLS).map((name, id) => ({
+        id,
+        name,
+      }));
       return tags.filter((tag) =>
         tag.name.toLowerCase().includes(search.toLowerCase())
       );
@@ -77,9 +78,8 @@ type Props = {
   className?: string;
   placeholder?: string;
   onChange?: ChangeEventHandler<HTMLTextAreaElement>;
-  ref: React.RefObject<HTMLTextAreaElement>;
+  ref: RefObject<HTMLTextAreaElement>;
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  // defaultValue?: string;
   value: string;
   setValue: (value: string) => void;
 };
@@ -93,19 +93,31 @@ const TextareaWithPopup: FC<Props> = ({
   setValue: setEditorValue,
   ...props
 }) => {
-  // const [editorValue, setEditorValue] = useState("");
-  const [activePopups, setActivePopups] = useState({});
-  const [history, setHistory] = useState([{ value: "", cursorPosition: 0 }]);
+  const [activePopups, setActivePopups] = useState<
+    Record<
+      string,
+      {
+        search: string;
+        position: { top: number; left: number };
+        visible: boolean;
+        loading: boolean;
+        options: Option[];
+        selectedIndex: number;
+      }
+    >
+  >({});
+  const [history, setHistory] = useState<
+    { value: string; cursorPosition: number }[]
+  >([{ value: "", cursorPosition: 0 }]);
   const [historyIndex, setHistoryIndex] = useState(0);
-  // const editorRef = useRef(null);
-  const popupRefs = useRef({});
+  const popupRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       for (const trigger in popupRefs.current) {
         if (
           popupRefs.current[trigger] &&
-          !popupRefs.current[trigger].contains(event.target)
+          !popupRefs.current[trigger].contains(event.target as Node)
         ) {
           setActivePopups((prev) => ({
             ...prev,
@@ -122,7 +134,7 @@ const TextareaWithPopup: FC<Props> = ({
   }, []);
 
   const getCaretCoordinates = () => {
-    const textarea = editorRef.current;
+    const textarea = editorRef.current!;
     const caretPosition = textarea.selectionStart;
     const textBeforeCaret = textarea.value.slice(0, caretPosition);
     const lines = textBeforeCaret.split("\n");
@@ -142,7 +154,7 @@ const TextareaWithPopup: FC<Props> = ({
     document.body.appendChild(dummyElement);
 
     const caretRect = dummyElement.getBoundingClientRect();
-    //document.body.removeChild(dummyElement);
+    document.body.removeChild(dummyElement);
 
     const textareaRect = textarea.getBoundingClientRect();
     return {
@@ -151,7 +163,7 @@ const TextareaWithPopup: FC<Props> = ({
     };
   };
 
-  const handleInput = async (e) => {
+  const handleInput = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     const cursorPosition = e.target.selectionStart;
 
@@ -160,7 +172,17 @@ const TextareaWithPopup: FC<Props> = ({
 
     const textBeforeCursor = newValue.slice(0, cursorPosition);
 
-    const newActivePopups = { ...activePopups };
+    const newActivePopups: Record<
+      string,
+      {
+        search: string;
+        position: { top: number; left: number };
+        visible: boolean;
+        loading: boolean;
+        options: Option[];
+        selectedIndex: number;
+      }
+    > = { ...activePopups };
 
     for (const [triggerChar, triggerConfig] of Object.entries(triggers)) {
       const match = textBeforeCursor.match(triggerConfig.pattern);
@@ -194,19 +216,19 @@ const TextareaWithPopup: FC<Props> = ({
     onChange && onChange(e);
   };
 
-  const handleOptionClick = (triggerChar, option) => {
+  const handleOptionClick = (triggerChar: string, option: Option) => {
     insertOption(triggerChar, option);
   };
 
-  const insertOption = (triggerChar, option) => {
-    const cursorPosition = editorRef.current.selectionStart;
+  const insertOption = (triggerChar: string, option: Option) => {
+    const cursorPosition = editorRef.current!.selectionStart;
     const textBeforeCursor = editorValue.slice(0, cursorPosition);
     const textAfterCursor = editorValue.slice(cursorPosition);
     const match = textBeforeCursor.match(triggers[triggerChar].pattern);
     if (!match) return;
 
-    const triggerStartIndex = match.index;
-    const triggerEndIndex = triggerStartIndex + match[0].length;
+    const triggerStartIndex = match.index!;
+    // const triggerEndIndex = triggerStartIndex + match[0].length;
     const insertText = option.symbol || option.name;
 
     // Preserve any space before the trigger
@@ -234,15 +256,16 @@ const TextareaWithPopup: FC<Props> = ({
       ...prev,
       [triggerChar]: { ...prev[triggerChar], visible: false },
     }));
-    editorRef.current.focus();
+
+    editorRef.current?.focus();
 
     setTimeout(() => {
-      editorRef.current.selectionStart = editorRef.current.selectionEnd =
-        newCursorPosition;
+      editorRef.current!.selectionStart = editorRef.current!.selectionEnd =
+        cursorPosition;
     }, 0);
   };
 
-  const addToHistory = (value, cursorPosition) => {
+  const addToHistory = (value: string, cursorPosition: number) => {
     setHistory((prev) => {
       const newHistory = prev.slice(0, historyIndex + 1);
       newHistory.push({ value, cursorPosition });
@@ -258,7 +281,7 @@ const TextareaWithPopup: FC<Props> = ({
       setEditorValue(value);
       setHistoryIndex(newIndex);
       setTimeout(() => {
-        editorRef.current.selectionStart = editorRef.current.selectionEnd =
+        editorRef.current!.selectionStart = editorRef.current!.selectionEnd =
           cursorPosition;
       }, 0);
     }
@@ -271,13 +294,13 @@ const TextareaWithPopup: FC<Props> = ({
       setEditorValue(value);
       setHistoryIndex(newIndex);
       setTimeout(() => {
-        editorRef.current.selectionStart = editorRef.current.selectionEnd =
+        editorRef.current!.selectionStart = editorRef.current!.selectionEnd =
           cursorPosition;
       }, 0);
     }
   }, [history, historyIndex]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     onKeyDown && onKeyDown(e);
     if (e.key === "z" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
@@ -342,15 +365,28 @@ const TextareaWithPopup: FC<Props> = ({
     }
   };
 
-  const renderOption = (triggerChar, option, index, selectedIndex) => {
-    const isSelected = index === selectedIndex;
+  type RenderOptionOptions = {
+    triggerChar: string;
+    option: Option;
+    role?: string;
+    selected?: boolean;
+  };
+
+  const renderOption: FC<RenderOptionOptions> = ({
+    triggerChar,
+    option,
+    role,
+    selected,
+  }) => {
     return (
       <div
+        title="Popup"
+        aria-label="Popup"
         key={option.id}
-        className={`option ${isSelected ? "selected" : ""}`}
+        className={`option ${selected ? "selected" : ""}`}
         onClick={() => handleOptionClick(triggerChar, option)}
-        role="option"
-        aria-selected={isSelected}
+        role={role}
+        aria-selected={selected}
       >
         {option.avatar && <span className="avatar">{option.avatar}</span>}
         {option.symbol && <span className="symbol">{option.symbol}</span>}
@@ -374,7 +410,11 @@ const TextareaWithPopup: FC<Props> = ({
           popup.visible && (
             <div
               key={triggerChar}
-              ref={(el) => (popupRefs.current[triggerChar] = el)}
+              ref={
+                ((el: HTMLDivElement) =>
+                  (popupRefs.current[triggerChar] =
+                    el)) as unknown as LegacyRef<HTMLDivElement>
+              }
               className="popup"
               style={{
                 top: popup.position.top,
@@ -388,7 +428,12 @@ const TextareaWithPopup: FC<Props> = ({
                 <div className="loading">Loading...</div>
               ) : (
                 popup.options.map((option, index) =>
-                  renderOption(triggerChar, option, index, popup.selectedIndex)
+                  renderOption({
+                    triggerChar,
+                    option,
+                    selected: popup.selectedIndex === index,
+                    role: "option",
+                  })
                 )
               )}
             </div>

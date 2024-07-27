@@ -264,3 +264,20 @@ export type RelationExt = Omit<Relation, "id" | "in" | "out"> & {
   in: string;
   out: string;
 };
+
+export type Cron = {
+  id: RecordId;
+  timestamp: number;
+  on: boolean;
+  schedule: string;
+  content: string;
+  source?: Agent;
+  target?: Post;
+  timezone?: string;
+};
+
+export type CronExt = Omit<Cron, "id" | "source" | "target"> & {
+  id: string;
+  source?: AgentExt;
+  target?: PostExt;
+};

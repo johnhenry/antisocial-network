@@ -203,7 +203,7 @@ export const createFile = async (
       );
     }
     await putObject(buff, { id: newFile.id.id as string });
-    createLog(newFile.id.toString(), drop);
+    createLog(newFile.id.toString());
     return newFile;
   } finally {
     await db.close();

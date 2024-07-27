@@ -13,11 +13,13 @@
 
 import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
 
-import {
+import type {
   Agent,
   AgentExt,
   AgentPlus,
   AgentPlusExt,
+  Cron,
+  CronExt,
   ErrorExt,
   File,
   FileExt,
@@ -141,11 +143,21 @@ export const mapPostPlusToPostPlusExt = (postPlus: PostPlus): PostPlusExt => {
 export const mapRelationToRelationExt = (
   relation: Relation,
 ): RelationExt => {
-  const { id, in: inn, out, data } = relation;
+  const { id, in: inn, out, ...rest } = relation;
   return {
     id: id.toString(),
     in: inn.toString(),
     out: out.toString(),
-    data,
+    ...rest,
+  };
+};
+
+export const mapCronToCronExt = (cron: Cron): CronExt => {
+  const { id, source, target, ...rest } = cron;
+  return {
+    id: id.toString(),
+    source: source ? mapAgentToAgentExt(source) : undefined,
+    target: target ? mapPostToPostExt(target) : undefined,
+    ...rest,
   };
 };

@@ -5,6 +5,8 @@ import type {
   AgentExt,
   AgentPlus,
   AgentPlusExt,
+  Cron,
+  CronExt,
   Entity,
   EntityExt,
   ErrorExt,
@@ -20,6 +22,7 @@ import type {
 
 import { StringRecordId } from "surrealdb.js";
 import { getDB, relate, unrelate } from "@/lib/db";
+import { createCron } from "@/lib/database/cron";
 
 import createPost, {
   getPost,
@@ -39,6 +42,7 @@ import { getLogs } from "@/lib/database/log";
 import {
   mapAgentPlusToAgentPlusExt,
   mapAgentToAgentExt,
+  mapCronToCronExt,
   mapErrorToErrorExt,
   mapFilePlusToFilePlusExt,
   mapFileToFileExt,
@@ -47,6 +51,24 @@ import {
   mapPostToPostExt,
   mapRelationToRelationExt,
 } from "@/lib/util/convert-types";
+
+export const sourceNTarget = async (
+  sourceId?: string,
+  targetId?: string,
+): Promise<[Agent?, Post?]> => {
+  const db = await getDB();
+  try {
+    const source: Agent | undefined = sourceId
+      ? await db.select<Agent>(new StringRecordId(sourceId))
+      : undefined;
+    const target: Post | undefined = targetId
+      ? await db.select<Post>(new StringRecordId(targetId))
+      : undefined;
+    return [source, target];
+  } finally {
+    db.close();
+  }
+};
 
 export const createPostExternal = async (
   content: string | undefined | false,
@@ -68,12 +90,7 @@ export const createPostExternal = async (
 ): Promise<EntityExt | void> => {
   const db = await getDB();
   try {
-    const source: Agent | undefined = sourceId
-      ? await db.select<Agent>(new StringRecordId(sourceId))
-      : undefined;
-    const target: Post | undefined = targetId
-      ? await db.select<Post>(new StringRecordId(targetId))
-      : undefined;
+    const [source, target] = await sourceNTarget(sourceId, targetId);
     const result: Entity | void = await createPost(content, {
       embedding,
       files,
@@ -289,4 +306,31 @@ export const unrelateExt = (inn: string, rel: string, out: string) => {
 export const getAllAgentNames = async (): Promise<string[]> => {
   const agents = await getAgents(0, -1);
   return agents.map((agent) => agent.name);
+};
+
+export const createCronExternal = async ({
+  on = true,
+  schedule,
+  content,
+  sourceId,
+  targetId,
+  timezone,
+}: {
+  on?: boolean;
+  schedule: string;
+  content: string;
+  sourceId?: string;
+  targetId?: string;
+  timezone: string;
+}): Promise<CronExt> => {
+  const [source, target] = await sourceNTarget(sourceId, targetId);
+  const cron = await createCron({
+    on,
+    schedule,
+    content,
+    source,
+    target,
+    timezone,
+  });
+  return mapCronToCronExt(cron);
 };

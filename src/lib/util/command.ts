@@ -144,8 +144,8 @@ const post = async (
       }
       return post;
     }
-    case "aggregate": {
-      // aggregate best responses
+    case "merge": {
+      // merge responses
       source = args.source
         ? await getAgent(new StringRecordId(args.source))
         : source;
