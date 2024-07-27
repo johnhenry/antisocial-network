@@ -76,10 +76,6 @@ export const getDB = async ({
     username: dbUsername,
     password: dbPassword,
   });
-  cronitialize(db);
-  if (!(await db.select(new StringRecordId("settings:current")))) {
-    await initialize(db);
-  }
   return db;
 };
 

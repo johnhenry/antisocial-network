@@ -32,7 +32,6 @@ class WriterManager {
   sendToWriters(data: string) {
     // console.log("Sending to writers", this.#writers, data);
     for (const writer of Object.values(this.writers)) {
-      console.log({ data });
       writer.write(`data: ${data}\n\n`);
     }
   }

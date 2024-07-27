@@ -2,25 +2,25 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Server",
+      "name": "[Server]",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev"
     },
     {
-      "name": "Client (Chrome)",
+      "name": "Chrome",
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3000"
     },
     {
-      "name": "Client (Edge)",
+      "name": "Edge",
       "type": "msedge",
       "request": "launch",
       "url": "http://localhost:3000"
     },
     {
-      "name": "Full (Chrome)",
+      "name": "Chrome+",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
@@ -31,7 +31,7 @@
       }
     },
     {
-      "name": "Full (Edge)",
+      "name": "Edge+",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",

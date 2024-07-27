@@ -21,6 +21,8 @@ const Notifier: FC<Props> = ({
 }) => {
   const [message, setMessage] = useState<Message>();
   const [active, setActive] = useState<boolean>(false);
+  const [seen, setSeen] = useState(new Set());
+
   const showNotification = (text: string, url?: string, type?: string) => {
     setMessage({ text, url, type });
   };
@@ -29,6 +31,12 @@ const Notifier: FC<Props> = ({
     eventSource.onmessage = (event) => {
       const notification = JSON.parse(event.data);
       const { id, timestamp, target, type, content, metadata } = notification;
+      const record = `${type}:${target}`;
+      if (seen.has(record)) {
+        return;
+      }
+      seen.add(record);
+      setSeen(new Set(seen));
       switch (type) {
         case "create-temp":
           // I do not want to show a temorary notification for this
@@ -38,7 +46,7 @@ const Notifier: FC<Props> = ({
           {
             const [nType] = target.split(":");
             const link = `/${nType}/${target}`;
-            showNotification(`New ${nType} created!`, link, type);
+            showNotification(`${record} New ${nType} created!`, link, type);
           }
           break;
         case "updated":
