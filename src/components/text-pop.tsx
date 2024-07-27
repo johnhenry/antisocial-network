@@ -10,10 +10,21 @@ const defaultTheme = {
   optionHover: "hover:bg-gray-100",
   loadingText: "px-4 py-2 text-gray-500",
 };
+import * as TOOLS from "@/tools/mod";
+const ToolOptions = Object.keys(TOOLS).map((name, id) => ({
+  id,
+  name,
+}));
+
+type Option = {
+  id: number;
+  name: string;
+  avatar?: string;
+};
 
 type Trigger = {
   pattern: RegExp;
-  fetchOptions: (search: string) => Promise<any[]>;
+  fetchOptions: (search: string) => Promise<Option[]> | Option[];
   color: string;
 };
 
@@ -36,13 +47,8 @@ const DEFAULT_TRIGGERS: Record<string, Trigger> = {
   },
   "#": {
     pattern: /(?:^|\s)#([\w-]*)$/,
-    fetchOptions: async (search) => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const tags = [
-        { id: 1, name: "javascript" },
-        { id: 2, name: "react" },
-        { id: 3, name: "node" },
-      ];
+    fetchOptions: (search) => {
+      const tags = ToolOptions;
       return tags.filter((tag) =>
         tag.name.toLowerCase().includes(search.toLowerCase())
       );

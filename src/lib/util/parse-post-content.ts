@@ -5,6 +5,7 @@ import { replaceAndAccumulate } from "@/lib/util/replace-mentions";
 import replaceMentions from "@/lib/util/replace-mentions";
 import { TABLE_AGENT } from "@/config/mod";
 import { createTempAgent } from "@/lib/database/agent";
+import { StringRecordId } from "surrealdb.js";
 
 const getAgentIdByNameOrCreate = async (
   name: string,
@@ -24,8 +25,14 @@ const getAgentIdByNameOrCreate = async (
   }
 };
 
+import { getAgent } from "@/lib/database/agent";
+
 const replaceAgents = async (name: string): Promise<string | [string, any]> => {
   if (recordMatch.test(name)) {
+    if (name.startsWith("@agent:")) {
+      const agent = await getAgent(new StringRecordId(name.slice(1)));
+      return [name, agent];
+    }
     return name;
   }
   if (name[0] === "@") {

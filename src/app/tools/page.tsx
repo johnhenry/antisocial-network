@@ -1,9 +1,10 @@
-import type { Descriptor } from "@/types/tools";
-import * as tools from "@/tools";
+import type { JSONExtendedObject } from "@/types/json-extended";
+import * as tools from "@/tools/mod";
 import { Fragment, ReactNode } from "react";
+import JSONExtended from "@/types/json-extended";
 
-const JsonToHtmlMapper = ({ data }: { data: Descriptor }) => {
-  const renderValue = (value: Descriptor, key: string): ReactNode => {
+const JsonToHtmlMapper = ({ data }: { data: JSONExtendedObject }) => {
+  const renderValue = (value: JSONExtendedObject, key: string): ReactNode => {
     if (typeof value === "object" && value !== null) {
       if (Array.isArray(value)) {
         return (
@@ -17,10 +18,10 @@ const JsonToHtmlMapper = ({ data }: { data: Descriptor }) => {
         return (
           <dl className={key}>
             {Object.entries(value).map(
-              ([subKey, subValue]: [string, Descriptor]) => (
+              ([subKey, subValue]: [string, JSONExtended]) => (
                 <Fragment key={subKey}>
                   <dt>{subKey}</dt>
-                  <dd>{renderValue(subValue, subKey)}</dd>
+                  <dd>{renderValue(subValue as never, subKey)}</dd>
                 </Fragment>
               )
             )}
@@ -41,7 +42,10 @@ const Page = () => {
       <h2>Tools</h2>
       <dl>
         {Object.entries(tools).map(
-          ([key, { descriptor }]: [string, { descriptor: Descriptor }]) => (
+          ([key, { descriptor }]: [
+            string,
+            { descriptor: JSONExtendedObject }
+          ]) => (
             <Fragment key={key}>
               <dt>{key}</dt>
               <dd>

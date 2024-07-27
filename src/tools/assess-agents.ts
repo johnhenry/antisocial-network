@@ -15,11 +15,11 @@ const schema = z.object({
 });
 
 const descriptor: Descriptor = {
-  name: "assessAgents",
-  description: "assign scores to agents",
-  parameters: {
-    type: "object",
-    properties: zodToJsonSchema(schema),
+  type: "function",
+  function: {
+    description: "assign scores to agents",
+    name: "assessagents",
+    parameters: zodToJsonSchema(schema) as any,
   },
 };
 
@@ -28,7 +28,7 @@ const handler: Handler = async ({
 }: {
   scores: { agent: string; score: number }[];
 }): Promise<string> => {
-  return String(0);
+  return "0";
 };
 
 const tool: Tool = {

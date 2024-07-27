@@ -15,7 +15,9 @@ import { getSettingsObject } from "@/lib/database/settings";
 import { RunnableLike } from "@langchain/core/runnables";
 import { getEncoding } from "js-tiktoken";
 import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
-
+import * as TOOLS from "@/tools/mod";
+import { Agent, Post } from "@/types/mod";
+import { Tool } from "@/types/tools";
 type FunctionDescriptor = {
   name: string;
   description: string;
@@ -35,30 +37,115 @@ type Invoker =
   | ChatAnthropic
   | ChatOllama;
 
+import { langchainToOllama } from "@/lib/util/message-format";
+
+export const respondT = async (
+  {
+    messages = [],
+    invocation = {},
+    parameters = {},
+    streaming = false,
+    tools = [],
+    target,
+    source,
+  }: {
+    messages?: [string, string][];
+    invocation?: Record<string, any>;
+    parameters?: Record<string, any>;
+    streaming?: boolean;
+    tools?: string[];
+    target?: Post;
+    source?: Agent;
+  } = {},
+): Promise<
+  BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
+> => {
+  const settings = await getSettingsObject();
+  const [repo, model] = (parameters?.model || settings.modeltools).split("::");
+  const arg: Record<any, any> = {
+    ...parameters,
+    model,
+  };
+
+  const id = target?.source?.id.toString();
+
+  const ollamaMessages = (messages || []).map(langchainToOllama);
+
+  const responses = [];
+  const ollama = new Ollama({
+    host: OLLAMA_LOCATION,
+  });
+  for (const toolname of tools) {
+    const currentTool: Tool | undefined = TOOLS[toolname];
+
+    if (currentTool) {
+      const { descriptor, handler } = currentTool;
+      const response = await ollama.chat({
+        model,
+        messages: ollamaMessages,
+        tools: [descriptor],
+      });
+      if (response.message.tool_calls) {
+        for (const tool of response.message.tool_calls) {
+          const functionResponse = await handler(
+            tool.function.arguments,
+          );
+          // Add function response to the conversation
+          responses.push(functionResponse);
+        }
+      }
+    } else {
+      responses.push(`Tool: ${toolname} not found`);
+    }
+  }
+
+  const content = `${id ? `@${id}\n` : ""}${responses.join("\n\n")}`;
+  return content as unknown as BaseMessageChunk;
+};
+
 export const respond = async (
   {
     messages = [],
     invocation = {},
     parameters = {},
     streaming = false,
+    tools = [],
+    target,
+    source,
   }: {
     messages?: [string, string][];
     invocation?: Record<string, any>;
     parameters?: Record<string, any>;
     streaming?: boolean;
+    tools?: string[];
+    target?: Post;
+    source?: Agent;
   } = {},
 ): Promise<
   BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
 > => {
+  if (tools && tools.length > 0) {
+    return respondT({
+      messages,
+      invocation,
+      parameters,
+      tools,
+      streaming,
+      target,
+      source,
+    });
+  }
+
   const settings = await getSettingsObject();
-  const [source, model] = (parameters?.model || settings.model).split("::");
+  const [repo, model] = (parameters?.model || settings.model).split("::");
   const arg: Record<any, any> = {
     ...parameters,
     model,
   };
+
   try {
     let invoker: Invoker;
-    switch (source) {
+    switch (repo) {
       case "groq": {
         arg.apiKey = settings.apikeygroq;
         delete arg.logprobs;
@@ -115,7 +202,7 @@ export const respondFunc = async (
 ): Promise<
   BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
 > => {
-  const [source, model] = MODEL_FUNCTIONS.split("::");
+  const [repo, model] = MODEL_FUNCTIONS.split("::");
 
   const invoker = new OllamaFunctions({
     ...parameters,
@@ -130,9 +217,9 @@ export const respondFunc = async (
 
 export const embed = async (prompt: string = genRandSurrealQLString()) => {
   const settings = await getSettingsObject();
-  const [source, model] = settings.modelembedding!.split("::");
+  const [repo, model] = settings.modelembedding!.split("::");
   try {
-    switch (source) {
+    switch (repo) {
       case "ollama":
       default: {
         const ollama = new Ollama({
@@ -152,9 +239,9 @@ export const embed = async (prompt: string = genRandSurrealQLString()) => {
 
 export const describe = async (base64data: string) => {
   const settings = await getSettingsObject();
-  const [source, model] = settings.modelvision!.split("::");
+  const [repo, model] = settings.modelvision!.split("::");
   try {
-    switch (source) {
+    switch (repo) {
       case "ollama":
       default: {
         const invoker = new OllamaLangchain({

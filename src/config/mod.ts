@@ -90,22 +90,39 @@ export const MODEL_VISION = read("MODEL_VISION", {
 });
 
 const MODELS_OTHERS_DEFAULT = [
-  // https://console.groq.com/docs/models
+  // Ollama: https://ollama.com/library
+  "ollama::llama3.1:latest",
+  "ollama::llama3:latest",
+  "ollama::mistral:latest",
+  "ollama::nomic-embed-text:latest",
+  "ollama::llava:latest",
+  // Groq: https://console.groq.com/docs/models
+  //// Google
+  "groq::gemma2-9b-it",
+  "groq::gemma-7b-it",
+  //// Meta
+  "groq::llama-3.1-405b-reasoning",
+  "groq::llama-3.1-70b-versatile",
+  "groq::llama-3.1-8b-instant",
   "groq::llama3-8b-8192",
   "groq::llama3-70b-8192",
+  //// Groq
+  "groq::llama3-groq-70b-8192-tool-use-preview",
+  "groq::llama3-groq-8b-8192-tool-use-preview",
+  //// Mixtral
   "groq::mixtral-8x7b-32768",
-  "groq::gemma-7b-it",
-  // https://docs.anthropic.com/en/docs/about-claude/models
+  // Anthropic: https://docs.anthropic.com/en/docs/about-claude/models
   "anthropic::claude-3-5-sonnet-20240620",
   "anthropic::claude-3-opus-20240229",
   "anthropic::claude-3-sonnet-20240229",
   "anthropic::claude-3-haiku-20240307",
-  // https://platform.openai.com/docs/models
+  // OpenAI: https://platform.openai.com/docs/models
+  "openai::gpt-4o-mini",
   "openai::gpt-4o",
   "openai::gpt-4-turbo",
   "openai::gpt-3.5-turbo",
-  "openai::dall-e-3",
-  "openai::dall-e-2",
+  // "openai::dall-e-3",
+  // "openai::dall-e-2",
   "openai::text-embedding-3-large",
   "openai::text-embedding-3-small",
   "openai::text-embedding-ada-002",
@@ -115,6 +132,16 @@ const MODELS_OTHER = read("MODELS_OTHER", {
   defaultValue: MODELS_OTHERS_DEFAULT,
   cast: (s: string) => s.split(","),
 });
+
+const MODELS_TOOL = read("MODELS_TOOL", {
+  defaultValue: ["ollama::llama3.1:latest", "ollama::llama3:latest"],
+  cast: (s: string) => s.split(","),
+});
+
+const MODEL_TOOL = read("MODEL_TOOL", {
+  defaultValue: "ollama::llama3.1:latest",
+});
+
 export const MODELS = [
   ...new Set(
     [
@@ -126,6 +153,7 @@ export const MODELS = [
     ].filter((model) => model),
   ),
 ];
+
 export const OLLAMA_LOCATION = read("OLLAMA_LOCATION", {
   defaultValue: "http://localhost:11434",
 });
@@ -208,6 +236,13 @@ export const SETTINGS_DEFAULT: Setting[] = [
     type: "select",
     options: MODELS,
     defaultValue: MODEL_VISION,
+  },
+  {
+    name: "modeltools",
+    label: "Tools Model",
+    type: "select",
+    options: MODELS_TOOL,
+    defaultValue: MODEL_TOOL,
   },
   {
     name: "apikeygroq",

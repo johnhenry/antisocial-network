@@ -30,6 +30,9 @@ import { createFiles } from "@/lib/database/file";
 import { getEntity, getLatest } from "@/lib/database/helpers";
 import { respond } from "@/lib/ai";
 
+export const getAgent = getEntity<Agent>;
+export const getAgents = getLatest<Agent>(TABLE_AGENT);
+
 export const nameExists = async (name: string): Promise<boolean> => {
   const db = await getDB();
   try {
@@ -66,19 +69,6 @@ export const createTempAgent = async (
     db.close();
   }
 };
-
-// export const getAgent = async (id: string): Promise<Agent> => {
-//   const db = await getDB();
-//   try {
-//     const agent = await db.select(new StringRecordId(id)) as Agent;
-//     return agent;
-//   } finally {
-//     db.close();
-//   }
-// };
-
-export const getAgent = getEntity<Agent>;
-export const getAgents = getLatest<Agent>(TABLE_AGENT);
 
 const combineQualities = (
   description: string = "",
@@ -343,7 +333,6 @@ export const agentResponse = async (
     return results as LangchainGenerator;
   }
   return results as BaseMessageChunk;
-  // return `response->${Date.now()}`;
 };
 
 type RecursiveDescendantResult = [Post, RecursiveDescendantResult[]];

@@ -11,21 +11,21 @@ const schema = z.object({
 });
 
 const descriptor: Descriptor = {
-  name: "subtraction",
-  description: "subtract two numbers",
-  parameters: {
-    type: "object",
-    properties: zodToJsonSchema(schema),
+  type: "function",
+  function: {
+    description: "subtract two numbers",
+    name: "subtraction",
+    parameters: zodToJsonSchema(schema) as any,
   },
 };
 
-const handler: Handler = async ({
+const handler: Handler = ({
   minuend,
   subtrahend,
 }: {
   minuend: number;
   subtrahend: number;
-}): Promise<string> => {
+}): string => {
   return String(minuend - subtrahend);
 };
 

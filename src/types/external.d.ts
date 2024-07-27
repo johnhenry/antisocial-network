@@ -1,3 +1,5 @@
+import type { Tool } from "@/types/tools";
+
 declare module "sanitize-html" {
   // Adjust the parameter and return types based on the actual implementation
   export default function (string): string;
@@ -19,4 +21,10 @@ declare module "markdown-it" {
 declare module "surreal.js" {
   // Adjust the parameter and return types based on the actual implementation
   export default function (formRef: HTMLFormElement): Promise<object>;
+}
+
+declare module "@/tools/mod" {
+  import { Tool } from "@/types/tools";
+  declare const tools: { [key: string]: Tool };
+  export = tools;
 }
