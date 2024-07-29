@@ -28,8 +28,12 @@ const Page: FC<PageProps> = ({}) => {
         <InfiniteScroller
           fetchChildren={fetchChildren(0)}
           ChildRenderer={Log}
-          childProps={{ className: "log" }}
-          FinalItem={({ children, ...props }) => <li {...props}>{children}</li>}
+          childProps={{ className: "log", Wrapper: "dl" }}
+          FinalItem={({ className = "", children, ...props }) => (
+            <li className={`${className} log loading`} {...props}>
+              {children}
+            </li>
+          )}
         />
       </div>
     </article>

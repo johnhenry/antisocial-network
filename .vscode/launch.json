@@ -11,12 +11,14 @@
       "name": "Chrome",
       "type": "chrome",
       "request": "launch",
+      "webRoot": "${workspaceFolder}/src",
       "url": "http://localhost:3000"
     },
     {
       "name": "Edge",
       "type": "msedge",
       "request": "launch",
+      "webRoot": "${workspaceFolder}/src",
       "url": "http://localhost:3000"
     },
     {
@@ -24,6 +26,7 @@
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
+      "sourceMaps": true,
       "serverReadyAction": {
         "pattern": "- Local:.+(https?://.+)",
         "uriFormat": "%s",
@@ -35,6 +38,7 @@
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
+      "sourceMaps": true,
       "serverReadyAction": {
         "pattern": "- Local:.+(https?://.+)",
         "uriFormat": "%s",

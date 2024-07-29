@@ -2,13 +2,7 @@ import type { FC, ReactNode, ComponentClass } from "react";
 import type { PostExt, FileExt, AgentExt, AgentPlusExt } from "@/types/mod";
 import imageFromString from "@/lib/util/image-from-string";
 import timeAgo from "@/lib/util/time-ago";
-import {
-  IconPost,
-  IconMask,
-  IconMemory,
-  IconAgent,
-  IconTool,
-} from "@/components/icons";
+import { IconPost, IconMask } from "@/components/icons";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { REL_REMEMBERS } from "@/config/mod";
@@ -20,10 +14,10 @@ type PostProps = PostExt & {
   setMasquerade?: (masquerade: AgentPlusExt | null) => void;
 };
 
+import { IconMemory } from "@/components/icons";
+
 import Attachment from "@/components/attachment";
 import { relateExt, unrelateExt } from "@/lib/database/mod";
-
-import TOOLS from "@/tools/mod";
 
 const Post: FC<PostProps> = ({
   id,
@@ -34,9 +28,6 @@ const Post: FC<PostProps> = ({
   files,
   children,
   masquerade,
-  bibliography,
-  mentions,
-  tools,
   setMasquerade,
   ...props
 }) => {
@@ -73,9 +64,6 @@ const Post: FC<PostProps> = ({
       });
     }
   };
-  const showFooter =
-    masquerade || bibliography?.length || mentions?.length || tools?.length;
-
   const body = (
     <>
       <header>
@@ -110,61 +98,16 @@ const Post: FC<PostProps> = ({
         </span>
       ) : null}
       {children}
-      {showFooter ? (
+      {masquerade ? (
         <footer>
-          <div className="bibliography">
-            {bibliography && bibliography.length
-              ? bibliography.map((post) => {
-                  return (
-                    <a
-                      key={post.id}
-                      href={`/post/${post.id}`}
-                      title={post.content}
-                    >
-                      <IconPost />
-                    </a>
-                  );
-                })
-              : null}
-            {mentions && mentions.length
-              ? mentions.map((mention) => {
-                  return (
-                    <a
-                      key={mention.id}
-                      href={`/post/${mention.id}`}
-                      title={`@${mention.name}\n${mention.content}`}
-                    >
-                      <IconAgent />
-                    </a>
-                  );
-                })
-              : null}
-            {tools && tools.length
-              ? tools
-                  .map((tool) => TOOLS[tool])
-                  .map((tool) => {
-                    return (
-                      <a
-                        key={tool.name}
-                        href={`/tools/`}
-                        title={`#${tool.name}\n${tool.description}`}
-                      >
-                        {<IconTool />}
-                      </a>
-                    );
-                  })
-              : null}
-          </div>
-          {masquerade ? (
-            <button
-              title="toggle bookmarks"
-              className={remembered.has(id) ? "bookmarked" : ""}
-              onClick={() => toggleRemembered()}
-            >
-              <IconMask />
-              <IconMemory />
-            </button>
-          ) : null}
+          <button
+            title="toggle bookmarks"
+            className={remembered.has(id) ? "bookmarked" : ""}
+            onClick={() => toggleRemembered()}
+          >
+            <IconMask />
+            <IconMemory />
+          </button>
         </footer>
       ) : null}
     </>

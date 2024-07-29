@@ -3,6 +3,7 @@
 import type { FC } from "react";
 import type {
   PostExt,
+  PostPlusExt,
   AgentPlusExt,
   EntityExt,
   ErrorExt,
@@ -17,6 +18,8 @@ import useLocalStorage from "@/lib/hooks/use-localstorage";
 import { MASQUERADE_KEY } from "@/config/mod";
 import Masquerade from "@/components/masquerade";
 
+import { IconFile, IconArrowLeft, IconArrowRight } from "@/components/icons";
+
 type PageProps = {
   params: {
     id: string;
@@ -24,7 +27,7 @@ type PageProps = {
 };
 const Page: FC<PageProps> = ({ params }) => {
   const identifier = decodeURIComponent(params.id || "");
-  const [post, setPost] = useState<PostExt>();
+  const [postPlus, setPostPlus] = useState<PostPlusExt>();
   const [elicits, setElicits] = useState<PostExt[]>([]);
   const router = useRouter();
   const [masquerade, setMasquerade] = useLocalStorage<AgentPlusExt | null>(
@@ -34,8 +37,9 @@ const Page: FC<PageProps> = ({ params }) => {
   useEffect(() => {
     const load = async () => {
       const postPlus = await getPostPlusExternal(identifier);
-      const { post, elicits } = postPlus;
-      setPost(post);
+      const { elicits, ...post } = postPlus;
+      console.log({ postPlus });
+      setPostPlus(post);
       setElicits(elicits || []);
     };
     load();
@@ -84,6 +88,10 @@ const Page: FC<PageProps> = ({ params }) => {
         break;
     }
   };
+  if (!postPlus) {
+    return <article>Loading</article>;
+  }
+  const { post, before, after, container } = postPlus;
 
   return (
     <article className="post-single">
@@ -92,20 +100,52 @@ const Page: FC<PageProps> = ({ params }) => {
         setMasquerade={setMasquerade}
         className="agent-masquerade"
       />
-      {post?.target ? (
-        <>
+      {post.target ? (
+        <ul className="list-tight">
           {[post.target].map((post) => (
             <Post
               key={post.id}
-              Wrapper={"span"}
-              className="target"
-              {...post}
+              Wrapper={"li"}
+              className="target entity"
               masquerade={masquerade}
+              setMasquerade={setMasquerade}
+              {...post}
             />
           ))}
-        </>
+        </ul>
       ) : null}
-      {post ? <Post Wrapper="div" className="post" {...post} /> : null}
+      <Post
+        Wrapper="div"
+        className="post entity"
+        masquerade={masquerade}
+        setMasquerade={setMasquerade}
+        {...post}
+      />
+      <nav>
+        {before ? (
+          <a
+            href={`/post/${before.id}`}
+            className="before"
+            title={before.content}
+          >
+            <IconArrowLeft />
+          </a>
+        ) : null}
+        {container ? (
+          <a
+            href={`/file/${container.id}`}
+            className="container"
+            title={container.content}
+          >
+            <IconFile />
+          </a>
+        ) : null}
+        {after ? (
+          <a href={`/post/${after.id}`} className="after" title={after.content}>
+            <IconArrowRight />
+          </a>
+        ) : null}
+      </nav>
       <InputBox
         Wrapper={"div"}
         className="input-box"
@@ -117,7 +157,12 @@ const Page: FC<PageProps> = ({ params }) => {
       {elicits && elicits.length ? (
         <ul className="list-tight">
           {elicits.map((post) => (
-            <Post key={post.id} Wrapper={"li"} className="elicits" {...post} />
+            <Post
+              key={post.id}
+              Wrapper={"li"}
+              className="elicits entity"
+              {...post}
+            />
           ))}
         </ul>
       ) : null}

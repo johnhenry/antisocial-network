@@ -10,7 +10,6 @@ const { error } = console;
 type Props = {
   className?: string;
   duration?: number;
-  cacheTime: number;
   Wrapper?: ComponentType<any> | string;
 };
 
@@ -18,7 +17,6 @@ const Notifier: FC<Props> = ({
   className,
   duration,
   Wrapper = "div",
-  cacheTime = 5000,
   ...props
 }) => {
   const [message, setMessage] = useState<Message>();
@@ -39,10 +37,6 @@ const Notifier: FC<Props> = ({
       }
       seen.add(record);
       setSeen(new Set(seen));
-      setTimeout(() => {
-        seen.delete(record);
-        setSeen(new Set(seen));
-      }, cacheTime);
       switch (type) {
         case "create-temp":
           // I do not want to show a temorary notification for this
@@ -59,7 +53,7 @@ const Notifier: FC<Props> = ({
           {
             const [nType] = target.split(":");
             const link = `/${nType}/${target}`;
-            showNotification(`(${target}) updated!`, link, type);
+            showNotification(`${target} updated!`, link, type);
           }
           break;
       }

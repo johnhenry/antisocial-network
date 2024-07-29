@@ -1,9 +1,7 @@
-import * as TOOLS from "@/tools/mod";
-
+import TOOLS from "@/tools/mod";
 const tool_names_and_descriptions = Object.entries(TOOLS).map((
   [name, tool],
 ) => [name, tool.descriptor.function.description]);
-
 /**
  * Generates a system message for agents to converse with each other.
  *
@@ -14,15 +12,22 @@ const tool_names_and_descriptions = Object.entries(TOOLS).map((
  * const message = generateSystemMessage(true);
  * console.log(message);
  */
-export const generateSystemMessage = (useRelevantKnowledge = true) => {
+export const generateSystemMessage = (
+  useRelevantKnowledge = true,
+  toolUsage = true,
+) => {
   const MESSAGE_FORMAT = `
     Message Format:
     - Messages need not have attribution and can be anonymous in the following format:
       "<message content>"
       - Example: "Hello, how are you?"
-    - If an existing message is attributed to a specific speaker, it will begin with the speaker's username in brackets followed by a colon, the space and the message content:
-      "[<username>]: <message content>"
-      - Example: "[agent:a1b2c3]: I'm doing well, thank you."
+    - If an existing message is attributed to a specific speaker, it will begin with the speaker's username in brackets, the space and the message content:
+      "[<username>] <message content>"
+      - Example: "[agent:a1b2c3] I'm doing well, thank you."
+    - Messages from tools will be attributed to the tool name in brackets preceeded by a hash:
+      - Example: "[timetool] The time is 2022-03-23 15:00:00"
+    - Multiple tools may respond to a single message.
+      - Example: "[timetool] The time is 2022-03-23 15:00:00\n\n#[subtraction] 1 minus 2 is -1"
     - When creating a message, use the anonymous format. DO NOT include the brackets and username around your own username. Simply use the format:
       "<message content>"
       - Example: "I'm doing well, thank you."
@@ -31,8 +36,9 @@ export const generateSystemMessage = (useRelevantKnowledge = true) => {
   const IDENTIFYING_SPEAKERS = `
     Identifying Speakers:
     - If it exists, pay attention to the name in square brackets at the beginning of each message to identify who is speaking.
-      - Example: in "[agent:d1e2f3]: What is your name?", agent:d1e2f3 is the speaker.
+      - Example: in "[agent:d1e2f3] What is your name?", agent:d1e2f3 is the speaker.
     - Keep track of different speakers throughout the conversation.
+    - Tools may respond to messages
   `;
 
   const HANDLING_MENTIONS = `
@@ -50,18 +56,19 @@ export const generateSystemMessage = (useRelevantKnowledge = true) => {
         - In this example, the message is addressed to you.
     - If another user is mentioned, you are not obligated to acknowledge the user unless it is relevant to your response.
     - If another user is mentioned who has not yet participated in the conversation, you should ignore that user.
+    - Only mention other users if you wish to recieve a response from them.
     - When creating a message, never mention yourself.
-    - Do not under any circumstances mention yourself in a message.
+    - DO NOT mention yourself in a message.
   `;
 
   const TOOL_USAGE = `
     Tool Usage:
     - Tools are used to get more information on a subject.
     - Call tools by their name in the following format: "#<toolname>"
-    - The tool will respond with a message containing the information you requested;
+    - The tool will respond with a message containing the information requested;
       - Example:
         - post: "#timetool"
-        - response: "@{id}\nThe time for -5 is 2022-03-23 15:00:00"
+        - response: "#[timetool] @{id}\nThe time for 0 is 2022-03-23 15:00:00"
     - Available Tools include:
   ${
     tool_names_and_descriptions.map(([name, description]) =>
@@ -69,6 +76,8 @@ export const generateSystemMessage = (useRelevantKnowledge = true) => {
     ).join("\n")
   }
     - Use only the above tools. Do not use any other tools.
+    - Do not use tools in your responses
+    - If multiple tools are called, they
   `;
 
   const DETERMINING_ADDRESSEES = `
@@ -112,14 +121,16 @@ export const generateSystemMessage = (useRelevantKnowledge = true) => {
     MESSAGE_FORMAT,
     IDENTIFYING_SPEAKERS,
     HANDLING_MENTIONS,
-    TOOL_USAGE,
+
     DETERMINING_ADDRESSEES,
     YOUR_RESPONSES,
     MAINTAINING_CONTEXT,
     HANDLING_MULTIPLE_THREADS,
     ADAPTING_TONE_AND_STYLE,
   ];
-
+  if (toolUsage) {
+    steps.push(TOOL_USAGE);
+  }
   if (useRelevantKnowledge) {
     steps.push(USING_RELEVANT_KNOWLEDGE);
   }

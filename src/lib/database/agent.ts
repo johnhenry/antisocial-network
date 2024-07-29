@@ -19,7 +19,8 @@ import {
   TABLE_POST,
 } from "@/config/mod";
 import { getDB } from "@/lib/db";
-import { embed, PROMPTS_SUMMARIZE, summarize, tokenize } from "@/lib/ai";
+import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
+import { embed, summarize } from "@/lib/ai";
 import hash from "@/lib/util/hash";
 import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
 import { StringRecordId } from "surrealdb.js";
@@ -50,7 +51,7 @@ export const nameExists = async (name: string): Promise<boolean> => {
 };
 
 export const createTempAgent = async (
-  { name }: { name: string },
+  { name, context }: { name?: string; context?: string } = {},
 ): Promise<AgentTemp> => {
   const db = await getDB();
   try {
@@ -62,8 +63,11 @@ export const createTempAgent = async (
       name,
       hash: hash(),
       embedding,
+      metadata: {
+        context,
+      },
     }) as AgentTemp[];
-    createLog(agent.id.toString(), { type: "create-temp" });
+    createLog(agent.id.toString(), { type: "created-temp" });
     return agent;
   } finally {
     db.close();
@@ -85,12 +89,16 @@ const genCharacter = async ({
   description = "",
   qualities = [],
   image,
+  context,
+  id,
 }: {
   name?: string;
   parameters?: AgentParameters;
   description?: string;
   qualities?: [string, string][];
   image?: string;
+  context?: string;
+  id?: string;
 } = {}) => {
   const combinedQualities = combineQualities(description, qualities);
   let content;
@@ -103,10 +111,9 @@ const genCharacter = async ({
     // name -> description -> content
     content = await summarize(
       description = await summarize(
-        name,
-        PROMPTS_SUMMARIZE.LLM_DESCRIPTION,
+        generateDescriptionPromptWithFirstMessage(name, context?.replaceAll(name, id||""), id),
       ),
-      PROMPTS_SUMMARIZE.LLM_PROMPT,
+      PROMPTS_SUMMARIZE.LLM_PROMPT, //TODO: I DON'T  THINK I BROKE ANYHTING< BUT I,m in the middle of makinf this dynamic to account for the first message and id passed
     );
   } else {
     // nothing is provided
@@ -214,6 +221,8 @@ export const updateAgent = async (
           parameters,
           description,
           qualities,
+          context: agent.metadata?.context,
+          id: agent.id.toString(),
         }),
       };
     } else {
@@ -230,7 +239,7 @@ export const updateAgent = async (
       timestamp: agent.timestamp,
       lastupdated: Date.now(),
     }) as Agent;
-    createLog(agent.id.toString(), { type: "update" });
+    createLog(agent.id.toString(), { type: "updated" });
     return updatedAgent;
   } finally {
     db.close();
@@ -282,6 +291,7 @@ export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
 ////////
 
 import {
+  generateDescriptionPromptWithFirstMessage,
   generateSystemMessage,
   generateSystemMessageAggregate,
   mapPostsToMessages,

@@ -9,6 +9,7 @@ import { StringRecordId } from "surrealdb.js";
 
 const getAgentIdByNameOrCreate = async (
   name: string,
+  context: string = name,
 ): Promise<Agent> => {
   const db = await getDB();
   try {
@@ -19,7 +20,8 @@ const getAgentIdByNameOrCreate = async (
         name,
       },
     );
-    return (agent || (await createTempAgent({ name })));
+    return (agent ||
+      (await createTempAgent({ name, context }))) as Agent;
   } finally {
     await db.close();
   }
@@ -27,7 +29,10 @@ const getAgentIdByNameOrCreate = async (
 
 import { getAgent } from "@/lib/database/agent";
 
-const replaceAgents = async (name: string): Promise<string | [string, any]> => {
+const replaceAgents = async (
+  name: string,
+  context: string = name,
+): Promise<string | [string, any]> => {
   if (recordMatch.test(name)) {
     if (name.startsWith("@agent:")) {
       const agent = await getAgent(new StringRecordId(name.slice(1)));
@@ -36,7 +41,7 @@ const replaceAgents = async (name: string): Promise<string | [string, any]> => {
     return name;
   }
   if (name[0] === "@") {
-    const agent = await getAgentIdByNameOrCreate(name.slice(1));
+    const agent = await getAgentIdByNameOrCreate(name.slice(1), context);
     const id = `@${agent.id.toString()}`;
     return [id, agent];
   }
@@ -49,7 +54,7 @@ const parsePostContent = async (
 ): Promise<string> => {
   const updatedContent = await replaceMentions(
     content,
-    replaceAndAccumulate(replaceAgents, mentions),
+    replaceAndAccumulate((x) => replaceAgents(x, content), mentions),
   );
   return updatedContent;
 };

@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@100&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Share+Tech+Mono&family=Sometype+Mono&display=swap");
 *,
 ::before,
 ::after {
@@ -241,8 +242,8 @@ body > main {
           mask-position: center;
           width: 2rem;
           aspect-ratio: 1;
-          -webkit-mask-image: url(/logo.svg);
-          mask-image: url(/logo.svg);
+          -webkit-mask-image: url(/logo-thick.svg);
+          mask-image: url(/logo-thick.svg);
           background-color: currentColor;
         }
       }
@@ -352,34 +353,34 @@ body > main {
       color: green;
     }
   }
-  .popup {
-    position: absolute;
-    z-index: 1;
-    color: var(--color-background);
-    background-color: var(--color-background-inverse);
-    border-radius: var(--size-corner-inside);
-    box-shadow: inset 0 0 0 1px var(--color-background);
-    max-height: 128px;
-    overflow-y: auto;
-    .loading {
-      @apply px-4 py-2;
-    }
+}
+.popup {
+  position: absolute;
+  z-index: 1;
+  color: var(--color-background);
+  background-color: var(--color-background-inverse);
+  border-radius: var(--size-corner-inside);
+  box-shadow: inset 0 0 0 1px var(--color-background);
+  max-height: 128px;
+  overflow-y: auto;
+  .loading {
+    @apply px-4 py-2;
+  }
 
-    .option {
-      @apply px-4 py-2 cursor-pointer flex items-center;
-      position: "absolute";
-      background-color: var(--color-text);
-      color: var(--color-midground);
-      .avatar {
-        @apply w-8 h-8 rounded-full flex items-center justify-center mr-2;
-      }
-      .symbol {
-        @apply mr-2 text-xl;
-      }
-      &.selected {
-        background-color: var(--color-background);
-        color: var(--color-background-inverse);
-      }
+  .option {
+    @apply px-4 py-2 cursor-pointer flex items-center;
+    position: "absolute";
+    background-color: var(--color-text);
+    color: var(--color-midground);
+    .avatar {
+      @apply w-8 h-8 rounded-full flex items-center justify-center mr-2;
+    }
+    .symbol {
+      @apply mr-2 text-xl;
+    }
+    &.selected {
+      background-color: var(--color-background);
+      color: var(--color-background-inverse);
     }
   }
 }
@@ -460,26 +461,55 @@ ul:has(> .entity) {
 }
 
 .log {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  font-family: "Share Tech Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
   padding: 1rem;
   width: 100%;
-  &:has(> .created) {
-    color: green;
+  &:has(> .created) :where(dt, summary),
+  summary {
+    color: rgb(65, 246, 65);
   }
-  > header {
-    display: flex;
-    gap: 1rem;
-    > .type {
-      text-transform: uppercase;
-    }
-    > .timestamp {
-      margin-right: auto;
-    }
+  &:has(> .created-temp) :where(dt, summary),
+  summary {
+    color: rgb(246, 222, 65);
   }
-  > main {
-    margin-left: auto;
+
+  &:has(> .updated) :where(dt, summary),
+  summary {
+    color: rgb(65, 65, 246);
+  }
+  &:has(> .deleted) :where(dt, summary),
+  summary {
+    color: rgb(138, 137, 137);
+  }
+  &:has(> .error) :where(dt, summary) {
+    color: rgb(246, 65, 65);
+  }
+  a {
+    text-decoration: underline;
+  }
+  pre {
+    display: inline-block;
+  }
+}
+dl {
+  width: 100%;
+}
+dt {
+  display: inline;
+  font-weight: bold;
+  &::after {
+    content: ": ";
+  }
+}
+dd {
+  display: inline;
+
+  &::after {
+    content: "";
+    display: block;
+    clear: both;
   }
 }
 
@@ -524,12 +554,12 @@ article.logs {
     .content {
       grid-area: co;
       white-space: normal;
-      &::before {
+      /* &::before {
         content: "“";
       }
       &::after {
         content: "”";
-      }
+      } */
     }
     .entity-link {
       grid-area: li;
@@ -606,9 +636,16 @@ article.logs {
         &::after {
           content: none;
         }
+        &:hover {
+          white-space: normal;
+          overflow: visible;
+        }
       }
     }
     .attachments {
+      display: none;
+    }
+    > footer {
       display: none;
     }
   }
@@ -650,6 +687,7 @@ article.logs {
   button {
     /* margin-left: auto; */
     padding: 0;
+    height: 100%;
     font-size: 0.6rem;
     border-radius: 50%;
     aspect-ratio: 1/1;
@@ -700,8 +738,66 @@ article.logs {
   }
   .post {
     width: 100%;
+    .timestamp {
+      display: block;
+    }
+    .entity-link {
+      display: none;
+    }
   }
   .elicits {
+  }
+}
+
+.agent-masquerade {
+  border-style: solid;
+  border-width: 1px;
+  width: 80%;
+  border-radius: 1.5rem;
+  height: 2rem;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  overflow: hidden;
+  padding: 0.25rem;
+  /* padding-left: 1rem; */
+  p {
+    flex: 1;
+    text-align: center;
+  }
+  button {
+    /* margin-left: auto; */
+    padding: 0;
+    font-size: 0.6rem;
+    border-radius: 50%;
+    aspect-ratio: 1/1;
+    &:first-child {
+      font-size: 0.6rem;
+    }
+  }
+}
+
+.bibliography {
+  flex: 1;
+  > a {
+    /* margin-left: auto; */
+    font-size: 0.6rem;
+    --size: 24px;
+    border-radius: 50%;
+    width: var(--size);
+    height: var(--size);
+    line-height: var(--size);
+    aspect-ratio: 1/1;
+    text-align: center;
+    border: 1px solid black;
+    display: inline-block;
+    background-color: white;
+    color: red;
+    margin-right: calc(var(--size) / 2 * -1);
+    transition: margin-right 0.5s;
+    :hover > & {
+      margin-right: 0;
+    }
   }
 }
 
@@ -764,7 +860,7 @@ article.logs {
   }
   > main {
     display: flex;
-    flex-direction: var(--column-direction);
+    flex-direction: var(--orientation-flex);
     gap: var(--size-gap);
     label {
       button {
@@ -852,6 +948,70 @@ article.logs {
     padding: var(--size-gap-inner);
   }
 }
+
+.schedule-single {
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-gap-inner);
+    width: 100%;
+    > * {
+      border-radius: var(--size-radius);
+      background-color: var(--color-midground);
+      padding: var(--size-gap-inner);
+    }
+    > header {
+      flex: 1;
+      > input {
+        padding: 0 var(--size-gap-inner);
+      }
+      > img {
+        width: 100%;
+      }
+      > form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--size-gap-inner);
+        > details {
+          display: flex;
+          flex-direction: column;
+          gap: var(--size-gap-inner);
+        }
+      }
+    }
+    label {
+      display: flex;
+      flex-direction: row;
+      gap: var(--size-gap-inner);
+      padding: var(--size-gap-inner);
+      position: relative;
+      width: 100%;
+      textarea {
+        flex: 1;
+        resize: vertical;
+        padding: var(--size-padding);
+        outline: none;
+      }
+    }
+    button {
+      color: white;
+    }
+  }
+  .schedule {
+    > header {
+      display: flex;
+      justify-content: space-between;
+      button {
+        padding: none;
+      }
+    }
+    > main {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
 .search-options {
   width: 100%;
   text-align: center;
@@ -898,7 +1058,9 @@ ol > dl {
   padding-left: 1rem;
 }
 
-ul {
+ul,
+table,
+details {
   width: 100%;
 }
 

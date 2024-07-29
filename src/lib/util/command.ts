@@ -45,7 +45,7 @@ const agent = async (
   switch (command) {
     case "create": {
       if (args.temporary) {
-        return createTempAgent({ name: args.name });
+        return createTempAgent({ name: args.name, context: args.content });
       }
 
       return createAgent({

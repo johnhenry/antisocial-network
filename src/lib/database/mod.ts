@@ -1,5 +1,5 @@
 "use server";
-
+import { ALL_TABLES } from "@/config/mod";
 import type {
   Agent,
   AgentExt,
@@ -19,10 +19,10 @@ import type {
   PostPlusExt,
   RelationExt,
 } from "@/types/mod";
-
+import type { RecordId } from "surrealdb.js";
 import { StringRecordId } from "surrealdb.js";
 import { getDB, relate, unrelate } from "@/lib/db";
-import { createCron } from "@/lib/database/cron";
+import { createCron, cronState, getAllCron } from "@/lib/database/cron";
 
 import createPost, {
   getPost,
@@ -303,9 +303,9 @@ export const unrelateExt = (inn: string, rel: string, out: string) => {
   return unrelate(new StringRecordId(inn), rel, new StringRecordId(out));
 };
 
-export const getAllAgentNames = async (): Promise<string[]> => {
+export const getAllAgentNamesAndIds = async (): Promise<[string, string][]> => {
   const agents = await getAgents(0, -1);
-  return agents.map((agent) => agent.name);
+  return agents.map((agent) => [agent.name, agent.id.toString()]);
 };
 
 export const createCronExternal = async ({
@@ -333,4 +333,33 @@ export const createCronExternal = async ({
     timezone,
   });
   return mapCronToCronExt(cron);
+};
+
+export const getAllCronExternal = async (): Promise<CronExt[]> => {
+  const crons = await getAllCron();
+  return crons.map(mapCronToCronExt);
+};
+
+export const cronStateExternal = (
+  on: boolean | null = false,
+  ...cronIds: string[]
+) => {
+  const ids = cronIds.map((id) =>
+    new StringRecordId(id)
+  ) as unknown as RecordId<string>[];
+  return cronState(
+    on,
+    ...ids,
+  );
+};
+
+export const clearDB = async () => {
+  const db = await getDB();
+  try {
+    for (const table of ALL_TABLES) {
+      await db.delete(table);
+    }
+  } finally {
+    await db.close();
+  }
 };

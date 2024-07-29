@@ -1,7 +1,7 @@
 import type { Relation } from "@/types/mod";
 
 import { RecordId, StringRecordId, Surreal } from "surrealdb.js";
-import { cronitialize } from "@/lib/database/cron";
+// import { cronitialize } from "@/lib/database/cron";
 import {
   ALL_TABLES,
   DB_DATABASE,
@@ -21,30 +21,36 @@ import {
 const { log } = console;
 export const initialize = async (db: Surreal): Promise<void> => {
   // Define settings table
-  try {
-    await db.create(TABLE_SETTINGS, {
-      id: TABLE_SETTINGS_ID_CURRENT,
-      data: SETTINGS_DEFAULT,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    throw error;
-  }
-  // Define indexed tables
-  for (const table of [TABLE_AGENT, TABLE_POST, TABLE_FILE]) {
-    const queries = [
-      `DEFINE TABLE IF NOT EXISTS ${table} SCHEMALESS`,
-      `DEFINE FIELD IF NOT EXISTS embedding ON TABLE ${table} TYPE array<number>`,
-      `DEFINE INDEX IF NOT EXISTS search ON ${table} FIELDS embedding MTREE DIMENSION ${SIZE_EMBEDDING_VECTOR} DIST COSINE`,
-    ];
+  if (
+    !(await db.select(
+      new StringRecordId(`${TABLE_SETTINGS}:${TABLE_SETTINGS_ID_CURRENT}`),
+    ))
+  ) {
     try {
-      await db.query(queries.join(";"));
+      await db.create(TABLE_SETTINGS, {
+        id: TABLE_SETTINGS_ID_CURRENT,
+        data: SETTINGS_DEFAULT,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
     } catch (error: any) {
-      if (error.message.includes("already exists")) {
-        log(`Index already exists on ${table}`);
-      } else {
-        throw error;
+      throw error;
+    }
+    // Define indexed tables
+    for (const table of [TABLE_AGENT, TABLE_POST, TABLE_FILE]) {
+      const queries = [
+        `DEFINE TABLE IF NOT EXISTS ${table} SCHEMALESS`,
+        `DEFINE FIELD IF NOT EXISTS embedding ON TABLE ${table} TYPE array<number>`,
+        `DEFINE INDEX IF NOT EXISTS search ON ${table} FIELDS embedding MTREE DIMENSION ${SIZE_EMBEDDING_VECTOR} DIST COSINE`,
+      ];
+      try {
+        await db.query(queries.join(";"));
+      } catch (error: any) {
+        if (error.message.includes("already exists")) {
+          log(`Index already exists on ${table}`);
+        } else {
+          throw error;
+        }
       }
     }
   }
@@ -76,6 +82,8 @@ export const getDB = async ({
     username: dbUsername,
     password: dbPassword,
   });
+  await initialize(db);
+  // cronitialize(db);
   return db;
 };
 
@@ -185,15 +193,4 @@ export const q = (strings: string[], ...values: any[]) => {
   }
   const string = str.join("");
   return [string, vals];
-};
-
-export const clearDB = async () => {
-  const db = await getDB();
-  try {
-    for (const table of ALL_TABLES) {
-      await db.delete(table);
-    }
-  } finally {
-    await db.close();
-  }
 };

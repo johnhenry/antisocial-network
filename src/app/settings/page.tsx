@@ -3,8 +3,9 @@ import type { Agent, Settings, Setting } from "@/types/mod";
 import { useState, useEffect, useRef } from "react";
 import truncate from "@/lib/util/truncate-string";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
-import { clearDB } from "@/lib/db";
 import { getSettings, updateSettings } from "@/lib/database/settings";
+
+import { clearDB } from "@/lib/database/mod";
 
 import obfo from "obfo";
 

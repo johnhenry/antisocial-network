@@ -1,63 +1,44 @@
+import type { FC } from "react";
 import type { JSONExtendedObject } from "@/types/json-extended";
-import * as tools from "@/tools/mod";
+import TOOLS from "@/tools/mod";
 import { Fragment, ReactNode } from "react";
 import JSONExtended from "@/types/json-extended";
+import type { Tool } from "@/types/tools";
 
-const JsonToHtmlMapper = ({ data }: { data: JSONExtendedObject }) => {
-  const renderValue = (value: JSONExtendedObject, key: string): ReactNode => {
-    if (typeof value === "object" && value !== null) {
-      if (Array.isArray(value)) {
-        return (
-          <ol className={key}>
-            {value.map((item, index) => (
-              <li key={index}>{renderValue(item, `${key}-item`)}</li>
-            ))}
-          </ol>
-        );
-      } else {
-        return (
-          <dl className={key}>
-            {Object.entries(value).map(
-              ([subKey, subValue]: [string, JSONExtended]) => (
-                <Fragment key={subKey}>
-                  <dt>{subKey}</dt>
-                  <dd>{renderValue(subValue as never, subKey)}</dd>
-                </Fragment>
-              )
-            )}
-          </dl>
-        );
-      }
-    } else {
-      return <span className={key}>{String(value)}</span>;
-    }
-  };
+const Tool: FC<Tool> = ({ descriptor, handler }) => {
+  const { name } = descriptor.function;
+  const { description } = descriptor.function;
+  const { properties } = descriptor.function.parameters;
 
-  return renderValue(data, "");
+  return (
+    <>
+      <h3>#{name}</h3>
+      <p>{description}</p>
+      <table>
+        <tbody>
+          {Object.entries(properties).map(([key, value]) => (
+            <tr key={key}>
+              <td>{key}</td>
+              <td>{value.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <details>
+        <summary>Handler</summary>
+        <pre>{handler.toString()}</pre>
+      </details>
+    </>
+  );
 };
 
 const Page = () => {
   return (
     <article>
       <h2>Tools</h2>
-      <dl>
-        {Object.entries(tools).map(
-          ([key, { descriptor }]: [
-            string,
-            { descriptor: JSONExtendedObject }
-          ]) => (
-            <Fragment key={key}>
-              <dt>{key}</dt>
-              <dd>
-                <details>
-                  <summary></summary>
-                  <JsonToHtmlMapper data={descriptor} />
-                </details>
-              </dd>
-            </Fragment>
-          )
-        )}
-      </dl>
+      {Object.entries(TOOLS).map(([name, tool]: [string, Tool]) => (
+        <Tool key={name} {...tool} />
+      ))}
     </article>
   );
 };

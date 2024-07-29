@@ -1,3 +1,5 @@
+"use server";
+
 import type { Setting } from "@/types/mod";
 import { StringRecordId } from "surrealdb.js";
 import { getDB } from "@/lib/db";

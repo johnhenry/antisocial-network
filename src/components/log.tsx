@@ -14,32 +14,36 @@ const Log: FC<LogProps> = ({
   target,
   metadata,
   type,
-  Wrapper = "li",
+  Wrapper,
   ...props
 }) => {
   const [targetType] = target.split(":");
 
   const body = (
     <>
-      <header className={type}>
-        <span className="type">{type}</span>
-        <span className="timestamp">
-          {new Date(timestamp).toLocaleString()}
-        </span>
-
-        <a className="target" href={`${targetType}/${target}`}>
+      <dd className="content">{content}</dd>
+      <dt className="target">target</dt>
+      <dd className="target">
+        <a href={`/${targetType}/${target}`}>
           {target}
           <IconLink />
         </a>
-      </header>
-      <main>{content}</main>
+      </dd>
+      <dt className={`type ${type}`}>type</dt>
+      <dd className={`type ${type}`}>{type}</dd>
+      <dt className="timestamp">timestamp</dt>
+      <dd className="timestamp">{timestamp}</dd>
+      <dt className="id">id</dt>
+      <dd className="id">{id}</dd>
       {metadata ? (
-        <footer>
-          <details title={String(timestamp)}>
-            <summary>Metadata</summary>
-            <pre>{JSON.stringify(metadata, null, " ")}</pre>
-          </details>
-        </footer>
+        <>
+          <dd className="metadata">
+            <details>
+              <summary>metadata</summary>
+              <pre>{JSON.stringify(metadata, null, " ")}</pre>
+            </details>
+          </dd>
+        </>
       ) : null}
     </>
   );

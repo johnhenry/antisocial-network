@@ -182,7 +182,7 @@ const InputBox: FC<InputBoxProps> = ({
         // }
         value={text}
         setValue={doText}
-      />
+      ></TextareaWithPopup>
       <fieldset>
         <label className="label-file">
           <IconFile />

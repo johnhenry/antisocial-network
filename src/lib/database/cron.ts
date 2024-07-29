@@ -1,69 +1,100 @@
 import type { Agent, Cron, Post } from "@/types/mod";
+import type { Surreal } from "surrealdb.js";
 import { TABLE_CRON } from "@/config/mod";
 import { getDB } from "@/lib/db";
-import { StringRecordId } from "surrealdb.js";
+import { RecordId } from "surrealdb.js";
 import { CronJob } from "cron";
+
 const jobs: { [key: string]: CronJob } = {};
 import createPost from "@/lib/database/post";
 
-let CHRONITIALIZED: boolean = false;
-export const cronitialize = async (db) => {
-  if (CHRONITIALIZED) {
-    return;
-  }
-  CHRONITIALIZED = true;
-  const crons = await db.select<Cron>(TABLE_CRON);
-  crons.forEach((cron) => {
-    jobs[cron.id.toString()] = CronJob.from({
-      cronTime: cron.schedule,
-      onTick: () => {
-        createPost(cron.content, {
-          source: cron.source,
-          target: cron.target,
-        });
-      },
-      start: cron.on,
-      timeZone: cron.timezone,
-    });
+
+const invoke = async (cron: Cron) => {
+  await createPost(cron.content, {
+    source: cron.source,
+    target: cron.target,
   });
+  return cron;
 };
-export const removeCron = async (cron: Cron) => {
+
+export const invokeCron = async (id: RecordId) => {
+  return await invoke(await getCron(id));
+};
+
+// const startCron = async (cron: Cron) => {
+//   CronJob.from({
+//     cronTime: cron.schedule,
+//     onTick: () => {
+//       invoke(cron);
+//     },
+//     start: true,
+//     timeZone: cron.timezone,
+//   });
+// };
+// let CHRONITIALIZED: boolean = false;
+
+// export const cronitialize = async (db: Surreal) => {
+//   if (CHRONITIALIZED) {
+//     return;
+//   }
+//   CHRONITIALIZED = true;
+//   const crons = await db.select<Cron>(TABLE_CRON);
+//   crons.forEach((cron) => {
+//     if (cron.on) {
+//       startCron(cron);
+//     }
+//   });
+// };
+export const removeCron = async (id: RecordId) => {
   const db = await getDB();
   try {
-    if (cron) {
-      jobs[cron.id.toString()].stop();
-      delete jobs[cron.id.toString()];
-      await db.delete(cron.id);
-    }
+    // jobs[id.toString()].stop();
+    // delete jobs[id.toString()];
+    await db.delete(id);
+  } finally {
+    db.close();
+  }
+};
+export const getCron = async (id: RecordId) => {
+  const db = await getDB();
+  try {
+    return await db.select<Cron>(id);
   } finally {
     db.close();
   }
 };
 export const cronState = async (
   on: boolean | null = true,
-  ...crons: Cron[]
+  ...cronIds: (RecordId<string>)[]
 ) => {
-  if (!crons.length) {
-    const db = await getDB();
-    try {
-      crons = await db.select<Cron>(TABLE_CRON);
-    } finally {
-      db.close();
+  let crons: (RecordId<string>)[] = [];
+  const db = await getDB();
+  try {
+    if (!cronIds.length) {
+      crons = (await db.select<Cron>(TABLE_CRON)).map(({ id }) => id);
+    } else {
+      crons = cronIds;
     }
-  }
-  for (const cron of crons) {
-    if (cron) {
-      const id = cron.id.toString();
-      if (on = true) {
-        jobs[id].start();
-      } else if (on = false) {
-        jobs[id].stop();
-      } else if (on = null) {
-        jobs[id].stop();
-        delete jobs[id];
-        await removeCron(cron);
+    const query = `UPDATE type::table($table) SET on = $on WHERE id = $id`;
+
+    for (const ID of crons) {
+      await db.query(query, {
+        on: !!on,
+        id: ID,
+        table: TABLE_CRON,
+      });
+      // const id = ID.toString();
+      if (on) {
+        // jobs[id].start();
+      } else {
+        // jobs[id].stop();
+        if (on === null) {
+          await removeCron(ID as RecordId<string>);
+        }
       }
     }
+  } finally {
+    db.close();
   }
 };
 
@@ -88,15 +119,19 @@ export const createCron = async (
       target,
       timezone,
     }) as Cron[];
-    jobs[cron.id.toString()] = CronJob.from({
-      cronTime: cron.schedule,
-      onTick: () => {
-        createPost(content, { source, target });
-      },
-      start: cron.on,
-      timeZone: timezone,
-    });
+    // if (on) {
+    //   startCron(cron);
+    // }
     return cron;
+  } finally {
+    db.close();
+  }
+};
+
+export const getAllCron = async (): Promise<Cron[]> => {
+  const db = await getDB();
+  try {
+    return await db.select<Cron>(TABLE_CRON);
   } finally {
     db.close();
   }

@@ -3,7 +3,7 @@ import { print as printToConsole } from "@/lib/util/logging";
 import { TABLE_LOG } from "@/config/mod";
 import { getDB } from "@/lib/db";
 import { getLatest } from "@/lib/database/helpers";
-import { mapLogToLogExt } from "../util/convert-types";
+import { mapLogToLogExt } from "@/lib/util/convert-types";
 
 export const sendNotification = (log: Log) => {
   const HOST = "http://localhost:3000";

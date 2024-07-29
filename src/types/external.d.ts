@@ -24,7 +24,8 @@ declare module "surreal.js" {
 }
 
 declare module "@/tools/mod" {
-  import { Tool } from "@/types/tools";
-  declare const tools: { [key: string]: Tool };
-  export = tools;
+  import { RegisteredTool, Tool } from "@/types/tools";
+  // declare const tools: { [key: string]: Tool };
+  // export = tools;
+  export default Record<string, RegisteredTool>;
 }

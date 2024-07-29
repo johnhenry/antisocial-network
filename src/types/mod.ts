@@ -27,7 +27,6 @@ export type Post = {
   hash?: string;
   target?: Post;
   source?: Agent;
-  container?: File;
   bibliography?: Post[];
   tools?: string[]; // match:/\w[\w:-]*\w/
 };
@@ -38,6 +37,7 @@ export type PostPlus = {
   after?: Post;
   elicits?: Post[];
   remembers?: Agent[];
+  container?: File;
 };
 
 export type PostPlusExt = {
@@ -46,6 +46,7 @@ export type PostPlusExt = {
   after?: PostExt;
   elicits?: PostExt[];
   remembers?: AgentExt[];
+  container?: FileExt;
 };
 
 export type PostExt =
@@ -66,7 +67,6 @@ export type PostExt =
     mentions?: AgentExt[];
     target?: PostExt;
     source?: AgentExt;
-    container?: FileExt;
     bibliography?: PostExt[];
   }; // content for PostEx is a textual summary of the content
 
@@ -85,6 +85,7 @@ export type Agent = {
   image?: string;
   indexed?: string;
   lastupdated?: number;
+  metadata?: Record<string, any>;
 };
 
 export type AgentPlus = {

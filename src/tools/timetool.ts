@@ -6,7 +6,7 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 const schema = z.object({
   offset: z
     .number()
-    .describe("Timezone offset"),
+    .describe("Timezone offset").default(0),
 });
 
 const descriptor: Descriptor = {
@@ -41,7 +41,9 @@ const handler: Handler = ({ offset }: { offset: number }) => {
   const minutes = String(localTime.getMinutes()).padStart(2, "0");
   const seconds = String(localTime.getSeconds()).padStart(2, "0");
 
-  return `The time for ${offset} is ${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  return `The time for UTC${
+    offset >= 0 ? "+" : ""
+  }${offset} is ${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
 const tool: Tool = {

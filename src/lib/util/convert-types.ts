@@ -107,7 +107,6 @@ export const mapPostToPostExt = (post: Post): PostExt => {
     mentions,
     target,
     source,
-    container,
     bibliography,
     ...rest
   } = post;
@@ -118,7 +117,6 @@ export const mapPostToPostExt = (post: Post): PostExt => {
     mentions: mentions?.map(mapAgentToAgentExt),
     target: target ? mapPostToPostExt(target) : undefined,
     source: source ? mapAgentToAgentExt(source) : undefined,
-    container: container ? mapFileToFileExt(container) : undefined,
     bibliography: bibliography?.map(mapPostToPostExt),
   };
 };
@@ -130,6 +128,7 @@ export const mapPostPlusToPostPlusExt = (postPlus: PostPlus): PostPlusExt => {
     after,
     elicits,
     remembers,
+    container,
   } = postPlus;
   return {
     post: mapPostToPostExt(post),
@@ -137,6 +136,7 @@ export const mapPostPlusToPostPlusExt = (postPlus: PostPlus): PostPlusExt => {
     after: after ? mapPostToPostExt(after) : undefined,
     elicits: elicits?.map(mapPostToPostExt),
     remembers: remembers?.map(mapAgentToAgentExt),
+    container: container ? mapFileToFileExt(container) : undefined,
   };
 };
 

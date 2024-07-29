@@ -1,12 +1,76 @@
 import type { ChangeEventHandler, FC, RefObject, LegacyRef } from "react";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { getAllAgentNames } from "@/lib/database/mod";
+import TOOLS from "@/tools/mod";
 
-import type { Trigger } from "@/components/text-pop-triggers";
-import { At_AgentName, Hashtag_ToolName } from "@/components/text-pop-triggers";
+const defaultTheme = {
+  textarea: "w-full p-2 border border-gray-300 rounded",
+  popup:
+    "bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto",
+  option: "px-4 py-2 cursor-pointer flex items-center",
+  optionSelected: "bg-blue-100",
+  optionHover: "hover:bg-gray-100",
+  loadingText: "px-4 py-2 text-gray-500",
+};
+
+type Option = {
+  id: number;
+  name: string;
+  avatar?: string;
+  symbol?: string;
+};
+
+type Trigger = {
+  pattern: RegExp;
+  fetchOptions: (search: string) => Promise<Option[]> | Option[];
+  color: string;
+};
 
 const DEFAULT_TRIGGERS: Record<string, Trigger> = {
-  "@": At_AgentName,
-  "#": Hashtag_ToolName,
+  "@": {
+    pattern: /(?:^|\s)@([\w-:]*)$/,
+    fetchOptions: async (search) => {
+      const names = await getAllAgentNames();
+      return names
+        .filter((name) => {
+          return name.toLowerCase().includes(search.toLowerCase());
+        })
+        .map((name, index) => ({
+          id: index,
+          name,
+          avatar: "",
+        }));
+    },
+    color: "#4a5568",
+  },
+  "#": {
+    pattern: /(?:^|\s)#([\w-]*)$/,
+    fetchOptions: (search) => {
+      const tags = Object.keys(TOOLS).map((name, id) => ({
+        id,
+        name,
+      }));
+      return tags.filter((tag) =>
+        tag.name.toLowerCase().includes(search.toLowerCase())
+      );
+    },
+    color: "#48bb78",
+  },
+  "::": {
+    pattern: /(?:^|\s)::([\w-]*)$/,
+    fetchOptions: async (search) => {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const emojis = [
+        { id: 1, name: "smile", symbol: "😊" },
+        { id: 2, name: "heart", symbol: "❤️" },
+        { id: 3, name: "thumbsup", symbol: "👍" },
+      ];
+      return emojis.filter((emoji) =>
+        emoji.name.toLowerCase().includes(search.toLowerCase())
+      );
+    },
+    color: "#ed8936",
+  },
 };
 
 type Props = {
@@ -16,19 +80,9 @@ type Props = {
   onChange?: ChangeEventHandler<HTMLTextAreaElement>;
   ref: RefObject<HTMLTextAreaElement>;
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  value: string | undefined;
+  value: string;
   setValue: (value: string) => void;
 };
-
-// const defaultTheme = {
-//   textarea: "w-full p-2 border border-gray-300 rounded",
-//   popup:
-//     "bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto",
-//   option: "px-4 py-2 cursor-pointer flex items-center",
-//   optionSelected: "bg-blue-100",
-//   optionHover: "hover:bg-gray-100",
-//   loadingText: "px-4 py-2 text-gray-500",
-// };
 
 const TextareaWithPopup: FC<Props> = ({
   triggers = DEFAULT_TRIGGERS,

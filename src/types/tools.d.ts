@@ -1,3 +1,4 @@
+
 export type Descriptor = {
   type: "function";
   function: {
@@ -17,7 +18,8 @@ export type Descriptor = {
   };
 };
 export type Handler = (args: any) => Promise<string> | string;
-export interface Tool {
+export type Tool = {
   descriptor: Descriptor;
   handler: Handler;
 }
+export type RegisteredTool = Tool & { description: string, name:string };
