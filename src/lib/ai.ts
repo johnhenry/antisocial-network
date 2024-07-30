@@ -15,9 +15,9 @@ import { getSettingsObject } from "@/lib/database/settings";
 import { RunnableLike } from "@langchain/core/runnables";
 import { getEncoding } from "js-tiktoken";
 import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
-import TOOLS  from "@/tools/mod";
+import TOOLS  from "@/tools/handlers";
 import { Agent, Post } from "@/types/mod";
-import { RegisteredTool } from "@/types/tools";
+import { Tool } from "@/types/tools";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 
 type FunctionDescriptor = {
@@ -78,14 +78,14 @@ export const respondT = async (
     host: OLLAMA_LOCATION,
   });
   for (const toolname of tools) {
-    const currentTool: RegisteredTool | undefined = TOOLS[toolname];
+    const currentTool: Tool | undefined = TOOLS[toolname];
 
     if (currentTool) {
-      const {name, descriptor, handler } = currentTool;
+      const {name, handler, description, ...descriptor } = currentTool;
       const response = await ollama.chat({
         model,
         messages: ollamaMessages,
-        tools: [descriptor],
+        tools: [currentTool],
       });
       if (response.message.tool_calls) {
         for (const tool of response.message.tool_calls) {

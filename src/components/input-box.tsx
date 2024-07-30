@@ -228,7 +228,7 @@ const InputBox: FC<InputBoxProps> = ({
           {hasMention ? (
             <>
               {" "}
-              <IconAI />
+              <IconAI className="icon-ai" />
             </>
           ) : null}
         </button>

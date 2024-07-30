@@ -1,4 +1,4 @@
-import type { Descriptor, Handler, Tool } from "@/types/tools";
+import type { Descriptor } from "@/types/tools";
 
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -20,19 +20,4 @@ const descriptor: Descriptor = {
   },
 };
 
-const handler: Handler = ({
-  minuend,
-  subtrahend,
-}: {
-  minuend: number;
-  subtrahend: number;
-}): string => {
-  return `${minuend} minus ${subtrahend} is ${minuend - subtrahend}`;
-};
-
-const tool: Tool = {
-  descriptor,
-  handler,
-};
-
-export default tool;
+export default descriptor;

@@ -23,9 +23,16 @@ declare module "surreal.js" {
   export default function (formRef: HTMLFormElement): Promise<object>;
 }
 
-declare module "@/tools/mod" {
-  import { RegisteredTool, Tool } from "@/types/tools";
+declare module "@/tools/descriptors" {
+  import { RegisteredDescriptor  } from "@/types/tools";
   // declare const tools: { [key: string]: Tool };
   // export = tools;
-  export default Record<string, RegisteredTool>;
+  export default Record<string, RegisteredDescriptor>;
+}
+
+declare module "@/tools/descriptors" {
+  import { Tool } from "@/types/tools";
+  // declare const tools: { [key: string]: Tool };
+  // export = tools;
+  export default Record<string, Tool>;
 }

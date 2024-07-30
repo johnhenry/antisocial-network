@@ -1,4 +1,5 @@
 "use client";
+import DynamicLoader from "@/components/dynamic-loader";
 
 import type { FC, ComponentClass } from "react";
 import type {

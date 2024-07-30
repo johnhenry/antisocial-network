@@ -1,5 +1,5 @@
 import { getAllAgentNamesAndIds } from "@/lib/database/mod";
-import TOOLS from "@/tools/mod";
+import TOOLS from "@/tools/descriptors";
 
 type Option = {
   id: number;

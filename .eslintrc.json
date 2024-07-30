@@ -1,11 +1,11 @@
 {
   "extends": "next/core-web-vitals",
   "rules": {
-    "indent": [
-      "error",
-      2,
-      { "ignoredNodes": ["TemplateLiteral *"], "autoFix": false }
-    ],
-    "function-paren-newline": "off"
+    // "indent": [
+    //   "error",
+    //   2,
+    //   { "ignoredNodes": ["TemplateLiteral *"], "autoFix": false }
+    // ],
+    // "function-paren-newline": "off"
   }
 }

@@ -4,9 +4,9 @@ import type { FC } from "react";
 import { useEffect, useState, useRef } from "react";
 import { getAgentPlusExternal, updateAgentExternal } from "@/lib/database/mod";
 import obfo from "obfo";
-import { MODELS, AI_SAYINGS, MASQUERADE_KEY } from "@/config/mod";
+import { MODELS, MASQUERADE_KEY } from "@/config/mod";
 import imageFromString from "@/lib/util/image-from-string";
-import QuoteCycler from "@/components/quote-cycler";
+import DynamicLoader from "@/components/dynamic-loader";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 export type Props = { params: { id: string } };
 import Masquerade from "@/components/masquerade";
@@ -73,11 +73,7 @@ const Page: FC<Props> = ({ params }) => {
     };
   }, []);
   if (!agentPlus) {
-    return (
-      <article>
-        <QuoteCycler sayings={AI_SAYINGS} className="quote-cycler" random />
-      </article>
-    );
+    return <DynamicLoader />;
   }
   const toggleMasquerade = () => {
     return masquerade?.agent.id === agentPlus.agent.id

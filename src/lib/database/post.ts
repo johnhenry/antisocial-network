@@ -382,7 +382,7 @@ export const createPost = async (
       }
       depth -= 1;
       if (tools && tools.length) {
-        createPost(false, {
+        await createPost(false, {
           tools,
           target: post,
           depth,
@@ -391,7 +391,7 @@ export const createPost = async (
         });
       }else{
         for (const source of mentions) {
-          createPost(false, {
+          await createPost(false, {
             source,
             target: post,
             depth,

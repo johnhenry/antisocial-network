@@ -42,7 +42,6 @@ export const POST: NextRoute<{ id?: string }> = async (
   { params: { id } },
 ) => {
   // invoke cron
-    console.log("POST", {id})
   if (id) {
     const cron = mapCronToCronExt(
       await invokeCron(new StringRecordId(id) as unknown as RecordId),

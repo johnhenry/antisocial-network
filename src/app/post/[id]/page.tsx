@@ -20,6 +20,8 @@ import Masquerade from "@/components/masquerade";
 
 import { IconFile, IconArrowLeft, IconArrowRight } from "@/components/icons";
 
+import DynamicLoader from "@/components/dynamic-loader";
+
 type PageProps = {
   params: {
     id: string;
@@ -38,7 +40,6 @@ const Page: FC<PageProps> = ({ params }) => {
     const load = async () => {
       const postPlus = await getPostPlusExternal(identifier);
       const { elicits, ...post } = postPlus;
-      console.log({ postPlus });
       setPostPlus(post);
       setElicits(elicits || []);
     };
@@ -89,7 +90,7 @@ const Page: FC<PageProps> = ({ params }) => {
     }
   };
   if (!postPlus) {
-    return <article>Loading</article>;
+    return <DynamicLoader />;
   }
   const { post, before, after, container } = postPlus;
 

@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { getFilePlusExternal, updateFileExternal } from "@/lib/database/mod";
 
 import obfo from "obfo";
+import DynamicLoader from "@/components/dynamic-loader";
 
 type Props = {
   params: {
@@ -34,7 +35,7 @@ const Page: FC<Props> = ({ params }) => {
   };
 
   if (!file) {
-    return <section>Loading...</section>;
+    return <DynamicLoader />;
   }
   return (
     <article ref={formRef} className="file-single" data-obfo-container="{}">

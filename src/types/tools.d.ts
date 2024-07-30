@@ -17,9 +17,8 @@ export type Descriptor = {
     };
   };
 };
-export type Handler = (args: any) => Promise<string> | string;
-export type Tool = {
-  descriptor: Descriptor;
+export type RegisteredDescriptor = Descriptor & { description: string, name:string };
+export type Handler = ((args: any) => Promise<string> | string) & ({ name?: string });
+export type Tool = RegisteredDescriptor &  {
   handler: Handler;
 }
-export type RegisteredTool = Tool & { description: string, name:string };

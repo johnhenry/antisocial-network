@@ -1,7 +1,7 @@
-import TOOLS from "@/tools/mod";
+import TOOLS from "@/tools/descriptors";
 const tool_names_and_descriptions = Object.entries(TOOLS).map((
-  [name, tool],
-) => [name, tool.descriptor.function.description]);
+  [name, {description}],
+) => [name, description]);
 /**
  * Generates a system message for agents to converse with each other.
  *
@@ -54,6 +54,10 @@ export const generateSystemMessage = (
     - Be prepared to respond to mentions of your own name ("@{id}") anywhere in a message.
       - Example: "Hello, @{id}, how do you feel about vegetables?"
         - In this example, the message is addressed to you.
+      - Example: "I think @{id} is a great conversationalist."
+        - In this example, the message is about you, but not adressed to you.
+      - Example: "@jamie-larkin, do you know @{id} is"
+        - In this example, the message is addressed to "jamie-larkin" but you are mentioned and invited to join the conversation.
     - If another user is mentioned, you are not obligated to acknowledge the user unless it is relevant to your response.
     - If another user is mentioned who has not yet participated in the conversation, you should ignore that user.
     - Only mention other users if you wish to recieve a response from them.

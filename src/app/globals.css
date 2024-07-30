@@ -130,7 +130,6 @@ button,
     filter: brightness(0.9);
   }
 }
-
 a,
 .a {
   text-decoration: none;
@@ -299,7 +298,7 @@ body > main {
   padding-right: var(--size-padding);
   display: grid;
   grid-template-columns: 15fr 48px;
-  grid-template-rows: 1fr 2rem;
+  grid-template-rows: 1fr 2.5rem;
   grid-template-areas:
     "ta fi"
     "bu bu";
@@ -458,6 +457,70 @@ ul:has(> .entity) {
 
 .list-tight {
   gap: 0;
+}
+
+article.loader {
+  .quote-cycler {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    justify-content: center;
+    margin: auto;
+    padding: 1rem;
+    > p {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    > blockquote {
+      margin-bottom: 1rem;
+      max-width: 600px;
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.4;
+      opacity: 0;
+      animation: faceInOutQueryCycler 5s ease-in-out;
+
+      &::before {
+        content: "\201C";
+        font-size: 1.5em;
+        vertical-align: -0.4em;
+        line-height: 0.1em;
+        margin-right: 0.25em;
+      }
+
+      &::after {
+        content: "\201D";
+        font-size: 1.5em;
+        vertical-align: -0.4em;
+        line-height: 0.1em;
+        margin-left: 0.25em;
+      }
+    }
+
+    > cite {
+      font-size: 1rem;
+      opacity: 0;
+      animation: faceInOutQueryCycler 5s ease-in-out;
+      text-align: right;
+      &::before {
+        content: "— ";
+      }
+    }
+  }
+
+}
+
+
+@keyframes faceInOutQueryCycler {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
 }
 
 .log {

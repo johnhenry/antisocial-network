@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   title: "The Anitsocial Network",
   description: "Social Networking, but without the people",
 };
+
 import { Suspense } from "react";
 const Page: FC<Props> = async ({ children }: Props) => {
   const cssFilePath = path.join(__dirname, "critical.css");
@@ -38,11 +39,12 @@ const Page: FC<Props> = async ({ children }: Props) => {
       </head>
       <body>
         <main>
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense
+            fallback={<article className="loading">Loading...</article>}
+          >
             <Notifier className="toast-notification" />
             {children}
           </Suspense>
-          ;
           <header className="inverted-colors">
             <h1>
               <a href="/">

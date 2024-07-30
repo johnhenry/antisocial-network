@@ -30,6 +30,7 @@ export const initialize = async (db: Surreal): Promise<void> => {
       await db.create(TABLE_SETTINGS, {
         id: TABLE_SETTINGS_ID_CURRENT,
         data: SETTINGS_DEFAULT,
+        seed: Math.random(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });

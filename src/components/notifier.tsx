@@ -10,7 +10,7 @@ const { error } = console;
 type Props = {
   className?: string;
   duration?: number;
-  cacheTime: number;
+  cacheTime?: number;
   Wrapper?: ComponentType<any> | string;
 };
 
@@ -59,7 +59,7 @@ const Notifier: FC<Props> = ({
           {
             const [nType] = target.split(":");
             const link = `/${nType}/${target}`;
-            showNotification(`(${target}) updated!`, link, type);
+            showNotification(`${nType} updated!`, link, type);
           }
           break;
       }
