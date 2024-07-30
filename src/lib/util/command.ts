@@ -133,7 +133,7 @@ const post = async (
         target: args.target
           ? await getPost(new StringRecordId(args.target))
           : target,
-        tool: args.tool,
+        tools: args.tool,
         streaming,
       });
       if (source) {
@@ -232,7 +232,7 @@ const parserOptions: parser.Options = {
     "chunk",
   ],
   boolean: ["delete", "chunk", "force"],
-  array: ["quality", "bookmarker", "keep", "temporary"],
+  array: ["quality", "bookmarker", "keep", "temporary", "tool"],
   default: {
     "delete": false,
     parameters: {},
@@ -244,6 +244,7 @@ const parserOptions: parser.Options = {
     chunk: true,
     force: false,
     temporary: true,
+    tool: [],
   },
 
   alias: {

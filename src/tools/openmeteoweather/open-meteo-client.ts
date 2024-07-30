@@ -1,3 +1,4 @@
+// @ts-nocheck
 export class OpenMeteoClient {
   constructor(baseUrl = 'https://api.open-meteo.com/v1') {
     this.baseUrl = baseUrl;

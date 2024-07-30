@@ -34,32 +34,37 @@ const handler: Handler = ({
         errors.push((args.join(" ")));
       });
 
+const indentedCode = indent`${code}`;
+
 
       const out =[
       `The output of running the code:
 \`\`\`javascript
-${`${indent`${code}`}`}
+${indentedCode}
 \`\`\``];
 
       const result = context.evalSync(code);
       if(result){
+        const indentedResults = indent`${result}`;
         out.push(`- result:
 \`\`\`
-${`${indent`${result}`}`}
+${indentedResults}
 \`\`\``)
       }
 
       if(logs.length){
+        const indentedLogs = indent`${logs.join("\n")}`;
         out.push(`- logs:
 \`\`\`
-${indent`${logs.join("\n")}`}
+${indentedLogs}
 \`\`\``);
       }
 
       if(errors.length){
+        const indentedErrors = indent`${errors.join("\n")}`;
         out.push(`- errors:
 \`\`\`
-${indent`${errors.join("\n")}`}
+${indentedErrors}
 \`\`\``);
       }
       return out.join("\n\n");

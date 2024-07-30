@@ -3,8 +3,6 @@ import { getDB } from "@/lib/db";
 import getWriteManager from "@/lib/write-space";
 
 // Prevents this route's response from being cached on Vercel
-export const dynamic = "force-dynamic";
-export { getWriteManager };
 export const GET = (request: Request) => {
   const encoder = new TextEncoder();
   // https://upstash.com/blog/sse-streaming-llm-responses

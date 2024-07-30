@@ -21,9 +21,7 @@ import semanticChunker from "@/lib/chunkers/semantic";
 import {
   describe,
   embed,
-  PROMPTS_SUMMARIZE,
   summarize,
-  tokenize,
 } from "@/lib/ai";
 import hash from "@/lib/util/hash";
 import base64to from "@/lib/util/base64-to";

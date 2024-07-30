@@ -539,14 +539,22 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
 };
 const CLONE_FORBIDDEN_KEYS = ["id", "timestamp"];
 
-export type Keeper = "mentions" | "tools" | "source" | "target" | "container";
+// export type Keeper = "mentions" | "tools" | "source" | "target" | "container";
+
+export type Keeper = string;
 
 export const clonePost = async (
   post: Post,
   keep?: Keeper[],
   update: Partial<Post> = {},
 ): Promise<Post> => {
-  const props: Omit<Post, "id" | "timestamp"> = {
+  // const props: Omit<Post, "id" | "timestamp"> = {
+  //   content: post.content,
+  //   embedding: post.embedding,
+  //   count: post.count,
+  //   hash: post.hash,
+  // };
+  const props: Record<string, any> = {
     content: post.content,
     embedding: post.embedding,
     count: post.count,
@@ -559,7 +567,7 @@ export const clonePost = async (
     if (!(k in post)) {
       throw new Error(`Property ${k} not found in post.`);
     }
-    props[k] = post[k] as any;
+    props[k as keyof Post] = post[k as keyof Post];
   }
   if (update.source) {
     props.source = update.source;

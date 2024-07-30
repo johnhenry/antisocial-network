@@ -1,3 +1,5 @@
+import type { HasId, HasTimestamp } from "@/types/misc";
+
 import React, {
   useState,
   useEffect,
@@ -9,9 +11,6 @@ import React, {
   ReactNode,
   ComponentClass,
 } from "react";
-
-type HasId = any & { id: string };
-type HasTimestamp = any & { timestamp: number };
 
 interface InfiniteScrollerProps {
   ChildRenderer?: ComponentType<any> | string;

@@ -53,4 +53,4 @@ export const POST: NextRoute<{ id?: string }> = async (
   const cron = mapCronToCronExt(await createCron(newCron));
   return new Response(JSON.stringify(cron));
 };
-export const dymanic = "force-dynamic";
+

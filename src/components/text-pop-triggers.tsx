@@ -1,7 +1,7 @@
 import { getAllAgentNamesAndIds } from "@/lib/database/mod";
 import TOOLS from "@/tools/descriptors";
 
-type Option = {
+export type Option = {
   id: number;
   name: string;
   avatar?: string;

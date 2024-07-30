@@ -1,7 +1,13 @@
-import type { ChangeEventHandler, FC, RefObject, LegacyRef } from "react";
+import type {
+  ChangeEventHandler,
+  FC,
+  LegacyRef,
+  RefObject,
+  MutableRefObject,
+} from "react";
 import { useState, useRef, useEffect, useCallback } from "react";
 
-import type { Trigger } from "@/components/text-pop-triggers";
+import type { Trigger, Option } from "@/components/text-pop-triggers";
 import { At_AgentName, Hashtag_ToolName } from "@/components/text-pop-triggers";
 
 const DEFAULT_TRIGGERS: Record<string, Trigger> = {
@@ -14,9 +20,12 @@ type Props = {
   className?: string;
   placeholder?: string;
   onChange?: ChangeEventHandler<HTMLTextAreaElement>;
-  ref: RefObject<HTMLTextAreaElement>;
+  // ref: RefObject<HTMLTextAreaElement | undefined>;
+  ref: MutableRefObject<LegacyRef<HTMLTextAreaElement> | undefined>;
+
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  value: string | undefined;
+  value: string;
+  name?: string;
   setValue: (value: string) => void;
 };
 
@@ -80,7 +89,7 @@ const TextareaWithPopup: FC<Props> = ({
   }, []);
 
   const getCaretCoordinates = () => {
-    const textarea = editorRef.current!;
+    const textarea = (editorRef as RefObject<HTMLTextAreaElement>).current!;
     const caretPosition = textarea.selectionStart;
     const textBeforeCaret = textarea.value.slice(0, caretPosition);
     const lines = textBeforeCaret.split("\n");
@@ -167,7 +176,8 @@ const TextareaWithPopup: FC<Props> = ({
   };
 
   const insertOption = (triggerChar: string, option: Option) => {
-    const cursorPosition = editorRef.current!.selectionStart;
+    const cursorPosition = (editorRef as RefObject<HTMLTextAreaElement>)
+      .current!.selectionStart;
     const textBeforeCursor = editorValue.slice(0, cursorPosition);
     const textAfterCursor = editorValue.slice(cursorPosition);
     const match = textBeforeCursor.match(triggers[triggerChar].pattern);
@@ -203,11 +213,12 @@ const TextareaWithPopup: FC<Props> = ({
       [triggerChar]: { ...prev[triggerChar], visible: false },
     }));
 
-    editorRef.current?.focus();
+    (editorRef as RefObject<HTMLTextAreaElement>).current?.focus();
 
     setTimeout(() => {
-      editorRef.current!.selectionStart = editorRef.current!.selectionEnd =
-        cursorPosition;
+      (editorRef as RefObject<HTMLTextAreaElement>).current!.selectionStart = (
+        editorRef as RefObject<HTMLTextAreaElement>
+      ).current!.selectionEnd = cursorPosition;
     }, 0);
   };
 
@@ -227,8 +238,9 @@ const TextareaWithPopup: FC<Props> = ({
       setEditorValue(value);
       setHistoryIndex(newIndex);
       setTimeout(() => {
-        editorRef.current!.selectionStart = editorRef.current!.selectionEnd =
-          cursorPosition;
+        (editorRef as RefObject<HTMLTextAreaElement>).current!.selectionStart =
+          (editorRef as RefObject<HTMLTextAreaElement>).current!.selectionEnd =
+            cursorPosition;
       }, 0);
     }
   }, [history, historyIndex]);
@@ -240,8 +252,9 @@ const TextareaWithPopup: FC<Props> = ({
       setEditorValue(value);
       setHistoryIndex(newIndex);
       setTimeout(() => {
-        editorRef.current!.selectionStart = editorRef.current!.selectionEnd =
-          cursorPosition;
+        (editorRef as RefObject<HTMLTextAreaElement>).current!.selectionStart =
+          (editorRef as RefObject<HTMLTextAreaElement>).current!.selectionEnd =
+            cursorPosition;
       }, 0);
     }
   }, [history, historyIndex]);
@@ -331,8 +344,6 @@ const TextareaWithPopup: FC<Props> = ({
         key={option.id}
         className={`option ${selected ? "selected" : ""}`}
         onClick={() => handleOptionClick(triggerChar, option)}
-        role={role}
-        aria-selected={selected}
       >
         {option.avatar && <span className="avatar">{option.avatar}</span>}
         {option.symbol && <span className="symbol">{option.symbol}</span>}
@@ -344,11 +355,10 @@ const TextareaWithPopup: FC<Props> = ({
   return (
     <>
       <textarea
-        ref={editorRef}
+        ref={editorRef as LegacyRef<HTMLTextAreaElement> | undefined}
         value={editorValue}
         onChange={handleInput}
         onKeyDown={handleKeyDown}
-        aria-autocomplete="list"
         {...props}
       />
       {Object.entries(activePopups).map(
@@ -368,7 +378,6 @@ const TextareaWithPopup: FC<Props> = ({
                 borderColor: triggers[triggerChar].color,
                 position: "absolute",
               }}
-              role="listbox"
             >
               {popup.loading ? (
                 <div className="loading">Loading...</div>

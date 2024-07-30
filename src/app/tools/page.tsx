@@ -1,9 +1,6 @@
 import type { FC } from "react";
-import type { JSONExtendedObject } from "@/types/json-extended";
-import TOOLS from "@/tools/descriptors";
-import { Fragment, ReactNode } from "react";
-import JSONExtended from "@/types/json-extended";
 import type { RegisteredDescriptor } from "@/types/tools";
+import TOOLS from "@/tools/descriptors";
 
 const Tool: FC<RegisteredDescriptor> = ({
   name,
@@ -34,9 +31,11 @@ const Page = () => {
   return (
     <article>
       <h2>Tools</h2>
-      {Object.entries(TOOLS).map(([name, tool]: [string, Tool]) => (
-        <Tool key={name} {...tool} />
-      ))}
+      {Object.entries(TOOLS).map(
+        ([name, tool]: [string, RegisteredDescriptor], index, array) => (
+          <Tool key={name} {...tool} />
+        )
+      )}
     </article>
   );
 };

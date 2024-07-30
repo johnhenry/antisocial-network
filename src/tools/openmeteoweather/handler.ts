@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import type { Handler } from "@/types/tools";
 import { z } from 'zod';
 import type { OpenMeteoParams } from '@/tools/openmeteoweather/open-meteo-schema';

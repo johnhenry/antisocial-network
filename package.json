@@ -13,7 +13,7 @@
     "env:vars": "npm run deno:run -s src/script/show-config.ts",
     "minio": "minio server ./.minio",
     "destroy": "rm -rf ./.minio && rm -rf ./.surreal",
-    "cronmower": "cronmower"
+    "cronmower": "cronmower -v"
   },
   "browser": {
     "child_process": false
@@ -55,9 +55,11 @@
   },
   "devDependencies": {
     "@types/identicon.js": "^2.3.4",
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/sanitize-html": "^2.11.0",
     "@types/yargs-parser": "^21.0.3",
     "eslint": "^8",
     "eslint-config-next": "15.0.0-rc.0",

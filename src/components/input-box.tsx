@@ -6,8 +6,10 @@ import type {
   ComponentClass,
   ChangeEventHandler,
   KeyboardEventHandler,
+  MutableRefObject,
+  LegacyRef,
 } from "react";
-import { useRef, useState, useEffect, Suspense } from "react";
+import { useRef, useState, useEffect } from "react";
 import { IconFile, IconAI } from "@/components/icons";
 import Image from "next/image";
 import obfo from "obfo";
@@ -32,6 +34,7 @@ import fileToBase64 from "@/lib/util/to-base64";
 import { createPostExternal } from "@/lib/database/mod";
 import { useSearchParams } from "next/navigation";
 import TextareaWithPopup from "@/components/text-pop";
+import { Mutable } from "next/dist/client/components/router-reducer/router-reducer-types";
 const InputBox: FC<InputBoxProps> = ({
   Wrapper,
   entityReady,
@@ -45,7 +48,7 @@ const InputBox: FC<InputBoxProps> = ({
 }) => {
   const searchParams = useSearchParams();
   const [stashedText, setStashedText] = useState("");
-  const [storedText, setStoredText] = useLocalStorage<string | undefined>(
+  const [storedText, setStoredText] = useLocalStorage<string>(
     localStorageKey,
     "" // TODO: can this be undefined? I think there may be some wiere interactions with local storage.
   );
@@ -175,7 +178,11 @@ const InputBox: FC<InputBoxProps> = ({
         onChange={(event) => {
           doText(event.target.value);
         }}
-        ref={textArea}
+        ref={
+          textArea as MutableRefObject<
+            LegacyRef<HTMLTextAreaElement> | undefined
+          >
+        }
         onKeyDown={keyDown}
         // defaultValue={
         //   decodeURIComponent(searchParams.get("q") || "") || storedText

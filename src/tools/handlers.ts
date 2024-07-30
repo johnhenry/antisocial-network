@@ -10,7 +10,7 @@ const handlers = { assessagents, subtraction, timetool, javascript, openmeteowea
 const registry: Record<string, Tool> = {};
 const register = (
   handler: Handler,
-  name: string = handler.name,) => {
+  name: string = handler.name||"",) => {
   if(descriptorRegistry[name]){
     registry[name] = { ...descriptorRegistry[name], handler };
   }

@@ -5,8 +5,12 @@ const genRandomIntString = () => {
 
 class WriterManager {
   #writers: Record<string, any> = {};
+  #id:number;
   constructor() {
-    this.id = Math.random();
+    this.#id = Math.random();
+  }
+  get id () {
+    return this.#id;
   }
   setWriter(writer: any) {
     const name = genRandomIntString();

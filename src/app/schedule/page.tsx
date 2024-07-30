@@ -1,6 +1,6 @@
 "use client";
 import type { CronExt } from "@/types/mod";
-import type { FC, ChangeEvent } from "react";
+import type { FC, ChangeEvent, LegacyRef } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import type { Trigger } from "@/components/text-pop-triggers";
@@ -42,7 +42,9 @@ import TextareaWithPopup from "@/components/text-pop";
 import { set } from "zod";
 
 const Page: FC = () => {
-  const textArea = useRef<HTMLTextAreaElement>();
+  const textArea = useRef<LegacyRef<HTMLTextAreaElement> | undefined>(
+    undefined
+  );
   const [text, doText] = useState("");
   const [schedules, setSchedules] = useState<CronExt[]>([]);
   const newSchedule = useRef<HTMLElement>();
@@ -101,6 +103,7 @@ const Page: FC = () => {
         <label>
           On
           <input
+            title="on"
             type="checkbox"
             name="on"
             data-obfo-cast="checkbox"
@@ -110,15 +113,20 @@ const Page: FC = () => {
         </label>
         <label>
           Schedule
-          <input type="text" name="schedule" defaultValue="*/30 * * * * *" />
+          <input
+            title="schedule"
+            type="text"
+            name="schedule"
+            defaultValue="*/30 * * * * *"
+          />
         </label>
         <label>
           Source
-          <input type="text" name="sourceId" />
+          <input title="source" type="text" name="sourceId" />
         </label>
         <label>
           Target
-          <input type="text" name="targetId" />
+          <input title="target" type="text" name="targetId" />
         </label>
         <label>
           Timezone
