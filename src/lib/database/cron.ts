@@ -1,50 +1,25 @@
 import type { Agent, Cron, Post } from "@/types/mod";
-import type { Surreal } from "surrealdb.js";
 import { TABLE_CRON } from "@/config/mod";
 import { getDB } from "@/lib/db";
 import { RecordId } from "surrealdb.js";
-import { CronJob } from "cron";
 
-const jobs: { [key: string]: CronJob } = {};
 import createPost from "@/lib/database/post";
+const CRON_ENDPOINT = `http://localhost:3042`;
 
-
-const invoke = async (cron: Cron) => {
-  await createPost(cron.content, {
-    source: cron.source,
-    target: cron.target,
-  });
+export const invokeCron = async (id: RecordId) => {
+  const cron = await getCron(id);
+  if (!cron) {
+    throw new Error("Cron not found");
+  }
+  if (cron.on) {
+    await createPost(cron.content, {
+      source: cron.source,
+      target: cron.target,
+    });
+  }
   return cron;
 };
 
-export const invokeCron = async (id: RecordId) => {
-  return await invoke(await getCron(id));
-};
-
-// const startCron = async (cron: Cron) => {
-//   CronJob.from({
-//     cronTime: cron.schedule,
-//     onTick: () => {
-//       invoke(cron);
-//     },
-//     start: true,
-//     timeZone: cron.timezone,
-//   });
-// };
-// let CHRONITIALIZED: boolean = false;
-
-// export const cronitialize = async (db: Surreal) => {
-//   if (CHRONITIALIZED) {
-//     return;
-//   }
-//   CHRONITIALIZED = true;
-//   const crons = await db.select<Cron>(TABLE_CRON);
-//   crons.forEach((cron) => {
-//     if (cron.on) {
-//       startCron(cron);
-//     }
-//   });
-// };
 export const removeCron = async (id: RecordId) => {
   const db = await getDB();
   try {
@@ -67,27 +42,33 @@ export const cronState = async (
   on: boolean | null = true,
   ...cronIds: (RecordId<string>)[]
 ) => {
-  let crons: (RecordId<string>)[] = [];
+  let crons: Cron[] = [];
   const db = await getDB();
   try {
     if (!cronIds.length) {
-      crons = (await db.select<Cron>(TABLE_CRON)).map(({ id }) => id);
+      crons = await db.select<Cron>(TABLE_CRON);
     } else {
-      crons = cronIds;
+      crons = await Promise.all(cronIds.map((id) => db.select<Cron>(id)));
     }
     const query = `UPDATE type::table($table) SET on = $on WHERE id = $id`;
 
-    for (const ID of crons) {
+    for (const cron of crons) {
+      const { id } = cron;
+      const stringId = id.toString();
       await db.query(query, {
         on: !!on,
-        id: ID,
+        id: id,
         table: TABLE_CRON,
       });
-      // const id = ID.toString();
       if (on) {
-        // jobs[id].start();
+        if (CRON_ENDPOINT) {
+          const body = cron.schedule;
+          fetch(`${CRON_ENDPOINT}/${stringId}`, { method: "Put", body });
+        }
       } else {
-        // jobs[id].stop();
+        if (CRON_ENDPOINT) {
+          fetch(`${CRON_ENDPOINT}/${stringId}`, { method: "Delete" });
+        }
         if (on === null) {
           await removeCron(ID as RecordId<string>);
         }
@@ -99,7 +80,7 @@ export const cronState = async (
 };
 
 export const createCron = async (
-  { on = true, schedule, content, source, target, timezone }: {
+  { on = true, schedule, content, source, target, timezone = "+00:00" }: {
     on?: boolean;
     schedule?: string;
     content?: string;

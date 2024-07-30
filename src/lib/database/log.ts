@@ -38,10 +38,18 @@ export const createLog = async (
       content: content ? content : `${type}: ${target}`,
       metadata,
     }) as Log[];
-    if (print) {
-      printToConsole(log);
-    }
     sendNotification(log);
+    const l = { ...log, id: log.id.toString() };
+    const separator = "--".repeat(30);
+    printToConsole(separator);
+    printToConsole(`[${new Date(log.timestamp)}]`, `[${log.id.toString()}]`);
+
+    log.metadata = { a: 1, b: 2 };
+    if (log["metadata"]) {
+      printToConsole("[metadata]  ", log.metadata);
+    }
+    printToConsole(l.content);
+    printToConsole(separator);
 
     return log;
   } finally {

@@ -1,5 +1,5 @@
 import parser from "yargs-parser";
-import createLog from "@/lib/database/log";
+import type { Keeper } from "@/lib/database/post";
 import {
   Agent,
   AgentTemp,
@@ -23,13 +23,11 @@ import {
   REL_BOOKMARKS,
   REL_ELICITS,
   REL_INSERTED,
-  TABLE_AGENT,
 } from "@/config/mod";
-import { boolean } from "zod";
-import { StringRecordId } from "surrealdb.js";
+import { RecordId, StringRecordId } from "surrealdb.js";
 import { relate } from "@/lib/db";
 import { getAgent } from "@/lib/database/agent";
-
+import { createCron, cronState, invokeCron } from "@/lib/database/cron";
 /**
  * Parses a command string and returns the parsed result.
  *
@@ -37,7 +35,7 @@ import { getAgent } from "@/lib/database/agent";
  * @returns void.
  */
 
-const agent = async (
+export const agent = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
   { files, target, source, streaming }: CommandOptions,
@@ -47,13 +45,14 @@ const agent = async (
       if (args.temporary) {
         return createTempAgent({ name: args.name, context: args.content });
       }
-
       return createAgent({
         name: args.name,
         description: args.description,
-        qualities: args.quality.map((quality: string) => {
-          return quality.split(":");
-        }),
+        qualities: args.quality && args.quality.length
+          ? args.quality.map((quality: string) => {
+            return quality.split(":");
+          })
+          : undefined,
         files,
         parameters: { DEFAULT_PARAMETERS_AGENT, ...args.parameters },
       });
@@ -63,7 +62,7 @@ const agent = async (
   }
 };
 
-const file = async (
+export const file = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
   { files, target, source, streaming }: CommandOptions,
@@ -82,6 +81,7 @@ const file = async (
         chunk: args.chunk,
         owner: args.owner ? await getAgent(args.owner) : source,
       });
+      // TODO: why does this not happen automatically
       await Promise.all(
         args.bookmarker.map(async (bookmarker: string) => {
           const agent = await getAgent(new StringRecordId(bookmarker));
@@ -90,15 +90,10 @@ const file = async (
       );
       return newFile;
     }
-    case "":
-      {
-      }
-      break;
   }
 };
-import type { Keeper } from "@/lib/database/post";
 
-const post = async (
+export const post = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
   { files, target, source, streaming, keep }: CommandOptions,
@@ -174,6 +169,46 @@ const post = async (
   }
 };
 
+import { mapCronToCronExt } from "@/lib/util/convert-types";
+export const cron = async (
+  [command, ...tokens]: (string | number)[],
+  args: { [x: string]: any },
+  { files, target, source, streaming }: CommandOptions,
+) => {
+  switch (command) {
+    case "create": {
+      source = args.source
+        ? await getAgent(new StringRecordId(args.source))
+        : source;
+      if (!source) {
+        throw new Error("Source required");
+      }
+      target = args.target
+        ? await getPost(new StringRecordId(args.target))
+        : target;
+      return await createCron({
+        content: args.content,
+        schedule: tokens[0] as string,
+        on: !args.off,
+        target,
+        source,
+      });
+    }
+    case "ping": {
+      return mapCronToCronExt(
+        await invokeCron(
+          new StringRecordId(tokens[0] as string) as unknown as RecordId,
+        ),
+      );
+    }
+    case "setstate": {
+      return cronState(
+        !args.delete ? null : !args.off,
+        new StringRecordId(tokens[0] as string) as unknown as RecordId,
+      );
+    }
+  }
+};
 const generateEphemeralId = (tb = "log"): RecordIdEphemeral => ({
   tb,
   id: "",
@@ -182,7 +217,7 @@ const generateEphemeralId = (tb = "log"): RecordIdEphemeral => ({
   },
 });
 
-const debug = async (
+export const debug = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
   { files, target, source, streaming, keep }: CommandOptions,
@@ -230,8 +265,10 @@ const parserOptions: parser.Options = {
     "source",
     "target",
     "chunk",
+    "yes",
+    "no",
   ],
-  boolean: ["delete", "chunk", "force"],
+  boolean: ["delete", "chunk", "force", "off"],
   array: ["quality", "bookmarker", "keep", "temporary", "tool"],
   default: {
     "delete": false,
@@ -245,6 +282,7 @@ const parserOptions: parser.Options = {
     force: false,
     temporary: true,
     tool: [],
+    off: false,
   },
 
   alias: {
@@ -282,6 +320,8 @@ export const processCommand = async (
       return file(tokens, args, options);
     case "post":
       return post(tokens, args, options);
+    case "cron":
+      return cron(tokens, args, options);
     case "debug":
       return await debug(tokens, args, options);
     default:

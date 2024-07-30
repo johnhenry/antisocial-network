@@ -1,4 +1,6 @@
-import type { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import type { NextRoute } from "@/types/network";
+import type { Cron } from "@/types/mod";
 import {
   createCron,
   getAllCron,
@@ -7,50 +9,66 @@ import {
 } from "@/lib/database/cron";
 import { RecordId, StringRecordId } from "surrealdb.js";
 import { mapCronToCronExt } from "@/lib/util/convert-types";
-type R = Promise<Response | NextResponse> | Response | NextResponse;
-type NextRoute<T = unknown> = (
-  request: NextRequest,
-  { params }: { params: T },
-) => R;
 
-export const GET: NextRoute<{ id?: string }> = async (
-  request: NextRequest,
+import { cron } from "@/lib/util/command";
+
+export const GET: NextRoute<{ id: string }> = async (
+  request: unknown,
   { params: { id } },
 ) => {
-  if(id==="schedules"){
+  if (id === "schedules") {
     const crons = await getAllCron();
     return new Response(JSON.stringify(Object.fromEntries(
       crons
-      .map(mapCronToCronExt).map(({id,on, schedule})=>[`http://localhost:3000/api/cron/${id}`, on ? schedule : ""]))));
+        .map(mapCronToCronExt).map((
+          { id, on, schedule },
+        ) => [`http://localhost:3000/api/cron/${id}`, on ? schedule : ""]),
+    )));
   }
 
-  // view single cron
-  if (id) {
-    const cron = mapCronToCronExt(
-      await getCron(new StringRecordId(id) as unknown as RecordId),
-    );
-    return new Response(JSON.stringify(cron));
-  }
-  // view all cron
-  return new Response(
-    JSON.stringify((await getAllCron()).map(mapCronToCronExt)),
+  // view single cron JOB
+  const cron = mapCronToCronExt(
+    await getCron(new StringRecordId(id) as unknown as RecordId),
   );
+  return new Response(JSON.stringify(cron));
 };
 
-export const POST: NextRoute<{ id?: string }> = async (
+export const POST: NextRoute<{ id: string }> = async (
   request: NextRequest,
   { params: { id } },
 ) => {
   // invoke cron
-  if (id) {
-    const cron = mapCronToCronExt(
-      await invokeCron(new StringRecordId(id) as unknown as RecordId),
-    );
+  const target = request.headers.get("x-target") || undefined;
+  const source = request.headers.get("x-source") || undefined;
+
+  try {
+    const targetCron = await cron(["ping", id], { source, target }, {});
+    if (!(targetCron as Cron).on) {
+      return new Response("gone", { status: 410 });
+    }
     return new Response(JSON.stringify(cron));
+  } catch (e) {
+    return new Response("error", { status: 400 });
   }
-  // create new cron
-  const newCron = await request.json();
-  const cron = mapCronToCronExt(await createCron(newCron));
-  return new Response(JSON.stringify(cron));
 };
 
+export const PATCH: NextRoute<{ id: string }> = async (
+  request: NextRequest,
+  { params: { id } },
+) => {
+  // invoke cron
+
+  try {
+    const { state } = await request.json();
+    const off = !state ||
+      state.toLowerCase() === "off" ||
+      state.toLowerCase() === "false";
+    const targetCron = await cron(["setstate", id], { off }, {});
+    if (!(targetCron as Cron).on) {
+      return new Response("gone", { status: 410 });
+    }
+    return new Response(JSON.stringify(cron));
+  } catch (e) {
+    return new Response("error", { status: 400 });
+  }
+};

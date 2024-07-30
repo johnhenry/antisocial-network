@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url("https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@100&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Share+Tech+Mono&family=Sometype+Mono&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@100&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Share+Tech+Mono&family=Sometype+Mono&display=swap"); */
 *,
 ::before,
 ::after {
@@ -363,19 +363,37 @@ body > main {
   max-height: 128px;
   overflow-y: auto;
   .loading {
-    @apply px-4 py-2;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  /* padding:0.5rem 1rem; */
   }
 
   .option {
-    @apply px-4 py-2 cursor-pointer flex items-center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+  /* padding:0.5rem 1rem; */
     position: "absolute";
     background-color: var(--color-text);
     color: var(--color-midground);
     .avatar {
-      @apply w-8 h-8 rounded-full flex items-center justify-center mr-2;
+      width: 2rem;
+      height: 2rem;
+      display:flex;
+      align-items: center;
+      justify-content: center;
+      margin-right:0.5rem;
+
     }
     .symbol {
-      @apply mr-2 text-xl;
+      font-size: 1.25rem;
+      line-height: 1.75rem;
     }
     &.selected {
       background-color: var(--color-background);

@@ -146,10 +146,16 @@ export type FileExt = Omit<File, "id" | "embedding" | "data" | "owner"> & {
   owner?: AgentExt;
 };
 
-export type Entity = Agent | AgentTemp | File | Post | Error | Log;
+export type Entity = Agent | AgentTemp | File | Post | Log | Cron | Error;
 // `Error is a built in type`
 // AgentTemp will becaome AgentExt
-export type EntityExt = AgentExt | FileExt | PostExt | ErrorExt | LogExt;
+export type EntityExt =
+  | AgentExt
+  | FileExt
+  | PostExt
+  | CronExt
+  | LogExt
+  | ErrorExt;
 
 export type EntToExt =
   | ((entity: Agent) => AgentExt)
