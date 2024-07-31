@@ -1,6 +1,6 @@
 import type { HasId, HasTimestamp } from "@/types/misc";
 
-export const removeDeplicatesById = (items: HasId[]) => {
+export const removeDuplicatesById = (items: HasId[]) => {
   const ids = new Set();
   return items.filter((item) => {
     if (ids.has(item.id)) {
@@ -17,6 +17,6 @@ export const orderByTimestamp = (items: HasTimestamp[]) => {
 };
 
 export const orderByTimestampAndRemoveDuplicates = (items:(HasId & HasTimestamp)[]) =>
-  orderByTimestamp(removeDeplicatesById(items));
+  orderByTimestamp(removeDuplicatesById(items));
 
 export default orderByTimestampAndRemoveDuplicates;

@@ -2,6 +2,7 @@
 import type { FC, ComponentClass } from "react";
 import type { LogExt } from "@/types/mod";
 import { IconLink } from "@/components/icons";
+import type { HasId, HasTimestamp } from "@/types/misc";
 
 type LogProps = LogExt & {
   Wrapper?: ComponentClass<any> | string;
@@ -17,15 +18,16 @@ const Log: FC<LogProps> = ({
   Wrapper,
   ...props
 }) => {
-  const [targetType] = target.split(":");
+  const targetId = (target as HasId).id || "";
+  const [targetType] = targetId.split(":");
 
   const body = (
     <>
       <dd className="content">{content}</dd>
       <dt className="target">target</dt>
       <dd className="target">
-        <a href={`/${targetType}/${target}`}>
-          {target}
+        <a href={`/${targetType}/${targetId}`}>
+          {targetId}
           <IconLink />
         </a>
       </dd>

@@ -25,18 +25,23 @@ const handler: Handler = ({
       const logs:string[] = [];
       const errors:string[] = [];
 
+      const mapArgs = (args:any[] )=> (args.map(x=>{
+            args.unshift(String(Date.now()));
+            try{
+              return JSON.stringify(x);
+            }catch{
+              return String(x);
+            }
+        }).join(" "));
+
       jail.setSync('log', (...args:any[]) =>{
-        args.unshift(String(Date.now()));
-        logs.push((args.join(" ")));
+        logs.push(mapArgs(args))
       });
-      jail.setSync('log', (...args:any[]) =>{
-        args.unshift(String(Date.now()));
-        errors.push((args.join(" ")));
+      jail.setSync('error', (...args:any[]) =>{
+        errors.push(mapArgs(args))
       });
 
-const indentedCode = indent`${code}`;
-
-
+      const indentedCode = indent`${code}`
       const out =[
       `The output of running the code:
 \`\`\`javascript
@@ -44,17 +49,15 @@ ${indentedCode}
 \`\`\``];
 
       const result = context.evalSync(code);
-      if(result){
-        const indentedResults = indent`${result}`;
-        out.push(`- result:
+      const indentedResults = indent`${result}`;
+      out.push(`- <${typeof result}>
 \`\`\`
 ${indentedResults}
 \`\`\``)
-      }
 
       if(logs.length){
         const indentedLogs = indent`${logs.join("\n")}`;
-        out.push(`- logs:
+        out.push(`- logs
 \`\`\`
 ${indentedLogs}
 \`\`\``);
@@ -62,7 +65,7 @@ ${indentedLogs}
 
       if(errors.length){
         const indentedErrors = indent`${errors.join("\n")}`;
-        out.push(`- errors:
+        out.push(`- errors
 \`\`\`
 ${indentedErrors}
 \`\`\``);

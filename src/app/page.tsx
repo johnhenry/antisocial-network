@@ -104,7 +104,7 @@ const getFetchChildren = (start = 0) => {
 };
 
 import { removeDeplicatesById } from "@/lib/util/order-and-remove-duplicates";
-
+import orderByTimeStampAndRemoveDuplicates from "@/lib/util/order-and-remove-duplicates";
 const Page: FC<PageProps> = ({}) => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
@@ -205,7 +205,7 @@ const Page: FC<PageProps> = ({}) => {
         agents: searchAgents,
       }
     );
-    setSearchResults(removeDeplicatesById(searchResults));
+    setSearchResults(orderByTimeStampAndRemoveDuplicates(searchResults));
   };
 
   useDebouncedEffect(

@@ -251,7 +251,7 @@ export type RecordIdEphemeral = {
 export type Log = {
   id: RecordId | RecordIdEphemeral;
   timestamp: number;
-  target: string; // TODO: change to entity...maybe?
+  target: Exclude<Entity, Log>; // TODO: change to entity...maybe?
   type: string;
   content: string;
   metadata?: JSONExtendedObject;
