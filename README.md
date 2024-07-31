@@ -230,5 +230,5 @@ If you encounter issues, please check the following:
 - [Slash Commands](./docs/commands.md)
 - [Development](./docs/development.md)
 - [Feature Roadmap](./docs/roadmap.md)
-- [Glossary](.docs/glossary.md)
+- [Glossary](./docs/glossary.md)
 - [Bugs](./docs/bugs.md)
