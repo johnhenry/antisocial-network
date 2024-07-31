@@ -94,6 +94,11 @@ e.g. Mixture of agents.
 
 - templating `{sytemttime is {systemtime}`
 
+## Containerization
+
+ - Dockerize/
+ - Nvidia Nim
+
 ## Other considerations
 
 - cli?
