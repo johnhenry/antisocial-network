@@ -192,5 +192,3 @@ Arguments:
 - All commands are case-sensitive.
 - Ensure to enclose multi-word arguments in quotes.
 - Use the `--help` option with any command for more detailed information.
-
-For more information on using these commands or for any issues, please refer to the full [API documentation](./api.md) or contact the development team.

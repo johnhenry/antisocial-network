@@ -14,14 +14,14 @@
     "cronmower": "cronmower -v",
     "db:mem": "surreal start memory -A --auth --user root --pass root",
     "db": "surreal start file://./.surreal -A --auth --user root --pass root",
-    "files": "npm run minio",
-    "cron": "npm run cronmower -v",
-    "backend": "npm run db & npm run files & npm run cron",
-    "backend-no-surreal": "npm run files & npm run cron",
+    "files": "npm run -s minio",
+    "cron": "npm run -s cronmower -v",
+    "backend": "npm run -s db & npm run -s files & npm run -s cron",
+    "backend-no-surreal": "npm run -s iles & npm run -s cron",
     "db:reset": "rm -rf ./.minio",
     "file:reset": "rm -rf ./.surreal",
-    "all:reset": "npm run db:reset && npm run file:reset",
-    "frontend": "npm run build && npm start"
+    "all:reset": "npm run -s db:reset && npm run -s file:reset",
+    "frontend": "npm run -s build && npm start"
   },
   "browser": {
     "child_process": false
