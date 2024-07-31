@@ -14,7 +14,7 @@ The Antisocial Network is a self-hosted,
 [RAG](./docs/glossary.md#retrieval-augmented-generation)
 solution modeled after modern social networks.
 
-It runs entirely locally on your machine, or it can be configure to reach out to remote AI servers including [grok](https://groq.com), [ahtnropic](https://www.anthropic.com/), or [openai](https://openai.com/).
+It runs entirely locally on your machine, or it can connect to remote AI servers including [grok](https://groq.com), [ahtnropic](https://www.anthropic.com/), or [openai](https://openai.com/).
 
 [<img alt="screenshot" src="./screenshots/front.png" style="max-width:40%"/>](./screenshots/front.png)
 [<img alt="screenshot" src="./screenshots/agent.png" style="max-width:40%"/>](./screenshots/agent.png)
