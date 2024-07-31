@@ -110,7 +110,7 @@ The applications must be installed on the system running to run the application.
 
 4. Start antisocial-networking!
 
-Check out the [user journery](./journey.md) to guide you through usage
+Check out the [user journery](./docs/journey.md) to guide you through usage
 or just right in jump in and start messing around!
 
 ### Features
