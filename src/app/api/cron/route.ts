@@ -30,7 +30,7 @@ export const POST: NextRoute = async (
         {},
       ) as Cron,
     );
-    return new Response(JSON.stringify(cron));
+    return new Response(JSON.stringify(cron), { status: 201 });
   } catch (e) {
     return new Response("error", { status: 400 });
   }

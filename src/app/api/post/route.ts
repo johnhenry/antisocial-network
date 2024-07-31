@@ -30,7 +30,7 @@ export const POST: NextRoute = async (
           {},
         ) as Post,
       );
-      return new Response(JSON.stringify(p));
+      return new Response(JSON.stringify(p), { status: 201 });
     }
   } catch (e) {
     return new Response("error", { status: 400 });

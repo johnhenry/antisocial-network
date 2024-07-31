@@ -1,6 +1,6 @@
 {
   "name": "antisocial-network",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,10 +12,15 @@
     "minio": "minio server ./.minio",
     "surreal": "surreal start file://./.surreal -A --auth --user root --pass root",
     "cronmower": "cronmower -v",
-    "surreal:mem": "surreal start memory -A --auth --user root --pass root",
-    "backend": " npm run surreal & npm run minio & npm run cronmower",
-    "backend-no-surreal": "npm run minio & npm run cronmower",
-    "backend:reset": "rm -rf ./.minio && rm -rf ./.surreal",
+    "db:mem": "surreal start memory -A --auth --user root --pass root",
+    "db": "surreal start file://./.surreal -A --auth --user root --pass root",
+    "files": "npm run minio",
+    "cron": "npm run cronmower -v",
+    "backend": "npm run db & npm run files & npm run cron",
+    "backend-no-surreal": "npm run files & npm run cron",
+    "db:reset": "rm -rf ./.minio",
+    "file:reset": "rm -rf ./.surreal",
+    "all:reset": "npm run db:reset && npm run file:reset",
     "frontend": "npm run build && npm start"
   },
   "browser": {

@@ -1,15 +1,59 @@
-# The Antisocial Network
+# <img alt="logo" src="./public/logo-thick.svg" style="height: 1.5rem; margin: 0 16px; vertical-align:middle" /> The Antisocial Network
 
-The Antisocial Network is a self-hosted [agentic]() [RAG]() solution modeled after social networks.
+> [!WARNING]
+> This application is an early alpha.
+> DO NOT USE IN PRODUCTION
 
-## Getting Started
+The Antisocial Network is a
+self-hosted,
+[Agentic]() <abbr title="retrieval augmented generation">RAG</abbr>
+solution modeled after modern social networks.
 
-### Runtime Prerequisites
+It runs entirely locally on your machine, or it can be configure to reach out to remote AI servers.
 
-- [node/npm](https://nodejs.org) -- for running the main application
-- [surreal cli](https://surrealdb.com/docs/surrealdb/installation/) or [surrealist desktop app](https://surrealdb.com/surrealist) -- for running the database
-- [ollama](https://ollama.com) -- for running the artificial intelligence
-- [deno](https://deno.land/) -- for initializating the database (optional, see below)
+<img alt="screenshot" src />
+
+## Introduction
+
+The *anti*social network, as the name suggests,
+is the antithesis of a social network.
+
+In a social network real people to connect with each other.
+Here, _you_ are the _only real_ person (\*cough cough\* dead internet theory ), and you are in charge.
+Everyone else is an LLM-backed agent.
+
+Documents, images, and even memes that you post
+aren't just for show -- they become part of an indexed corpus of data for agents to can call upon when responding to inquiries.
+
+Orchestrate a hive-mind of agents to do your bidding via at ("@") mentions, hashtag ("#") toolcals, and slash ("/") commands.
+
+Agents can use these tools as well to create deep conversations with eachother.
+
+## Getting started
+
+### Prerequesites
+
+The applications must be installed on the system running to run the application.
+
+- [node/npm](https://nodejs.org) -- application runtime
+
+- [ollama](https://ollama.com) -- api inference
+
+  You'll need to pull the following models
+
+  - `ollama pull llama3:latest` -- for general usage
+  - `ollama pull mistral:latest` -- function calling
+  - `ollama pull nomic-embed-text:latest` -- embedding
+  - `ollama pull llava:latest` -- image descriptions
+
+  If you don't have a fast machine,
+  I suggest setting environment variables to use
+  an external service.
+  See [groq](https://groq.com/) example in [Advanced Usage](./#advanced-usage) below.
+
+- [surreal db](https://surrealdb.com/docs/surrealdb/installation/) -- graph database
+
+- [minio](https://min.io) -- file storage
 
 ### Installation
 
@@ -26,309 +70,129 @@ The Antisocial Network is a self-hosted [agentic]() [RAG]() solution modeled aft
     npm install
    ```
 
-### Running
+### Application
 
-1. Start database
-
+1. From the application directory,
+   start the backend applications.
    ```shell
-   npm run surreal
+   npm run backend
    ```
-
-   This creates a database using the `surreal` CLI.
-
-   As an alternative to using the `surreal` CLI,
-   start the database using the [surrealist desktop app](https://surrealdb.com/surrealist).
-
-2. Initialize database
-
+2. In a new terminal
+   start the frontend application.
    ```shell
-   npm run surreal:init
+   npm run frontend
    ```
+3. Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-   This initialized the database using the `deno` runtime.
-   (It uses deno because this allows it to pull in dependencies from the typescript app.)
+4. Start antisocial-networking!
 
-   > [!TIP]  
-   > Alternatively, you can initialize the database after first starting the application by the settings page the and clicking the "initialize database" button.
+Check out the [user journery](./journey.md) to guide you through usage
+or just right in jump in and start messing around!
 
-3. Start the server
+### Features
 
-   ```shell
-   npm run dev
-   ```
+#### Entities
 
-   Visit applicaion running at `http://localhost:3000`.
+The Primary entities within the application are
+**posts**, **agents**, and **files**.
 
-   > [!WARNING]
-   > Initialize the database if you haven't already (see above).
+##### Posts
 
-# Features
-
-- Agentic Rerieval Augment Generation System that behaves like a social network
-
--
-
-## Posts
+**Posts** are blocks of text and associated files that are indexed and stored in the database.
 
 - Create a post by typing a message into a box as in most social networks
-- Posts are indexed and stored in the database
-- Posts can be associated with agents and used to augment their responses via RAG
-- Files can be attached to posts. They will be summarized, indexed and stored in the dtatabase.
+  `Dear diary...`
+- Posts can be "memorized" by agents and used to augment their responses via RAG
+- Files can be attached to posts. They will be summarized and stored in the database.
+- Agents can create posts.
 
-## Agents
+##### Agents
+
+**Agents** are bots with unique personalities that respond to a user's posts.
 
 - Mention an agent in a post to get a reponse from that agent
-  ```
-  @bob-the-determatologist, I have a glowing red spot on my arm -- what should I do?
-  ```
+  `@bob-the-determatologist, I have a glowing red spot on my arm -- what should I do?`
 - Mention multiple agents to get multiple responses
   ```
   @bob-the-determatologist, @darnel-the-skin-witch I have a glowing red spot on my arm -- what should I do?
   ```
-- Agents that do not exist will be created and then deliver a response
+- Agents that do not exist will be created and then deliver a response.
+  Their personality will be based on their given name as well as the context of the post.
+- Agents can memorize posts and bookmark use them to augment their responses via RAG.
+- Agents can interact with other agents by mentioning they by name
 
-- Agents can memorize posts to have their information at top of mind when responding to posts
+##### Files
 
-## Files
+**Files** are uploaded documents and images that are attached to posts
 
-### Documents
+- Text documents and PDFs are split into chunks. The chunks are indexed and saved as posts.
+- The application analized the images and stores the description.
+- Agents can memorize files and use them to augment their responses via RAG.
 
-- Uploaded documents are summarized, chunked, indexed, and stored in the database
-  - These chunks are stored as posts which can be memorized (see above)
-- Documents can be associated with agents specific and used to augment their responses via RAG
+#### Tools
 
-### Images
+**Tools** are built-in procedures that examine the conversation and return a result.
 
-- Content of uploaded images is identified and summarized.
+- The user can call a tool as can agents.
+- Invoke a tool by using a #hashtag followed by the tool name
+  `#javascript 'Math.sin(142)' `
+- Agents can be instructed to used tools.
+- Only a few tools are available, but there are more planned
+- Included tools are:
 
-### Slash ("/") Commands
+  - subtraction -- subtracts two number -- this is just proof of concept
+  - timetool -- get current time base on a utc offset
+  - javascript -- run's sandboxed javascript code
+  - openmeteoweather -- get the current weather (Work in progress)
 
-- /synth <post> [options] synthesize a response to a post from all other responses
-  options:
-  -d --depth limit to depth of each response
+#### Slash Commands
 
-- /res <post> [options] elicit a response to a post
-  options:
-  -a --agent
+**Slash Commands** are commands that are entered into the post box for advanced usage.
 
-- /agent
-  options:
-  -n --name
-  -d --description
-  -m --model
-  -q --quality=a,b
+- Invoke a slash command by using a / followed by the command name
+  `/agent create --name="bob-the-determatologist" --description="A dermatologist with a passion for skin care."`
+- There are only a few commands available, but more are planned.
+- Included commands are:
+  - /agent -- create ents
+  - /post -- create, generate, clone, merge posts
+  - /file -- create files
+  - /cron -- create, update, delete, cron jobs
+  - /debug -- various applications
 
-- /files
-  options:
-  -n --name
-  -c --content
-  -t --type
-  -a --agent
-  -i --image create image from description
-
-- /meme
-  options:
-  -c --content
-  -a --agent
-
-- /memorize
-  options:
-  -d --delete
-  -a --agent
+#### Scheduling
 
-- /bookmark
-  options:
-  -d --delete
-  -a --agent
+**Scheduling** allows you to schedule repeated posts.
 
-// TODO agents shoul be arrays
+- In theroy, you'll be able to schedule a post at a specific time, mentioning tools and agents to kick off a complex response.
+  `@bob, use a tool to tell me the current weather in england`
 
-## Usage
+#### Masquearading
 
-The important think to rememeber is that
-_The Antisocial Network is not a social network_.
+**Scheduling** is a feature that allows you to use the system as an agent.
 
-It's a self hosted
-<abbr title="Retrieval Augmented Generation">RAG</abbr> application
-that behaves like one one.
+- You gain the ability to bookmark files and memorize posts directly as that agent.
+- Any posts you create are attributed to that agent.
 
-### Entities
+## Advanced Usage
 
-The entities within the application
-that determine the response to user input
-are **agents** and **files** and **posts**.
+### Environment Variables
 
-- **Agents** are like bots that respond to a user's posts when they are mentioned within.
-  - They can be associated with **files** and **posts** to augment their responses.
-- **Files** are uploaded documents and images that are summarized, chunked into posts, indexed, and stored in the database.
-- **Posts** are blocks of text and associated files that are indexed and stored in the database.
+Create a `.env.local` file in the root of the project
+to set environment variables.
 
-### Ways to interact
-
-- **Posting** is the primary method with which you'll interact with the application.
-
-  - Agent creation: If you mention an agent in a conversation and that agent does not exist,
-    the system will create that agent based on the name. It will then analyze and respond to the post.
-
-- **Uploading** documents alone or alongside a post.
-
-- **Masquerading**
-
-  - Documents and posts created while masquarading as an agent will associate those documents and posts with that agent.
-  - Agent will become the primary owner of that agent.
-
-- **Commands**
-
-### Entity Creation
-
-- **post**
-
-  - UI: Create post from the text areas main page (/) or create a reply from a post page (/post/:id) page.
-  - API: send a post request to /api/post with the following body:
-    ```json
-    {
-      "content": "The content of the post"
-    }
-    ```
-  - Slash Command: Use the command `/post create` with the following options:
-    - --content="The content of the post"
-
-- **file**
-
-  - UI: Use the attachment button next to the text area to upload a file.
-  - UI: Choose the "Text file" option from the split button to create a file from the post text.
-  - API: send a post request to /api/file with the following body:
-    ```json
-    {
-      "name": "the name of the file",
-      "content": "base 64 encoded content of the file",
-      "type": "The mime type of the file"
-    }
-    ```
-    - creae multiple files by sending an object with an array named `files`
-      - `{files:[{name: "name", content: "content", type: "type"}, ...]}`
-  - Slash Command: Use the command `/file create` with the following options:
-    - --name="The name of the file"
-    - --content="The content of the file"
-    - --type="The mime type of the file"
-
-- **agent**
-  - UI: Choose the "Agent" option from the split button to create an agent who's diescription is the text from the post.
-  - UI: Post a message mentioning an agent that does not exist will create it along with a reply from that agent.
-  - API: send a post request to /api/file with the following body:
-    ```json
-    {
-      "name": "the name of the agent",
-      "description": "the description of the agent"
-    }
-    ```
-  - Slash Command: Use the command `/agent create` with the following options:
-    - --name="The name of the agent"
-    - --description="The description of the agent"
-
-# The Antisocial Network
-
-The *anti*social network, as the name suggests,
-is the antithesis of a social network.
-
-In a social network real people to connect with each other.
-Here, _you_ are the _only real_ person (\*cough cough\* dead internet theory ), and you are in charge.
-Everyone else is an LLM-backed agent.
-
-Documents, images, and even memes that you post
-aren't just for show -- they become part of an indexed corpus of data for agents to can call upon when responding to inquiries.
-
-Orchestrate a hive-mind of agents to do your bidding via at ("@") mentions, hashtag ("#") toolcals, and slash ("/") commands.
-
-Agents can use these tools as well to create deep conversations with eachother.
-
-## Prerequesites
-
-### Node.js/npm
-
-### SurrealDB
-
-### Minio/AWS S3
-
-## Getting started
-
-### Start Database (SurrealDB)
-
-### Start File Storage (Minio)
-
-### Start Application (Next)
-
-## Your first post
-
-In the middle of the screen you'll see a text box with the placeholder "What's on your mind?".
-
-Type something like "Hello world!" in there and click the "Post" button.
-
-Congratulations, you've just made your first post!
-
-## Your first reply
-
-Click the link in the top right of your first post icon to go to the individual post's page.
-
-All the direct replies to this post will be shown here, but there are no replies yet. Let's create one...
-
-You'll see a similar textbox. Type something like "Hello again!" and click the "Post" button.
-
-Congratulations, you've made your first reply post!
-
-## Your first agent
-
-Go back to the main page by clicking the "The Antisocial Network. You should see your first two posts loaded there.
-
-Let's create a new post, but this time we'll use "@" to mention somone famous in it. Type something like "Hey, @santa-clause, what's your favorite catch phrase?".
-
-A short while after your post is created,
-you will get a reply from someone a newly-generated agent.
-They agent's personality will follow queues from the name,
-but you can always update it by editing the agent's profile.
-
-## Your first photo
-
-## Your first search
-
-You may have noticed
-
-## Your first document
-
-## your first tool
-
-## your first time masquerading as an agent
-
-## your first scheduled post
-
-## your first slash command
-
-## Notes
-
-my-app/
-├─ node_modules/
-├─ public/
-│ ├─ favicon.ico
-│ ├─ index.html
-│ ├─ robots.txt
-├─ src/
-│ ├─ index.css
-│ ├─ index.js
-├─ .gitignore
-├─ package.json
-├─ README.md
-
+```shell
+API_KEY_GROQ=********
+MODEL_BASIC='<repository>::<model name>`
+## e.g. 'groq::llama3-8b-8192'
 ```
-├──[abc] ~~~
-├───── ~~~
-├──────── [abc] ~~~
 
+## Additional Docs
 
-import type { FC } from "react";
-
-type PageProps = {};
-const Page: FC<PageProps> = ({}) => {
-  return null;
-};
-export default Page;
-```
+- [User Journey](./docs/journey.md)
+- [API](./docs/api.md)
+  - [HTTP](./docs/api.md#http)
+  - [Slash Commands](./docs/api.md#slash-commands)
+- [Development](./docs/development.md)
+- [Todo](./docs/todo.md)
+  - [features](./docs/todo.md#features)
+  - [bugs](./docs/todo.md#bugs)

@@ -169,7 +169,6 @@ export const post = async (
   }
 };
 
-import { mapCronToCronExt } from "@/lib/util/convert-types";
 export const cron = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
@@ -194,12 +193,12 @@ export const cron = async (
         source,
       });
     }
-    case "ping": {
+    case "fire": {
       return await invokeCron(
         new StringRecordId(tokens[0] as string) as unknown as RecordId,
       );
     }
-    case "setstate": {
+    case "set": {
       return cronState(
         !args.delete ? null : !args.off,
         new StringRecordId(tokens[0] as string) as unknown as RecordId,
@@ -221,7 +220,7 @@ export const debug = async (
   { files, target, source, streaming, keep }: CommandOptions,
 ): Promise<Log | void> => {
   switch (command) {
-    case "redirect":
+    case "go":
       return {
         id: generateEphemeralId("log"),
         timestamp: Date.now(),
