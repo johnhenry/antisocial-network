@@ -42,7 +42,7 @@ export const POST: NextRoute<{ id: string }> = async (
   const source = request.headers.get("x-source") || undefined;
 
   try {
-    const targetCron = await cron(["ping", id], { source, target }, {});
+    const targetCron = await cron(["fire", id], { source, target }, {});
     if (!(targetCron as Cron).on) {
       return new Response("gone", { status: 410 });
     }

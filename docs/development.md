@@ -17,22 +17,22 @@ These applications can make development easier, but are not required.
 
 ## Scripts
 
-`package.json` has a few useful scripts that will help development.
+`package.json` has several useful scripts to help with development:
 
 ### Backend Services
 
-- `npm run db` start the database server
-- `npm run files` start the file storage server
-- `npm run cron` start the scheduling server
-- `npm run backend` start all backend services
+- `npm run db`: Start the database server
+- `npm run files`: Start the file storage server
+- `npm run cron`: Start the scheduling server
+- `npm run backend`: Start all backend services
 
 ### Reset Databases
 
-- `npm run file:reset` reset file storage
-- `npm run db:reset` reset the database
-- `npm run all:reset` reset database and file storage
+- `npm run file:reset`: Reset file storage
+- `npm run db:reset`: Reset the database
+- `npm run all:reset`: Reset database and file storage
 
 ### Frontend
 
-- `npm run frontend` start the frontend application
-- `npm run dev` start the frontend application in development mode
+- `npm run frontend`: Start the frontend application
+- `npm run dev`: Start the frontend application in development mode

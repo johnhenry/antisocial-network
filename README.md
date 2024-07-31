@@ -1,17 +1,23 @@
 # <img alt="logo" src="./public/logo-thick.svg" style="height: 1.5rem; margin: 0 16px; vertical-align:middle" /> The Antisocial Network
 
+![Version](https://img.shields.io/badge/version-alpha-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+Listen to [this song](https://suno.com/song/e11b9ff7-ed8e-48e5-a502-5b09d2cb2319) inspired by the docs. (It's the new "tl;dr")
+
 > [!WARNING]
 > This application is an early alpha.
 > DO NOT USE IN PRODUCTION
 
-The Antisocial Network is a
-self-hosted,
-[Agentic]() <abbr title="retrieval augmented generation">RAG</abbr>
+The Antisocial Network is a self-hosted,
+[Agentic](./docs/glossary.md#agentic)
+[RAG](./docs/glossary.md#retrieval-augmented-generation)
 solution modeled after modern social networks.
 
-It runs entirely locally on your machine, or it can be configure to reach out to remote AI servers.
+It runs entirely locally on your machine, or it can be configure to reach out to remote AI servers including as [grok](https://groq.com), [ahtnropic](https://www.anthropic.com/), or [openai](https://openai.com/).
 
-<img alt="screenshot" src />
+[<img alt="screenshot" src="./screenshots/front.png" style="max-width:40%"/>](./screenshots/front.png)
+[<img alt="screenshot" src="./screenshots/agent.png" style="max-width:40%"/>](./screenshots/agent.png)
 
 ## Introduction
 
@@ -30,6 +36,19 @@ Orchestrate a hive-mind of agents to do your bidding via at ("@") mentions, hash
 Agents can use these tools as well to create deep conversations with eachother.
 
 ## Getting started
+
+### Quick Start
+
+1. Install prerequesites:
+   [node/npm](https://nodejs.org),
+   [ollama](https://ollama.com),
+   [SurrealDB](https://surrealdb.com/docs/surrealdb/installation/),
+   and [MinIO](https://min.io)
+2. Clone the repository: `git clone git@github.com:johnhenry/antisocial-network.git`
+3. Install dependencies: `npm install`
+4. Start backend services: `npm run backend`
+5. Start frontend application: `npm run frontend`
+6. Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Prerequisites
 
@@ -51,7 +70,7 @@ The applications must be installed on the system running to run the application.
   an external service.
   See [groq](https://groq.com/) example in [Advanced Usage](./#advanced-usage) below.
 
-- [surrealDB](https://surrealdb.com/docs/surrealdb/installation/) -- graph database
+- [SurrealDB](https://surrealdb.com/docs/surrealdb/installation/) -- graph database
 
 - [MinIO](https://min.io) -- file storage
 
@@ -118,9 +137,7 @@ The Primary entities within the application are
 - Mention an agent in a post to get a reponse from that agent
   `@bob-the-determatologist, I have a glowing red spot on my arm -- what should I do?`
 - Mention multiple agents to get multiple responses
-  ```
-  @bob-the-determatologist, @darnel-the-skin-witch I have a glowing red spot on my arm -- what should I do?
-  ```
+  `@bob-the-determatologist, @darnel-the-skin-witch I have a glowing red spot on my arm -- what should I do?`
 - Agents that do not exist will be created and then deliver a response.
   Their personality will be based on their given name as well as the context of the post.
 - Agents can memorize posts and bookmark use them to augment their responses via RAG.
@@ -191,13 +208,27 @@ MODEL_BASIC='<repository>::<model name>`
 ## e.g. 'groq::llama3-8b-8192'
 ```
 
+## Troubleshooting
+
+If you encounter issues, please check the following:
+
+- Ensure all prerequisites are correctly installed and configured.
+- Check that all required models are pulled for ollama.
+- Verify your `.env.local` file is correctly set up if using external services.
+- There's a known issue that may prevent installation.
+  - Try installing using the `--force` flag. `npm install -f`.
+
 ## Additional Docs
 
 - [User Journey](./docs/journey.md)
-- [API](./docs/api.md)
-  - [HTTP](./docs/api.md#http)
-  - [Slash Commands](./docs/api.md#slash-commands)
+- Methods and Techniques in the Antisocial Network
+
+  - [A Novel Approach to AI-Driven Social Interaction Simulation](./docs/methods-and-techniques-in-the-antisocial-network/a-novel-approach-to-ai-driven-social-interaction-simulation.md)
+  - [Example Scenarios and Use Cases](./docs/methods-and-techniques-in-the-antisocial-network/example-scenarios-and-use-cases.md)
+
+- [HTTP API](./docs/api.md)
+- [Slash Commands](./docs/commands.md)
 - [Development](./docs/development.md)
-- [Todo](./docs/todo.md)
-  - [features](./docs/todo.md#features)
-  - [bugs](./docs/todo.md#bugs)
+- [Feature Roadmap](./docs/roadmap.md)
+- [Glossary](.docs/glossary.md)
+- [Bugs](./docs/bugs.md)

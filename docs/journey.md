@@ -1,4 +1,4 @@
-# Antisocial Network User Journey
+# User Journey
 
 Welcome to the Antisocial Network! This guide will walk you through the key features of the application, helping you understand its capabilities and how to make the most of your experience.
 
