@@ -18,11 +18,7 @@ import { getSettingsObject } from "@/lib/database/settings";
 import createLog from "@/lib/database/log";
 
 import semanticChunker from "@/lib/chunkers/semantic";
-import {
-  describe,
-  embed,
-  summarize,
-} from "@/lib/ai";
+import { describe, embed, summarize } from "@/lib/ai";
 import hash from "@/lib/util/hash";
 import base64to from "@/lib/util/base64-to";
 import parsePDF from "@/lib/parsers/pdf";
@@ -104,11 +100,10 @@ export const createFile = async (
             hash: hash(text),
             content: summary,
             embedding,
-            // data: content,
             metadata,
             publisher,
             date,
-            owner,
+            owner: owner ? owner.id : undefined,
           }) as File[];
 
           if (chunk) {
@@ -148,11 +143,10 @@ export const createFile = async (
                 hash: hash(buff as Buffer),
                 content: summary,
                 embedding,
-                // data: content,
                 metadata,
                 publisher,
                 date,
-                owner,
+                owner: owner ? owner.id : undefined,
               }) as File[];
             }
           }
@@ -176,11 +170,10 @@ export const createFile = async (
           hash: hash(data),
           content: summary,
           embedding,
-          // data: content,
           metadata,
           publisher,
           date,
-          owner,
+          owner: owner ? owner.id : undefined,
         }) as File[];
       }
     }
@@ -201,7 +194,7 @@ export const createFile = async (
       );
     }
     await putObject(buff, { id: newFile.id.id as string });
-    createLog(newFile.id.toString());
+    createLog(newFile);
     return newFile;
   } finally {
     await db.close();
@@ -243,7 +236,7 @@ export const getFilePlus = async (id: StringRecordId): Promise<FilePlus> => {
     `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source`;
   // select target
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM file where id = $id`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM file where id = $id FETCH source, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
   );
   // select incoming relationships
   // precedes
@@ -251,19 +244,26 @@ export const getFilePlus = async (id: StringRecordId): Promise<FilePlus> => {
     `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data from agent where ->${REL_BOOKMARKS}->(file where id = $id)`,
   );
 
+  // select outgoing relationships
+  // excerpt
+  queries.push(
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data from post where <-${REL_CONTAINS}<-(file where id = $id) ORDER BY RAND LIMIT 1`,
+  );
+
   const db = await getDB();
   try {
-    const [[file], bookmarkers]: [[File], Agent[]] = await db.query(
-      queries.join(";"),
-      {
-        id,
-      },
-    );
+    const [[file], bookmarkers, [excerpt]]: [[File], Agent[], [Post]] = await db
+      .query(
+        queries.join(";"),
+        {
+          id,
+        },
+      );
     const obj = {
       file,
       bookmarkers,
+      excerpt,
     };
-
     return obj;
   } finally {
     await db.close();

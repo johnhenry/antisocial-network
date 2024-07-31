@@ -1,5 +1,5 @@
 import type { FC, ReactNode, ComponentClass } from "react";
-import type { PostExt, FileExt, AgentExt, AgentPlusExt } from "@/types/mod";
+import type { PostExt, AgentPlusExt } from "@/types/mod";
 import imageFromString from "@/lib/util/image-from-string";
 import timeAgo from "@/lib/util/time-ago";
 import {
@@ -131,7 +131,7 @@ const Post: FC<PostProps> = ({
                   return (
                     <a
                       key={mention.id}
-                      href={`/post/${mention.id}`}
+                      href={`/agent/${mention.id}`}
                       title={`@${mention.name}\n${mention.content}`}
                     >
                       <IconAgent />

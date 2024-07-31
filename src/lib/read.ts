@@ -37,6 +37,7 @@ export type Relationship = {
 const replaceContentWithLinks = async (
   item: { content?: string },
   render: boolean = false,
+  renderLinks: boolean = true,
 ): Promise<{ content?: string }> => {
   const content = render
     ? await renderText(item?.content || "")
@@ -49,7 +50,9 @@ const replaceContentWithLinks = async (
         const id = mention.slice(1);
         const [type] = id.split(":");
         const name = await replaceAgentIdWithName(id);
-        return `<a href="/${type}/${id}">${mention[0]}${name}</a>`;
+        return renderLinks
+          ? `<a href="/${type}/${id}">${mention[0]}${name}</a>`
+          : `${mention[0]}${name}`;
       }
       return mention;
     },

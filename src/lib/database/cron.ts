@@ -4,7 +4,8 @@ import { getDB } from "@/lib/db";
 import { RecordId } from "surrealdb.js";
 
 import createPost from "@/lib/database/post";
-const CRON_ENDPOINT = `http://localhost:3042`;
+import { CRON_PORT } from "@/config/mod";
+const CRON_ENDPOINT = `http://localhost:${CRON_PORT}`;
 
 export const invokeCron = async (id: RecordId) => {
   const cron = await getCron(id);
@@ -57,7 +58,7 @@ export const cronState = async (
       const stringId = id.toString();
       await db.query(query, {
         on: !!on,
-        id: id,
+        id,
         table: TABLE_CRON,
       });
       if (on) {
@@ -70,7 +71,7 @@ export const cronState = async (
           fetch(`${CRON_ENDPOINT}/${stringId}`, { method: "Delete" });
         }
         if (on === null) {
-          await removeCron(ID as RecordId<string>);
+          await removeCron(id as RecordId<string>);
         }
       }
     }
@@ -96,8 +97,8 @@ export const createCron = async (
       on,
       schedule,
       content,
-      source,
-      target,
+      source: source ? source.id : undefined,
+      target: target ? target.id : undefined,
       timezone,
     }) as Cron[];
     // if (on) {

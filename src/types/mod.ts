@@ -135,10 +135,12 @@ export type File = {
 export type FilePlus = {
   file: File;
   bookmarkers?: Agent[];
+  excerpt?: Post;
 };
 export type FilePlusExt = {
   file: FileExt;
   bookmarkers?: AgentExt[];
+  excerpt?: PostExt;
 };
 
 export type FileExt = Omit<File, "id" | "embedding" | "data" | "owner"> & {

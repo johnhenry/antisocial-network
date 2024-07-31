@@ -174,7 +174,7 @@ export const cron = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
   { files, target, source, streaming }: CommandOptions,
-) => {
+): Promise<Entity | void> => {
   switch (command) {
     case "create": {
       source = args.source
@@ -195,10 +195,8 @@ export const cron = async (
       });
     }
     case "ping": {
-      return mapCronToCronExt(
-        await invokeCron(
-          new StringRecordId(tokens[0] as string) as unknown as RecordId,
-        ),
+      return await invokeCron(
+        new StringRecordId(tokens[0] as string) as unknown as RecordId,
       );
     }
     case "setstate": {
@@ -307,12 +305,10 @@ export const processCommand = async (
   command = "",
   options: CommandOptions,
 ): Promise<Entity | void> => {
-  // createLog("command", { content: command });
   const { _: [root, ...tokens], ...args }: parser.Arguments = parser(
     command,
     parserOptions,
   );
-  // TODO: Implenet command processing
   switch (root) {
     case "agent":
       return agent(tokens, args, options);

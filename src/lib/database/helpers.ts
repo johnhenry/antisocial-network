@@ -1,4 +1,4 @@
-import type { Agent, Post } from "@/types/mod";
+import type { Agent, Entity, Post } from "@/types/mod";
 
 import { getDB } from "@/lib/db";
 import { StringRecordId } from "surrealdb.js";
@@ -37,6 +37,7 @@ export const replaceContentWithLinks = <
 >(
   item: T,
   render: boolean = false,
+  useLink: boolean = true,
 ): T => {
   item.content = render ? renderText(item?.content || "") : item?.content || "";
 
@@ -46,7 +47,7 @@ export const replaceContentWithLinks = <
       const id = rId.toString();
       item.content = item.content.replaceAll(
         new RegExp(`@${id}`, "g"),
-        `<a href="/agent/${id}">@${name}</a>`,
+        useLink ? `<a href="/agent/${id}">@${name}</a>` : `@${name}`,
       );
     }
   }
@@ -60,7 +61,20 @@ export const getEntity = async <
 ): Promise<T> => {
   const db = await getDB();
   try {
-    return replaceContentWithLinks<T>(await db.select<T>(id) as T);
+    const query = `SELECT *
+          FROM type::table($table)
+          ORDER BY timestamp DESC
+          FETCH source,
+            target, target.mentions, target.bibliography, target.source,
+            mentions, mentions.source, mentions.bibliography,
+            bibliography, bibliography.mentions, bibliography.source`;
+    const [[entity]] = await db.query<[[T]]>(query, {
+      id,
+    });
+
+    const result = await replaceContentWithLinks<T>(entity);
+
+    return result;
   } finally {
     await db.close();
   }
@@ -85,8 +99,13 @@ export const getLatest =
     try {
       let result: T[];
       if (limit < 0) {
-        const query =
-          `SELECT * FROM type::table($table) ORDER BY timestamp DESC`;
+        const query = `SELECT *
+          FROM type::table($table)
+          ORDER BY timestamp DESC
+          FETCH source,
+            target, target.mentions, target.bibliography, target.source,
+            mentions, mentions.source, mentions.bibliography,
+            bibliography, bibliography.mentions, bibliography.source`;
         // return all
         [
           result,
@@ -105,7 +124,11 @@ export const getLatest =
         // `;
 
         const query =
-          `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist FROM type::table($table) WHERE embedding <|${limit}|> $embedded ORDER BY dist DESC`;
+          `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist FROM type::table($table) WHERE embedding <|${limit}|> $embedded ORDER BY dist DESC
+          FETCH source,
+            target, target.mentions, target.bibliography, target.source,
+            mentions, mentions.source, mentions.bibliography,
+            bibliography, bibliography.mentions, bibliography.source`;
         // const query =
         //   `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist, ${""} OMIT ${""} FROM type::table($table) WHERE embedding <|${limit}|> $embedded ORDER BY dist DESC`;
 
@@ -124,6 +147,10 @@ export const getLatest =
             ORDER BY timestamp DESC
             LIMIT $limit
             START $start
+            FETCH source,
+      target, target.mentions, target.bibliography, target.source
+      mentions, mentions.source, mentions.bibliography,
+      bibliography, bibliography.mentions, bibliography.source
         `;
         [result] = await db.query(query, {
           table,
@@ -132,7 +159,15 @@ export const getLatest =
         }) as T[][];
       }
       return Promise.all(
-        result.map((item) => replaceContentWithLinks<T>(item, true)),
+        result.map(async (item) => {
+          const entity = item as T & { bibliography: Post[] };
+          if (entity.bibliography) {
+            entity.bibliography = entity.bibliography.map((mention) =>
+              replaceContentWithLinks(mention, false, false)
+            );
+          }
+          return await replaceContentWithLinks<T>(entity, true);
+        }),
       );
     } finally {
       db.close();

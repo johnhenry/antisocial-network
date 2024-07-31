@@ -1,9 +1,8 @@
 import type { FC, ReactNode, ComponentClass } from "react";
-import type { PostExt, FileExt, AgentExt, AgentPlusExt } from "@/types/mod";
-import imageFromString from "@/lib/util/image-from-string";
+import type { FileExt, AgentPlusExt } from "@/types/mod";
+
 import timeAgo from "@/lib/util/time-ago";
 import { IconFile, IconBookmark, IconMask } from "@/components/icons";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { relateExt, unrelateExt } from "@/lib/database/mod";

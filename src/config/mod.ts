@@ -386,6 +386,11 @@ export const FS_PORT = read("FS_PORT", {
   cast: parseInt,
 });
 
+export const CRON_PORT = read("FS_PORT", {
+  defaultValue: 3042,
+  cast: parseInt,
+});
+
 export const TIME_ZONES = [
   ["-12:00", "Baker Island, Howland Island (uninhabited)"],
   ["-11:00", "American Samoa, Niue"],

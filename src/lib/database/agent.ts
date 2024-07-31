@@ -67,7 +67,7 @@ export const createTempAgent = async (
         context,
       },
     }) as AgentTemp[];
-    createLog(agent.id.toString(), { type: "created-temp" });
+    createLog(agent, { type: "created-temp" });
     return agent;
   } finally {
     db.close();
@@ -111,7 +111,11 @@ const genCharacter = async ({
     // name -> description -> content
     content = await summarize(
       description = await summarize(
-        generateDescriptionPromptWithFirstMessage(name, context?.replaceAll(name, id||""), id),
+        generateDescriptionPromptWithFirstMessage(
+          name,
+          context?.replaceAll(name, id || ""),
+          id,
+        ),
       ),
       PROMPTS_SUMMARIZE.LLM_PROMPT, //TODO: I DON'T  THINK I BROKE ANYHTING< BUT I,m in the middle of makinf this dynamic to account for the first message and id passed
     );
@@ -173,7 +177,7 @@ export const createAgent = async ({
         image,
       }),
     }) as Agent[];
-    createLog(agent.id.toString());
+    createLog(agent);
     if (files) {
       await createFiles({ files, owner: agent });
     }
@@ -239,7 +243,7 @@ export const updateAgent = async (
       timestamp: agent.timestamp,
       lastupdated: Date.now(),
     }) as Agent;
-    createLog(agent.id.toString(), { type: "updated" });
+    createLog(agent, { type: "updated" });
     return updatedAgent;
   } finally {
     db.close();
@@ -251,7 +255,7 @@ export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
   const ADDITIONAL_FIELDS = `string::concat("", id) as id`;
   // select target
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding FROM agent where id = $id`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding FROM agent where id = $id FETCH source, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
   );
   // select incoming relationships
   // remembered

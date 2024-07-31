@@ -92,10 +92,12 @@ export const mapFilePlusToFilePlusExt = (filePlus: FilePlus): FilePlusExt => {
   const {
     file,
     bookmarkers,
+    excerpt,
   } = filePlus;
   return {
     file: mapFileToFileExt(file),
     bookmarkers: bookmarkers?.map(mapAgentToAgentExt),
+    excerpt: excerpt ? mapPostToPostExt(excerpt) : undefined,
   };
 };
 
