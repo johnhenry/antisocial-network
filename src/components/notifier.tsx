@@ -1,40 +1,92 @@
 "use client";
+
+import type { FC, ComponentType } from "react";
+
+import type { Message } from "@/components/toast-notification";
 import ToastNotification from "@/components/toast-notification";
 import { useState, useEffect } from "react";
 
 const { error } = console;
+type Props = {
+  className?: string;
+  duration?: number;
+  cacheTime?: number;
+  Wrapper?: ComponentType<any> | string;
+};
 
-const Notifier = (props) => {
-  const [message, setMessage] = useState(null);
-  const [spinner, setSpinner] = useState(null);
-  const showNotification = (text, url = null) => {
-    setMessage({ text, url });
+const Notifier: FC<Props> = ({
+  className,
+  duration,
+  Wrapper = "div",
+  cacheTime = 5000,
+  ...props
+}) => {
+  const [message, setMessage] = useState<Message>();
+  const [active, setActive] = useState<boolean>(false);
+  const [seen, setSeen] = useState(new Set());
+
+  const showNotification = (text: string, url?: string, type?: string) => {
+    setMessage({ text, url, type });
   };
   useEffect(() => {
     const eventSource = new EventSource("/api/notifications");
     eventSource.onmessage = (event) => {
-      const created = JSON.parse(event.data);
-      for (const [id] of created) {
-        const type = id.split(":")[0];
-        const link = `/${type}/${id}`;
-        showNotification(`new ${type} created`, link);
+      const notification = JSON.parse(event.data);
+      const { id, timestamp, target, type, content, metadata } = notification;
+      const record = `${type}:${target}`;
+      if (seen.has(record)) {
+        return;
+      }
+      seen.add(record);
+      setSeen(new Set(seen));
+      setTimeout(() => {
+        seen.delete(record);
+        setSeen(new Set(seen));
+      }, cacheTime);
+      switch (type) {
+        case "create-temp":
+          // I do not want to show a temorary notification for this
+          // as to not inspire the user to visit the page before it's ready.
+          break;
+        case "created":
+          {
+            const [nType] = target.split(":");
+            const link = `/${nType}/${target}`;
+            showNotification(`New ${nType} created!`, link, type);
+          }
+          break;
+        case "updated":
+          {
+            const [nType] = target.split(":");
+            const link = `/${nType}/${target}`;
+            showNotification(`${nType} updated!`, link, type);
+          }
+          break;
       }
     };
     eventSource.onerror = (e) => {
-      setSpinner(null);
+      setActive(false);
       error("SSE error:", e);
       eventSource.close();
     };
-    setSpinner(() => () => <div className="spinner" />);
+    setActive(true);
     return () => {
       try {
-        setSpinner(null);
+        setActive(false);
         eventSource.close();
       } catch (e) {
         error(e);
       }
     };
   }, []);
-  return <ToastNotification {...props} message={message} Spinner={spinner} />;
+  return (
+    <ToastNotification
+      {...props}
+      duration={duration}
+      message={message}
+      Wrapper={Wrapper}
+      className={[active ? "active" : "", className].join(" ")}
+    />
+  );
 };
 export default Notifier;

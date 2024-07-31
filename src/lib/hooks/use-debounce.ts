@@ -10,7 +10,7 @@ const useDebouncedEffect = (effect: Function, deps: any[], delay: number) => {
           cleanup = effect(...args);
         },
         delay,
-        ...args
+        ...args,
       );
 
       return () => {
@@ -21,7 +21,7 @@ const useDebouncedEffect = (effect: Function, deps: any[], delay: number) => {
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [...(deps || []), delay]
+    [...(deps || []), delay],
   );
 };
 

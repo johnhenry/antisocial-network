@@ -1,27 +1,29 @@
 "use client";
-import type { Agent } from "@/types/types";
+import type { AgentExt, AgentPlusExt, ErrorExt } from "@/types/mod";
 import type { FC } from "react";
-import { useState, useEffect } from "react";
-import { getEntity } from "@/lib/database/read";
+import { useEffect, useState, useRef } from "react";
+import { getAgentPlusExternal, updateAgentExternal } from "@/lib/database/mod";
 import obfo from "obfo";
-import { MODELS } from "@/settings";
-import { updateAgent } from "@/lib/database/update";
-import { MASQUERADE_KEY } from "@/settings";
+import { MODELS, MASQUERADE_KEY } from "@/config/mod";
+import imageFromString from "@/lib/util/image-from-string";
+import DynamicLoader from "@/components/dynamic-loader";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
-import Masquerade from "@/components/masquerade";
-import imageFromString from "@/util/image-from-string";
-import QuoteCycler from "@/components/quote-cycler";
-import { AI_SAYINGS } from "@/settings";
 export type Props = { params: { id: string } };
+import Masquerade from "@/components/masquerade";
+import { IconMask } from "@/components/icons";
 
 const Page: FC<Props> = ({ params }) => {
-  const [masquerade, setmasquerade] = useLocalStorage<Agent | null>(
-    MASQUERADE_KEY,
-    null
+  const [agentPlus, setAgentPlus] = useState<AgentPlusExt | undefined>(
+    undefined
   );
+  const [masquerade, setMasquerade] = useLocalStorage<AgentPlusExt | null>(
+    MASQUERADE_KEY,
+    null // TODO: can this be undefined? I think there may be some wiere interactions with local storage.
+  );
+
   const identifier = decodeURIComponent(params.id || "");
-  const [agent, setAgent] = useState<Agent | null>(null);
   const [dirty, setDirty] = useState(false);
+  const formRef = useRef(null);
   const taint = () => setDirty(true);
   const [qualities, setQualities] = useState<[string, string][]>([["", ""]]);
   const addEmptyQuality = () => {
@@ -35,20 +37,34 @@ const Page: FC<Props> = ({ params }) => {
     };
   };
   const update = async () => {
-    const data = obfo(document.querySelector("section"));
-    alert("Agent updating...");
+    const data = obfo<AgentExt>(formRef.current!);
     data.qualities = data.qualities.filter(
       ([name, description]: [string, string]) =>
         name.trim() && description.trim()
     );
-    const updatedAgent = await updateAgent(identifier, data);
-    alert(`Agent updated! ${updatedAgent}`);
+
+    const updatedAgent = await updateAgentExternal(identifier, data);
+    if ((updatedAgent as ErrorExt).isError) {
+      alert(`Error: ${(updatedAgent as ErrorExt).content}`);
+      return;
+    }
+    const newAgentPlus = { ...agentPlus, agent: updatedAgent as AgentExt };
+    setAgentPlus(newAgentPlus);
+    setMasquerade(
+      masquerade
+        ? masquerade.agent.id === newAgentPlus.agent.id
+          ? newAgentPlus
+          : masquerade
+        : null
+    );
+    alert(`Agent updated!`);
     setDirty(false);
   };
   useEffect(() => {
     const loadAgent = async () => {
-      const agent: any = await getEntity(identifier);
-      setAgent(agent);
+      const agentPlus = await getAgentPlusExternal(identifier);
+      setAgentPlus(agentPlus);
+      const { agent } = agentPlus;
       setQualities(agent.qualities.length ? agent.qualities : [["", ""]]);
     };
     loadAgent();
@@ -56,20 +72,23 @@ const Page: FC<Props> = ({ params }) => {
       // cleanup
     };
   }, []);
-  if (!agent) {
-    return (
-      <section>
-        <QuoteCycler sayings={AI_SAYINGS} className="quote-cycler" random />
-      </section>
-    );
+  if (!agentPlus) {
+    return <DynamicLoader />;
   }
+  const toggleMasquerade = () => {
+    return masquerade?.agent.id === agentPlus.agent.id
+      ? setMasquerade(null)
+      : setMasquerade(agentPlus);
+  };
+  const { agent } = agentPlus;
   return (
-    <section data-obfo-container="{}" className="section-agent">
+    <article data-obfo-container="{}" className="agent-single" ref={formRef}>
       <Masquerade
         masquerade={masquerade}
-        setmasquerade={setmasquerade}
+        setMasquerade={setMasquerade}
         className="agent-masquerade"
       />
+
       <h2>
         <input
           title="name"
@@ -94,6 +113,22 @@ const Page: FC<Props> = ({ params }) => {
             alt={agent.id}
           />
           <form data-obfo-container="{}" data-obfo-name="parameters">
+            <label>
+              <button
+                type="button"
+                onClick={toggleMasquerade}
+                title="save-changes"
+                className={
+                  masquerade?.agent.id === agent.id ? "masquerade" : ""
+                }
+              >
+                <IconMask />{" "}
+                {masquerade?.agent.id === agent.id
+                  ? "Stop masquerading"
+                  : "Masquerade"}{" "}
+                as {agent.name}
+              </button>
+            </label>
             <label>
               Model
               <select
@@ -431,9 +466,10 @@ const Page: FC<Props> = ({ params }) => {
             </details>
           </form>
         </header>
-        <footer>
+        <aside>
           <div>
             {agent.content}
+
             <details>
               <summary>Editable Description</summary>
               <textarea
@@ -481,9 +517,9 @@ const Page: FC<Props> = ({ params }) => {
               +
             </button>
           </div>
-        </footer>
+        </aside>
       </main>
-    </section>
+    </article>
   );
 };
 

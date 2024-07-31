@@ -1,19 +1,25 @@
-export const dynamic = "force-dynamic";
+import { getFile } from "@/lib/database/file";
+import { getObject } from "@/lib/fs/mod";
 
-import { getFile } from "@/lib/database/read";
+import { StringRecordId } from "surrealdb.js";
 
-import base64to from "@/util/base64-to";
+type GETOptions = {
+  params: {
+    id: string;
+  };
+};
 
-export const GET = async (_, options) => {
+export const GET = async (_: unknown, options: GETOptions) => {
   try {
     const { params } = options;
     const identifier = decodeURIComponent(params.id || "");
-    const result = await getFile(identifier);
-    const { type, data } = result;
-    return new Response(base64to(data as string), {
+    const [__, id] = identifier.split(":");
+    const file = await getFile(new StringRecordId(identifier));
+    const data = await getObject(id);
+    return new Response(data as unknown as string, {
       headers: {
-        "Content-Type": type,
-      } as HeadersInit,
+        "Content-Type": file.type,
+      },
     });
   } catch (error) {
     console.error(error);

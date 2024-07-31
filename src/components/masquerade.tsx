@@ -1,38 +1,41 @@
 "use client";
-import useLocalStorage from "@/lib/hooks/use-localstorage";
 import type { FC, ReactNode } from "react";
-import type { Agent } from "@/types/types";
+import type { AgentPlusExt } from "@/types/mod";
+import { IconMask } from "@/components/icons";
 type Props = {
-  masquerade: Agent | null;
+  masquerade: AgentPlusExt | null;
   children?: ReactNode;
   className?: string;
-  setmasquerade?: any;
+  setMasquerade?: any;
 };
-import { MASQUERADE_KEY } from "@/settings";
 
 const Masquerade: FC<Props> = ({
   masquerade,
   children,
-  setmasquerade,
+  setMasquerade,
   ...props
 }) => {
-  // const [masquerade, setmasquerade] = useLocalStorage<Agent | null>(
-  //   MASQUERADE_KEY,
-  //   null
-  // );
-  return masquerade ? (
+  if (!masquerade) {
+    return null;
+  }
+  const { agent } = masquerade;
+  return (
     <div {...props}>
+      <button title={agent.content} className="">
+        <IconMask />
+      </button>
       {children}
       <p>
-        <a href={`/agent/${masquerade.id}`}>
-          Masquerading as {masquerade.name}
-        </a>
+        <a href={`/agent/${agent.id}`}>Masquerading as @{agent.name}</a>
       </p>
-      <button className="close" onClick={() => setmasquerade(null)}>
-        x
+      <button
+        className="close"
+        onClick={() => setMasquerade && setMasquerade(null)}
+      >
+        ✖
       </button>
     </div>
-  ) : null;
+  );
 };
 
 export default Masquerade;

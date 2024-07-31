@@ -1,17 +1,30 @@
+import "server-only";
 const genRandomIntString = () => {
   return Math.floor(Math.random() * 1000000000).toString();
 };
 
 class WriterManager {
   #writers: Record<string, any> = {};
+  #id:number;
+  constructor() {
+    this.#id = Math.random();
+  }
+  get id () {
+    return this.#id;
+  }
   setWriter(writer: any) {
     const name = genRandomIntString();
+
     this.#writers[name] = writer;
     // console.log("Writer set", this.#writers, name);
     return name;
   }
+  get writers() {
+    return this.#writers;
+  }
   async deleteWriter(name: string): Promise<boolean> {
-    const writer = this.#writers[name];
+    const writer = this.writers[name];
+
     if (writer) {
       await writer.ready;
       await writer.close();
@@ -22,7 +35,7 @@ class WriterManager {
   }
   sendToWriters(data: string) {
     // console.log("Sending to writers", this.#writers, data);
-    for (const writer of Object.values(this.#writers)) {
+    for (const writer of Object.values(this.writers)) {
       writer.write(`data: ${data}\n\n`);
     }
   }

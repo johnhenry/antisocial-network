@@ -2,26 +2,47 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Next.js: debug server-side",
+      "name": "[Server]",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev"
     },
     {
-      "name": "Next.js: debug client-side",
+      "name": "Chrome",
       "type": "chrome",
       "request": "launch",
+      "webRoot": "${workspaceFolder}/src",
       "url": "http://localhost:3000"
     },
     {
-      "name": "Next.js: debug full stack",
+      "name": "Edge",
+      "type": "msedge",
+      "request": "launch",
+      "webRoot": "${workspaceFolder}/src",
+      "url": "http://localhost:3000"
+    },
+    {
+      "name": "Chrome+",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
+      "sourceMaps": true,
       "serverReadyAction": {
         "pattern": "- Local:.+(https?://.+)",
         "uriFormat": "%s",
         "action": "debugWithChrome"
+      }
+    },
+    {
+      "name": "Edge+",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "sourceMaps": true,
+      "serverReadyAction": {
+        "pattern": "- Local:.+(https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithEdge"
       }
     }
   ]

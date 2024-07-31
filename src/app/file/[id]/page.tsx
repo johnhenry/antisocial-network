@@ -1,84 +1,67 @@
 "use client";
 import type { FC } from "react";
-import type { Agent, File, Relationship } from "@/types/types";
-import { useEffect, useState } from "react";
-import { getAllAgents, getFullFile } from "@/lib/database/read";
-import truncate from "@/util/truncate-string";
-import { updateFile } from "@/lib/database/update";
+import type { FileExt, AgentExt } from "@/types/mod";
+import { useEffect, useState, useRef } from "react";
+import { getFilePlusExternal, updateFileExternal } from "@/lib/database/mod";
+
 import obfo from "obfo";
-import { REL_BOOKMARKS } from "@/settings";
-import RelationshipToggler from "@/components/relationship-toggler";
-import { MASQUERADE_KEY } from "@/settings";
-import useLocalStorage from "@/lib/hooks/use-localstorage";
-import Masquerade from "@/components/masquerade";
+import DynamicLoader from "@/components/dynamic-loader";
+
 type Props = {
   params: {
     id: string;
   };
 };
 const Page: FC<Props> = ({ params }) => {
-  const [masquerade, setmasquerade] = useLocalStorage<Agent | null>(
-    MASQUERADE_KEY,
-    null
-  );
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<FileExt | null>(null);
   const [dirty, setDirty] = useState(false);
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [bookmarks, setBookmarks] = useState<string[]>([]);
+  const formRef = useRef(null);
+  const [bookmarkers, setBookmarkers] = useState<AgentExt[]>([]);
 
   const taint = () => setDirty(true);
   const indetifier = decodeURIComponent(params.id || "");
   useEffect(() => {
     const fetchFile = async () => {
-      const { file, bookmarks } = await getFullFile(indetifier);
-      console.log({ bookmarks });
+      const { file, bookmarkers } = await getFilePlusExternal(indetifier);
       setFile(file);
-      setBookmarks(bookmarks);
-      const agents = await getAllAgents();
-      setAgents(agents);
+      setBookmarkers(bookmarkers || []);
     };
     fetchFile();
   }, [indetifier]);
   const update = async () => {
-    alert("updating...");
-    const data = obfo(document.querySelector(".section-file"));
-    await updateFile(indetifier, data);
-    alert("updated!");
+    const data = obfo(formRef.current!);
+    await updateFileExternal(indetifier, data);
+    alert("File updated!");
   };
 
   if (!file) {
-    return <section>Loading...</section>;
+    return <DynamicLoader />;
   }
   return (
-    <section className="section-file" data-obfo-container="{}">
-      <Masquerade
-        masquerade={masquerade}
-        setmasquerade={setmasquerade}
-        className="agent-masquerade"
-      >
-        <RelationshipToggler
-          inn={masquerade}
-          relationship={REL_BOOKMARKS}
-          out={file.id}
-          collection={bookmarks}
-          Wrapper="span"
-        >
-          <span className="icon">📖</span>
-          <span className="check">✓</span>
-        </RelationshipToggler>
-      </Masquerade>
+    <article ref={formRef} className="file-single" data-obfo-container="{}">
       <h2>
-        <input name="name" defaultValue={file.name} onChange={taint} />
+        <input
+          title="name"
+          name="name"
+          defaultValue={file.name}
+          onChange={taint}
+        />
       </h2>
       <main>
         <header>
           <p>
             Author{" "}
-            <input name="author" defaultValue={file.author} onChange={taint} />
+            <input
+              title="author"
+              name="author"
+              defaultValue={file.author}
+              onChange={taint}
+            />
           </p>
           <p>
             Publisher
             <input
+              title="publisher"
               name="publisher"
               defaultValue={file.publisher}
               onChange={taint}
@@ -87,9 +70,10 @@ const Page: FC<Props> = ({ params }) => {
           <p>
             Publish Date
             <input
-              name="publishDate"
+              title="date"
+              name="date"
               type="date"
-              defaultValue={file.publishDate}
+              defaultValue={file.date}
               onChange={taint}
             />
           </p>
@@ -114,13 +98,18 @@ const Page: FC<Props> = ({ params }) => {
             open
           </a>
           {file.type.startsWith("image/") ? (
-            <img src={`/file/${file.id}/raw`} width="256"></img>
+            <img alt={file.content} src={`/file/${file.id}/raw`} width="256" />
           ) : (
-            <iframe src={`/file/${file.id}/raw`} width="256"></iframe>
+            <iframe
+              title={`${file.name || file.id}`}
+              name=" document"
+              src={`/file/${file.id}/raw`}
+              width="256"
+            ></iframe>
           )}
         </footer>
       </main>
-    </section>
+    </article>
   );
 };
 

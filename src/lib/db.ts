@@ -1,5 +1,7 @@
-"use server";
-import { Surreal } from "surrealdb.js";
+import type { Relation } from "@/types/mod";
+
+import { RecordId, StringRecordId, Surreal } from "surrealdb.js";
+// import { cronitialize } from "@/lib/database/cron";
 import {
   ALL_TABLES,
   DB_DATABASE,
@@ -11,40 +13,45 @@ import {
   SIZE_EMBEDDING_VECTOR,
   TABLE_AGENT,
   TABLE_FILE,
-  TABLE_MEME,
+  TABLE_POST,
   TABLE_SETTINGS,
   TABLE_SETTINGS_ID_CURRENT,
-} from "@/settings";
-import { RecordId, StringRecordId } from "surrealdb.js";
+} from "@/config/mod";
 
-import { replaceNumber as rn } from "@/util/replace-char";
 const { log } = console;
-const initialize = async (db: Surreal): Promise<void> => {
+export const initialize = async (db: Surreal): Promise<void> => {
   // Define settings table
-  try {
-    await db.create(TABLE_SETTINGS, {
-      id: TABLE_SETTINGS_ID_CURRENT,
-      data: SETTINGS_DEFAULT,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    throw error;
-  }
-  // Define indexed tables
-  for (const table of [TABLE_AGENT, TABLE_MEME, TABLE_FILE]) {
-    const queries = [
-      `DEFINE TABLE IF NOT EXISTS ${table} SCHEMALESS`,
-      `DEFINE FIELD IF NOT EXISTS embedding ON TABLE ${table} TYPE array<number>`,
-      `DEFINE INDEX IF NOT EXISTS search ON ${table} FIELDS embedding MTREE DIMENSION ${SIZE_EMBEDDING_VECTOR} DIST COSINE`,
-    ];
+  if (
+    !(await db.select(
+      new StringRecordId(`${TABLE_SETTINGS}:${TABLE_SETTINGS_ID_CURRENT}`),
+    ))
+  ) {
     try {
-      await db.query(queries.join(";"));
+      await db.create(TABLE_SETTINGS, {
+        id: TABLE_SETTINGS_ID_CURRENT,
+        data: SETTINGS_DEFAULT,
+        seed: Math.random(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
     } catch (error: any) {
-      if (error.message.includes("already exists")) {
-        log(`Index already exists on ${table}`);
-      } else {
-        throw error;
+      throw error;
+    }
+    // Define indexed tables
+    for (const table of [TABLE_AGENT, TABLE_POST, TABLE_FILE]) {
+      const queries = [
+        `DEFINE TABLE IF NOT EXISTS ${table} SCHEMALESS`,
+        `DEFINE FIELD IF NOT EXISTS embedding ON TABLE ${table} TYPE array<number>`,
+        `DEFINE INDEX IF NOT EXISTS search ON ${table} FIELDS embedding MTREE DIMENSION ${SIZE_EMBEDDING_VECTOR} DIST COSINE`,
+      ];
+      try {
+        await db.query(queries.join(";"));
+      } catch (error: any) {
+        if (error.message.includes("already exists")) {
+          log(`Index already exists on ${table}`);
+        } else {
+          throw error;
+        }
       }
     }
   }
@@ -76,10 +83,8 @@ export const getDB = async ({
     username: dbUsername,
     password: dbPassword,
   });
-
-  if (!(await db.select(new StringRecordId("settings:current")))) {
-    await initialize(db);
-  }
+  await initialize(db);
+  // cronitialize(db);
   return db;
 };
 
@@ -106,19 +111,19 @@ const ensureRecordId = (id: RecordId | StringRecordId | string) => {
 };
 
 export const relate = async (
-  inn: string,
+  inn: RecordId | StringRecordId,
   relationship: string,
-  out: string,
+  out: RecordId | StringRecordId,
   data?: Record<string, any>,
-) => {
+): Promise<Relation> => {
   const db = await getDB();
   try {
-    const result = await db.relate(
-      ensureRecordId(inn),
+    const [result] = await db.relate(
+      inn,
       relationship,
-      ensureRecordId(out),
+      out,
       data,
-    );
+    ) as Relation[];
     return result;
   } finally {
     await db.close();
@@ -126,22 +131,26 @@ export const relate = async (
 };
 
 export const unrelate = async (
-  inn: RecordId | StringRecordId | string,
+  inn: RecordId | StringRecordId,
   relationship: string,
-  out: RecordId | StringRecordId | string,
+  out: RecordId | StringRecordId,
 ): Promise<boolean> => {
   const db = await getDB();
   try {
-    const [[rel]] = await db.query(
+    const [rel] = await db.query(
       `SELECT * FROM type::table($relationship) WHERE in = ${inn} AND out = ${out}`,
       {
         relationship,
       },
-    ) as any[][]; // TODO: find the type returned by Surreal DB query
-    if (!rel) {
+    ) as any[][];
+
+    if (!rel.length) {
       return false;
     }
-    await db.delete(rel.id);
+    // TODO: find the type returned by Surreal DB query
+    for (const relationship of rel) {
+      await db.delete(relationship.id);
+    }
     return true;
   } finally {
     await db.close();
@@ -158,11 +167,11 @@ export const query = (recycledDB?: Surreal): QueryTagTemplateFunction => {
     try {
       const vals: Record<string, any> = {};
       for (let i = 0; i < values.length; i++) {
-        vals[`${QUERY_VAR_PREFIX}${rn(i)}`] = values[i];
+        vals[`${QUERY_VAR_PREFIX}${i}`] = values[i];
       }
       const str = [strings[0]];
       for (let i = 1; i < strings.length; i++) {
-        str.push(`$${QUERY_VAR_PREFIX}${rn(i - 1)}`, strings[i]);
+        str.push(`$${QUERY_VAR_PREFIX}${(i - 1)}`, strings[i]);
       }
       const string = str.join("");
       return db.query(string, vals);
@@ -177,23 +186,12 @@ export const query = (recycledDB?: Surreal): QueryTagTemplateFunction => {
 export const q = (strings: string[], ...values: any[]) => {
   const vals: Record<string, any> = {};
   for (let i = 0; i < values.length; i++) {
-    vals[`${QUERY_VAR_PREFIX}${rn(i)}`] = values[i];
+    vals[`${QUERY_VAR_PREFIX}${i}`] = values[i];
   }
   const str = [strings[0]];
   for (let i = 1; i < strings.length; i++) {
-    str.push(`$${QUERY_VAR_PREFIX}${rn(i - 1)}`, strings[i]);
+    str.push(`$${QUERY_VAR_PREFIX}${(i - 1)}`, strings[i]);
   }
   const string = str.join("");
   return [string, vals];
-};
-
-export const clearDB = async () => {
-  const db = await getDB();
-  try {
-    for (const table of ALL_TABLES) {
-      await db.delete(table);
-    }
-  } finally {
-    await db.close();
-  }
 };

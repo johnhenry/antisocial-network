@@ -1,6 +1,6 @@
 import type { Chunker } from "@/lib/chunkers/types";
 import { embed as defaultEmbed } from "@/lib/ai";
-import cosineSimilarity from "@/util/cosine-similarity";
+import cosineSimilarity from "@/lib/util/cosine-similarity";
 // import compromise from "compromise";
 
 import sentence from "@/lib/chunkers/sentence";

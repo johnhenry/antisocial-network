@@ -1,0 +1,7 @@
+/* @layer black {
+  *,
+  *::before,
+  *::after {
+    background-color: black !important;
+  }
+} */

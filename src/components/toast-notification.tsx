@@ -1,15 +1,45 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, FC, ComponentType } from "react";
 
-const ToastNotification = ({ duration = 5000, Spinner, ...props }) => {
-  const [notifications, setNotifications] = useState([]);
+export type Message = {
+  text: string;
+  url?: string;
+  type?: string;
+};
 
-  const removeNotification = useCallback((id) => {
+type Notification = {
+  id: number;
+  text: string;
+  url?: string;
+  type?: string;
+  createdAt: number;
+  expiresAt: number;
+  isPaused: boolean;
+  pausedAt?: number;
+  onRemove?: () => void;
+};
+
+type Props = {
+  duration?: number;
+  message?: Message;
+  className?: string;
+  Wrapper?: ComponentType<any> | string;
+};
+
+const ToastNotification: FC<Props> = ({
+  duration = 5000,
+  className,
+  Wrapper = "div",
+  ...props
+}) => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const removeNotification = useCallback((id: number) => {
     setNotifications((prev) =>
       prev.filter((notification) => notification.id !== id)
     );
   }, []);
 
-  const pauseTimer = useCallback((id) => {
+  const pauseTimer = useCallback((id: number) => {
     setNotifications((prev) =>
       prev.map((notification) =>
         notification.id === id
@@ -19,11 +49,11 @@ const ToastNotification = ({ duration = 5000, Spinner, ...props }) => {
     );
   }, []);
 
-  const resumeTimer = useCallback((id) => {
+  const resumeTimer = useCallback((id: number) => {
     setNotifications((prev) =>
       prev.map((notification) => {
         if (notification.id === id && notification.isPaused) {
-          const pauseDuration = Date.now() - notification.pausedAt;
+          const pauseDuration = Date.now() - notification.pausedAt!;
           return {
             ...notification,
             isPaused: false,
@@ -37,10 +67,11 @@ const ToastNotification = ({ duration = 5000, Spinner, ...props }) => {
 
   useEffect(() => {
     if (props.message) {
-      const newNotification = {
+      const newNotification: Notification = {
         id: Date.now(),
-        message: props.message.text,
+        text: props.message.text,
         url: props.message.url,
+        type: props.message.type,
         createdAt: Date.now(),
         expiresAt: Date.now() + duration,
         isPaused: false,
@@ -68,26 +99,31 @@ const ToastNotification = ({ duration = 5000, Spinner, ...props }) => {
   }, []);
 
   return (
-    <div className="toast-notification" {...props}>
-      {Spinner ? <Spinner /> : null}
+    <Wrapper className={className} {...props}>
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`toast-item ${notification.isPaused ? "paused" : ""}`}
+          className={[
+            notification.isPaused ? "paused" : "",
+            notification.type || "",
+          ].join(" ")}
           onMouseEnter={() => pauseTimer(notification.id)}
           onMouseLeave={() => resumeTimer(notification.id)}
         >
           {notification.url ? (
-            <a href={notification.url}>{notification.message}</a>
+            <a href={notification.url}>{notification.text}</a>
           ) : (
-            notification.message
+            notification.text
           )}
-          <button onClick={() => removeNotification(notification.id)}>
-            Close
+          <button
+            title="close"
+            onClick={() => removeNotification(notification.id)}
+          >
+            x
           </button>
         </div>
       ))}
-    </div>
+    </Wrapper>
   );
 };
 
