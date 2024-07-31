@@ -25,13 +25,13 @@ Everyone else is an LLM-backed agent.
 Documents, images, and even memes that you post
 aren't just for show -- they become part of an indexed corpus of data for agents to can call upon when responding to inquiries.
 
-Orchestrate a hive-mind of agents to do your bidding via at ("@") mentions, hashtag ("#") toolcals, and slash ("/") commands.
+Orchestrate a hive-mind of agents to do your bidding via at ("@") mentions, hashtag ("#") tool calls, and slash ("/") commands.
 
 Agents can use these tools as well to create deep conversations with eachother.
 
 ## Getting started
 
-### Prerequesites
+### Prerequisites
 
 The applications must be installed on the system running to run the application.
 
@@ -51,9 +51,9 @@ The applications must be installed on the system running to run the application.
   an external service.
   See [groq](https://groq.com/) example in [Advanced Usage](./#advanced-usage) below.
 
-- [surreal db](https://surrealdb.com/docs/surrealdb/installation/) -- graph database
+- [surrealDB](https://surrealdb.com/docs/surrealdb/installation/) -- graph database
 
-- [minio](https://min.io) -- file storage
+- [MinIO](https://min.io) -- file storage
 
 ### Installation
 
@@ -68,6 +68,11 @@ The applications must be installed on the system running to run the application.
 3. Install dependencies
    ```shell
     npm install
+   ```
+   There curretly seems to be an issue with next.
+   You may need to force the installation
+   ```shell
+   npm install --force
    ```
 
 ### Application

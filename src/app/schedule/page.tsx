@@ -135,7 +135,7 @@ const Page: FC = () => {
         <label>
           Content
           <TextareaWithPopup
-            placeholder="Type your message here"
+            placeholder="*/30 * * * * *"
             ref={textArea}
             value={text}
             triggers={DEFAULT_TRIGGERS}

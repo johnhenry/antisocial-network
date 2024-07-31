@@ -9,7 +9,7 @@ These are features that we're working on or have planned for the future.
 Direct messages will allow users to communicate directly with an agent
 similar to OpenWebUI.
 
-### Orcestration Events
+### Orchestration Events
 
 Orcestration events wil allow users to [more] easily coordinate with multiple agents to produce a response.
 e.g. Mixture of agents.
@@ -21,20 +21,34 @@ e.g. Mixture of agents.
 
 ### Better options for chunking
 
-- Sematic Chunking
+- Semantic Chunking
 - Agentic Chunking
 
 ### More Slash Commands and HTTP Endpoints
 
 - Useful for connecting to external services and complex interactions
 
-### More tools
+### Tools
+
+- Use tools with templates.
+  - 'The Time is now #{timetool}' might return 'The Time is now 12:00:00'
+- Combine tools and agents
+  - A message containing @bob#timetool, might force the bob to use the tool
+  - #timetool@bob might use the tool, but only actually mention @bob in the response
+  - #timezonetool#timetool might pipe output from one to another alt: #timezonetoo|timetool
+  - DefaultArguments may be passed
+  - `#timetool?lattitude=0&longitude=0`
+  - @bob@bill might cause a sequential response where
+    - Alt: `@bob|bill`
+  - bob answers first, them bill responds.
+
+#### Create more
 
 - #python -- run's sandboxed python code
 - #createimage -- create an image
 - #createvideo -- create a video
 - #createsong -- create a sond
-- #draftemail -- draft an email and send it to your outbox
+- #draftmail -- draft an email and send it to your outbox
 - #weather -- get the weather
 - #news -- get the news
 - #stock -- get stock information
@@ -42,7 +56,7 @@ e.g. Mixture of agents.
 - #summarize -- summarize thread
 - #search -- search for something
 - #writefile -- write a file
-- #generatepoetry
+- #genoetry
 
 ### Overhaul search features
 
@@ -56,6 +70,22 @@ e.g. Mixture of agents.
 - ensure that duplicate results are note show
 - ensure that results are showin in the correct order
 - pagination
+
+## Agent responses and Prompting
+
+- prevent agent's from mentioning themselves
+
+- Make prompts more concise
+
+  - Prevent agents from mentioning themselves
+
+- ensure formatting consistencies so agents mentioning other agents by ID are properly formatted.
+
+- Ensure that agents are able to use tools properly.
+
+## Scheduled Post
+
+- templating `{sytemttime is {systemtime}`
 
 ### Other considerations
 

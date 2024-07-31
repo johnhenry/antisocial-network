@@ -96,7 +96,7 @@ Additionally, the document be split into individual posts.
 ## 10. Using Your First Slash Command
 
 1. Return to the home page.
-2. Type "/" followed by "agent create --name='philosopher-bot' --description='A wise AI that ponders life's greatest questions'".
+2. Type "/" folloewed by "agent create --name='philosopher-bot' --description='A wise AI that ponders life's greatest questions'".
 3. Submit the command and observe the creation of a new agent with the specified parameters.
 
 Try other slash commands like "/post generate" or "/file create" to explore more advanced features.

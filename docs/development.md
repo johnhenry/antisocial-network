@@ -13,7 +13,7 @@ These applications can make development easier, but are not required.
 
 - [surrealist desktop app](https://surrealdb.com/surrealist)
 
-  This desktop applicaon allows you to view the database in a more visual way.
+  This desktop application allows you to view the database in a more visual way.
 
 ## Scripts
 

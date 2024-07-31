@@ -160,21 +160,9 @@ const InputBox: FC<InputBoxProps> = ({
 
   const body = (
     <>
-      {/* <textarea
-        className={isSlash ? "slash-command" : ""}
-        placeholder="Type your message here"
-        onChange={(event) => {
-          doText(event.target.value);
-        }}
-        ref={textArea}
-        onKeyDown={keyDown}
-        defaultValue={
-          decodeURIComponent(searchParams.get("q") || "") || storedText
-        }
-      ></textarea> */}
       <TextareaWithPopup
         className={isSlash ? "slash-command" : ""}
-        placeholder="Type your message here"
+        placeholder="What's on your mind?"
         onChange={(event) => {
           doText(event.target.value);
         }}

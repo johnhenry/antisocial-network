@@ -64,10 +64,7 @@ export const getEntity = async <
     const query = `SELECT *
           FROM type::table($table)
           ORDER BY timestamp DESC
-          FETCH source,
-            target, target.mentions, target.bibliography, target.source,
-            mentions, mentions.source, mentions.bibliography,
-            bibliography, bibliography.mentions, bibliography.source`;
+          FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
     const [[entity]] = await db.query<[[T]]>(query, {
       id,
     });
@@ -102,10 +99,7 @@ export const getLatest =
         const query = `SELECT *
           FROM type::table($table)
           ORDER BY timestamp DESC
-          FETCH source,
-            target, target.mentions, target.bibliography, target.source,
-            mentions, mentions.source, mentions.bibliography,
-            bibliography, bibliography.mentions, bibliography.source`;
+          FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
         // return all
         [
           result,
@@ -125,10 +119,7 @@ export const getLatest =
 
         const query =
           `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist FROM type::table($table) WHERE embedding <|${limit}|> $embedded ORDER BY dist DESC
-          FETCH source,
-            target, target.mentions, target.bibliography, target.source,
-            mentions, mentions.source, mentions.bibliography,
-            bibliography, bibliography.mentions, bibliography.source`;
+          FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
         // const query =
         //   `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist, ${""} OMIT ${""} FROM type::table($table) WHERE embedding <|${limit}|> $embedded ORDER BY dist DESC`;
 
@@ -147,11 +138,7 @@ export const getLatest =
             ORDER BY timestamp DESC
             LIMIT $limit
             START $start
-            FETCH source,
-      target, target.mentions, target.bibliography, target.source
-      mentions, mentions.source, mentions.bibliography,
-      bibliography, bibliography.mentions, bibliography.source
-        `;
+            FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
         [result] = await db.query(query, {
           table,
           limit,
