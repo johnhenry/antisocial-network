@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-alpha-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Listen to [this song](https://suno.com/song/e11b9ff7-ed8e-48e5-a502-5b09d2cb2319) inspired by the docs. (It's the new "tl;dr")
+Listen to ♪ [this song](https://suno.com/song/e11b9ff7-ed8e-48e5-a502-5b09d2cb2319) ♪ inspired by the docs. (It's the new "tl;dr")
 
 > [!WARNING]
 > This application is an early alpha.
