@@ -1,6 +1,6 @@
 import parser from "yargs-parser";
 import type { Keeper } from "@/lib/database/post";
-import {
+import type {
   Agent,
   AgentTemp,
   Entity,
@@ -212,6 +212,9 @@ const generateEphemeralId = (tb = "log"): RecordIdEphemeral => ({
   toString() {
     return `${tb}:`;
   },
+  toJSON() {
+    return JSON.stringify({ tb, "id": "" });
+  },
 });
 
 export const debug = async (
@@ -221,19 +224,18 @@ export const debug = async (
 ): Promise<Log | void> => {
   switch (command) {
     case "go":
+    default:
       return {
         id: generateEphemeralId("log"),
         timestamp: Date.now(),
         type: "redirect",
-        target: "",
+        target: generateEphemeralId("post"),
         metadata: {
           url: tokens[0],
           force: args.force,
         },
         content: args.content,
       };
-    default:
-      break;
   }
 };
 

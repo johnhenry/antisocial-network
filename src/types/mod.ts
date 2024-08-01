@@ -246,12 +246,13 @@ export type RecordIdEphemeral = {
   tb: string;
   id: "";
   toString: () => string;
+  toJSON: () => string;
 };
 
 export type Log = {
   id: RecordId | RecordIdEphemeral;
   timestamp: number;
-  target: Exclude<Entity, Log>; // TODO: change to entity...maybe?
+  target: RecordId; // TODO: change to entity...maybe?
   type: string;
   content: string;
   metadata?: JSONExtendedObject;
