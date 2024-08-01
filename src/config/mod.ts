@@ -1,32 +1,130 @@
 // import "dotenv/config";
 import type { AgentParameters, Setting } from "@/types/mod";
 import { read } from "@/lib/util/env";
-////
-// Database
-////
-// Credentials
-export const DB_PATH = read("DB_PATH", {
-  defaultValue: "http://127.0.0.1:8000/rpc",
+import {
+  URLHost,
+  URLHostname,
+  URLHref,
+  URLOrigin,
+  URLPathname,
+  URLPort,
+  URLProtocol,
+} from "@/types/url";
+////////
+// Cronmower
+////////
+export const CRONMOWER_PROTOCOL: URLProtocol = read("CRONMOWER_PROTOCOL", {
+  defaultValue: "http:",
 });
+export const CRONMOWER_PORT: URLPort = read("CRONMOWER_PORT", {
+  defaultValue: "3042",
+});
+export const CRONMOWER_PATHNAME: URLPathname = read("CRONMOWER_PATHNAME", {
+  defaultValue: "/",
+});
+export const CRONMOWER_HOSTNAME: URLHostname = read("CRONMOWER_HOSTNAME", {
+  defaultValue: "localhost",
+});
+export const CRONMOWER_HOST: URLHost = read("CRONMOWER_HOST", {
+  defaultValue: `${CRONMOWER_HOSTNAME}:${CRONMOWER_PORT}`,
+});
+export const CRONMOWER_ORIGIN: URLOrigin = read("CRONMOWER_ORIGIN", {
+  defaultValue: `${CRONMOWER_PROTOCOL}//${CRONMOWER_HOST}`,
+});
+export const CRONMOWER_HREF: URLHref = read("CRONMOWER_HREF", {
+  defaultValue: `${CRONMOWER_ORIGIN}${CRONMOWER_PATHNAME}`,
+});
+////////
+// Database (SurrealDB)
+////////
+export const DB_PROTOCOL: URLProtocol = read("DB_PROTOCOL", {
+  defaultValue: "http:",
+});
+export const DB_PORT: URLPort = read("DB_PORT", {
+  defaultValue: "8000",
+});
+export const DB_PATHNAME: URLPathname = read("DB_PATHNAME", {
+  defaultValue: "/",
+});
+export const DB_HOSTNAME: URLHostname = read("DB_HOSTNAME", {
+  defaultValue: "localhost",
+});
+export const DB_HOST: URLHost = read("DB_HOST", {
+  defaultValue: `${DB_HOSTNAME}:${DB_PORT}`,
+});
+export const DB_ORIGIN: URLOrigin = read("DB_ORIGIN", {
+  defaultValue: `${DB_PROTOCOL}//${DB_HOST}`,
+});
+export const DB_HREF: URLHref = read("DB_HREF", {
+  defaultValue: `${DB_ORIGIN}${DB_PATHNAME}`,
+});
+// Credentials
 export const DB_DATABASE = read("DB_DATABASE", { defaultValue: "test" });
 export const DB_NAMESPACE = read("DB_NAMESPACE", { defaultValue: "test" });
 export const DB_USERNAME = read("DB_USERNAME", { defaultValue: "root" });
 export const DB_PASSWORD = read("DB_PASSWORD", { defaultValue: "root" });
-// // Tables
-// export const TABLE_SETTINGS = `settings`;
-// export const TABLE_AGENT = `agent`;
-// export const TABLE_FILE = `file`;
-// export const TABLE_POST = `post`;
-// export const TABLE_TOOL = `tool`;
-// export const TABLE_LOG = `log`;
-// export const ALL_TABLES = [
-//   TABLE_SETTINGS,
-//   TABLE_AGENT,
-//   TABLE_FILE,
-//   TABLE_POST,
-//   TABLE_TOOL,
-//   TABLE_LOG,
-// ];
+////////
+// File Storage (Minio/S3)
+////////
+export const FS_PROTOCOL: URLProtocol = read("FS_PROTOCOL", {
+  defaultValue: "http:",
+});
+export const FS_PORT: URLPort = read("FS_PORT", {
+  defaultValue: "9000",
+});
+export const FS_PATHNAME: URLPathname = read("FS_PATHNAME", {
+  defaultValue: "/",
+});
+export const FS_HOSTNAME: URLHostname = read("FS_HOSTNAME", {
+  defaultValue: "localhost",
+});
+export const FS_HOST: URLHost = read("FS_HOST", {
+  defaultValue: `${FS_HOSTNAME}:${FS_PORT}`,
+});
+export const FS_ORIGIN: URLOrigin = read("FS_ORIGIN", {
+  defaultValue: `${FS_PROTOCOL}//${FS_HOST}`,
+});
+export const FS_HREF: URLHref = read("FS_HREF", {
+  defaultValue: `${FS_ORIGIN}${FS_PATHNAME}`,
+});
+// Credentials
+export const FS_ACCESS_KEY = read("FS_ACCESS_KEY", {
+  defaultValue: "minioadmin",
+});
+export const FS_SECRET_KEY = read("FS_SECRET_KEY", {
+  defaultValue: "minioadmin",
+});
+export const FS_ENDPOINT = read("FS_ENDPOINT", {
+  defaultValue: "localhost",
+});
+export const FS_BUCKET = read("FS_BUCKET", {
+  defaultValue: "files",
+});
+////////
+// Inference (Ollama)
+////////
+export const OLLAMA_PROTOCOL: URLProtocol = read("OLLAMA_PROTOCOL", {
+  defaultValue: "http:",
+});
+export const OLLAMA_PORT: URLPort = read("OLLAMA_PORT", {
+  defaultValue: "11434",
+});
+export const OLLAMA_PATHNAME: URLPathname = read("OLLAMA_PATHNAME", {
+  defaultValue: "/",
+});
+export const OLLAMA_HOSTNAME: URLHostname = read("OLLAMA_HOSTNAME", {
+  defaultValue: "localhost",
+});
+export const OLLAMA_HOST: URLHost = read("OLLAMA_HOST", {
+  defaultValue: `${OLLAMA_HOSTNAME}:${OLLAMA_PORT}`,
+});
+export const OLLAMA_ORIGIN: URLOrigin = read("OLLAMA_ORIGIN", {
+  defaultValue: `${OLLAMA_PROTOCOL}//${OLLAMA_HOST}`,
+});
+export const OLLAMA_HREF: URLHref = read("OLLAMA_HREF", {
+  defaultValue: `${OLLAMA_ORIGIN}${OLLAMA_PATHNAME}`,
+});
+
 export const ALL_TABLES = [
   "settings",
   "agent",
@@ -155,10 +253,6 @@ export const MODELS = [
     ].filter((model) => model),
   ),
 ];
-
-export const OLLAMA_LOCATION = read("OLLAMA_LOCATION", {
-  defaultValue: "http://localhost:11434",
-});
 
 export const SIZE_EMBEDDING_VECTOR = read("SIZE_EMBEDDING_VECTOR", {
   defaultValue: 768,
@@ -368,28 +462,6 @@ export const AI_SAYINGS: [string, string][] = [
   ["The early worm gets the gradient.", "Robin Williamson-Watanabe"],
   ["An apple a day keeps the model decay away.", "Sir Isaac Newural Network"],
 ];
-
-export const FS_ACCESS_KEY = read("FS_ACCESS_KEY", {
-  defaultValue: "minioadmin",
-});
-export const FS_SECRET_KEY = read("FS_SECRET_KEY", {
-  defaultValue: "minioadmin",
-});
-export const FS_ENDPOINT = read("FS_ENDPOINT", {
-  defaultValue: "localhost",
-});
-export const FS_BUCKET = read("FS_BUCKET", {
-  defaultValue: "files",
-});
-export const FS_PORT = read("FS_PORT", {
-  defaultValue: 9000,
-  cast: parseInt,
-});
-
-export const CRON_PORT = read("FS_PORT", {
-  defaultValue: 3042,
-  cast: parseInt,
-});
 
 export const TIME_ZONES = [
   ["-12:00", "Baker Island, Howland Island (uninhabited)"],

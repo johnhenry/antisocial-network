@@ -1,13 +1,10 @@
 import type { Relation } from "@/types/mod";
-
 import { RecordId, StringRecordId, Surreal } from "surrealdb.js";
-// import { cronitialize } from "@/lib/database/cron";
 import {
-  ALL_TABLES,
   DB_DATABASE,
+  DB_HREF,
   DB_NAMESPACE,
   DB_PASSWORD,
-  DB_PATH,
   DB_USERNAME,
   SETTINGS_DEFAULT,
   SIZE_EMBEDDING_VECTOR,
@@ -58,7 +55,7 @@ export const initialize = async (db: Surreal): Promise<void> => {
 };
 
 export const getDB = async ({
-  dbPath = DB_PATH,
+  dbPath = DB_HREF,
   dbUsername = DB_USERNAME,
   dbPassword = DB_PASSWORD,
   dbNamespace = DB_NAMESPACE,

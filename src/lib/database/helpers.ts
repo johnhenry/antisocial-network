@@ -61,12 +61,14 @@ export const getEntity = async <
 ): Promise<T> => {
   const db = await getDB();
   try {
+    const [table] = id.toString().split(":");
     const query = `SELECT *
           FROM type::table($table)
           ORDER BY timestamp DESC
           FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
     const [[entity]] = await db.query<[[T]]>(query, {
       id,
+      table,
     });
 
     const result = await replaceContentWithLinks<T>(entity);

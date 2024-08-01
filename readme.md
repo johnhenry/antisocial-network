@@ -86,13 +86,9 @@ The applications must be installed on the system running to run the application.
    ```
 3. Install dependencies
    ```shell
-    npm install
+    npm install --legacy-peer-deps
    ```
-   There curretly seems to be an issue with next.
-   You may need to force the installation
-   ```shell
-   npm install --force
-   ```
+   (--legacy-peer-deps solve a know dependency issue that should be resolved in very the future.)
 
 ### Application
 
