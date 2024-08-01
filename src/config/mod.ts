@@ -44,7 +44,7 @@ export const DB_PORT: URLPort = read("DB_PORT", {
   defaultValue: "8000",
 });
 export const DB_PATHNAME: URLPathname = read("DB_PATHNAME", {
-  defaultValue: "/",
+  defaultValue: "/rpc",
 });
 export const DB_HOSTNAME: URLHostname = read("DB_HOSTNAME", {
   defaultValue: "localhost",

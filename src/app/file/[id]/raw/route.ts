@@ -22,7 +22,7 @@ export const GET = async (_: unknown, options: GETOptions) => {
       },
     });
   } catch (error) {
-    console.error("ERROR");
+    console.error("ERROR", error);
     return new Response("Not found.", { status: 404 });
   }
 };
