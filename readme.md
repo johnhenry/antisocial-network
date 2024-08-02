@@ -65,10 +65,10 @@ The applications must be installed on the system running to run the application.
   - `ollama pull nomic-embed-text:latest` -- embedding
   - `ollama pull llava:latest` -- image descriptions
 
-  > [!TIP]
-  > If you don't have a fast machine,
-  > I suggest setting environment variables to use an external service.
-  > See [groq](https://groq.com/) example in [Advanced Usage](./> #advanced-usage) below.
+> [!TIP]
+> If you don't have a fast machine,
+> I suggest setting environment variables to use an external service.
+> See [groq](https://groq.com/) example in [Advanced Usage](./> #advanced-usage) below.
 
 - [SurrealDB](https://surrealdb.com/docs/surrealdb/installation/) -- graph database
 
