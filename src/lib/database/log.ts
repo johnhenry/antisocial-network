@@ -35,7 +35,7 @@ export const createLog = async (
       timestamp: Date.now(),
       target: target.id,
       type,
-      content: content ? content : `${type}: ${target}`,
+      content: content ? content : `${type}: ${target.id.toJSON()}`,
       metadata,
     }) as Log[];
     sendNotification(log);

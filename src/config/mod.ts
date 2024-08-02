@@ -362,8 +362,8 @@ export const SETTINGS_DEFAULT: Setting[] = [
     name: "chunkingstrategy",
     label: "Chunking Strategy*",
     type: "select",
-    options: ["sentence", "semantic (coming soon)", "agentic (coming soon)"],
-    defaultValue: MODEL_EMBEDDING,
+    options: ["sentence", "semantic", "full", "agentic (coming soon)"],
+    defaultValue: "sentence",
   },
   {
     name: "charLimit",

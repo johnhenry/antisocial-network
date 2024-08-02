@@ -12,12 +12,15 @@ import { getEntity, getLatest } from "@/lib/database/helpers";
 
 import { getDB, relate } from "@/lib/db";
 
-import { RecordId, StringRecordId } from "surrealdb.js";
+import { StringRecordId } from "surrealdb.js";
 
 import { getSettingsObject } from "@/lib/database/settings";
 import createLog from "@/lib/database/log";
 
-import semanticChunker from "@/lib/chunkers/semantic";
+import createSentenceChunker from "@/lib/chunkers/sentence";
+import createSemanticChunker from "@/lib/chunkers/semantic";
+import defaultChunker from "@/lib/chunkers/default";
+
 import { describe, embed, summarize } from "@/lib/ai";
 import hash from "@/lib/util/hash";
 import base64to from "@/lib/util/base64-to";
@@ -66,12 +69,15 @@ export const createFile = async (
         {
           const settings = await getSettingsObject();
           let chunker;
-          switch (settings.chunker) {
-            case "sentence":
-            case "agentic":
+          switch (settings.chunkingstrategy) {
             case "semantic":
+              chunker = createSemanticChunker();
+              break;
+            case "sentence":
+              chunker = createSentenceChunker();
+              break;
             default:
-              chunker = semanticChunker;
+              chunker = defaultChunker;
               break;
           }
           let data, metadata, text;
@@ -105,20 +111,18 @@ export const createFile = async (
             date,
             owner: owner ? owner.id : undefined,
           }) as File[];
-
           if (chunk) {
             let previousPostId;
             // embed chunks
-            for await (const { chunk, embedding } of chunker(text)) {
+            for await (const [chunk, embedding] of chunker(text)) {
               const post = await createPost(chunk, {
                 embedding,
-                container: newFile,
                 dropLog: !logChunk,
               }) as Post;
               await relate(newFile.id, REL_CONTAINS, post.id);
               if (previousPostId) {
                 await relate(previousPostId, REL_PRECEDES, post.id, {
-                  container: newFile,
+                  container: newFile.id,
                 });
               }
               previousPostId = post.id;

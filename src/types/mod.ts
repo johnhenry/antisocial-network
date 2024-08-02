@@ -29,6 +29,7 @@ export type Post = {
   source?: Agent;
   bibliography?: Post[];
   tools?: string[]; // match:/\w[\w:-]*\w/
+  private?: boolean;
 };
 
 export type PostPlus = {
