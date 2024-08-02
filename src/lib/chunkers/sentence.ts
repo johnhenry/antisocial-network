@@ -1,4 +1,4 @@
-import type { Chunker } from "@/lib/chunkers/types";
+import type { Chunker, Embedding } from "@/lib/chunkers/types";
 import compromise from "compromise";
 import { embed as defaultEmbed } from "@/lib/ai";
 // Iterator that chunks senteneces into a stream of strings with maximum length
@@ -12,7 +12,9 @@ const splitter = function* (text: string, split: number = 2 ** 8) {
   }
 };
 
-export const create = ({ split = 0 }: { split?: number } = {}): Chunker => {
+export const create = (
+  { split = 0 }: { split?: number } = {},
+): Chunker<string, string> => {
   return async function* (text: string) {
     const doc = compromise(text);
     const sentences = doc.sentences().out("array");
@@ -29,14 +31,13 @@ export const create = ({ split = 0 }: { split?: number } = {}): Chunker => {
   };
 };
 
-// TODO: Create semantic chunker
 export const createSentenceChunker = ({
   embed = defaultEmbed,
   split = 0,
 }: {
   embed?: typeof defaultEmbed;
   split?: number;
-} = {}): Chunker<[string, number[]][]> => {
+} = {}): Chunker => {
   const sentence = create({ split });
   return async function* (text: string) {
     for await (const chunk of sentence(text)) {

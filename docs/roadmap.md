@@ -96,8 +96,8 @@ e.g. Mixture of agents.
 
 ## Containerization
 
- - Dockerize/
- - Nvidia Nim
+- Dockerize/
+- Nvidia Nim
 
 ## Other considerations
 

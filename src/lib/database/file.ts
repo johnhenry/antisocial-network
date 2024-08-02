@@ -12,12 +12,14 @@ import { getEntity, getLatest } from "@/lib/database/helpers";
 
 import { getDB, relate } from "@/lib/db";
 
-import { RecordId, StringRecordId } from "surrealdb.js";
+import { StringRecordId } from "surrealdb.js";
 
 import { getSettingsObject } from "@/lib/database/settings";
 import createLog from "@/lib/database/log";
 
 import createSentenceChunker from "@/lib/chunkers/sentence";
+import createSemanticChunker from "@/lib/chunkers/semantic";
+import defaultChunker from "@/lib/chunkers/default";
 
 import { describe, embed, summarize } from "@/lib/ai";
 import hash from "@/lib/util/hash";
@@ -68,11 +70,12 @@ export const createFile = async (
           const settings = await getSettingsObject();
           let chunker;
           switch (settings.chunker) {
-            case "sentence":
-            case "agentic":
             case "semantic":
-            default:
+              chunker = createSemanticChunker();
+            case "sentence":
               chunker = createSentenceChunker();
+            default:
+              chunker = defaultChunker;
               break;
           }
           let data, metadata, text;
