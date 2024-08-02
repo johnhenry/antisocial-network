@@ -1,0 +1,50 @@
+version: "3.8"
+services:
+  antisocial-network:
+    image: node:latest
+    container_name: antisocial-network
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+      - node_modules:/usr/src/app/node_modules
+    ports:
+      - "3000:3000"
+    command: >
+      sh ./run.sh
+    environment:
+      - DB_HOSTNAME=surrealdb
+      - FS_HOSTNAME=minio
+      - OLLAMA_HOSTNAME=host.docker.internal
+    depends_on:
+      - surrealdb
+      - minio
+
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: surrealdb
+    working_dir: /usr/src/app
+    command: start file://.surreal -A --auth --user root --pass root
+    user: "root"
+    volumes:
+      - surrealdb-data:/usr/src/app/.surreal
+    ports:
+      - "8000:8000"
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    working_dir: /usr/src/app
+    command: server ./.minio --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/usr/src/app/.minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+volumes:
+  surrealdb-data:
+  minio-data:
+  node_modules:

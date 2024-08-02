@@ -4,8 +4,9 @@ import stream from "stream";
 import {
   FS_ACCESS_KEY,
   FS_BUCKET,
-  FS_ENDPOINT,
+  FS_HOSTNAME,
   FS_PORT,
+  FS_PROTOCOL,
   FS_SECRET_KEY,
 } from "@/config/mod";
 
@@ -17,9 +18,9 @@ export const putObject = async (
   // endpoint and an authorized user's credentials
   // play.min.io is the MinIO public test cluster
   const minioClient = new Minio.Client({
-    endPoint: FS_ENDPOINT,
-    port: FS_PORT,
-    useSSL: false,
+    endPoint: FS_HOSTNAME,
+    port: Number(FS_PORT),
+    useSSL: FS_PROTOCOL === "https:",
     accessKey: FS_ACCESS_KEY,
     secretKey: FS_SECRET_KEY,
   });
@@ -39,8 +40,8 @@ export const putObject = async (
 
 export const getObject = async (id: string) => {
   const minioClient = new Minio.Client({
-    endPoint: FS_ENDPOINT,
-    port: FS_PORT,
+    endPoint: FS_HOSTNAME,
+    port: Number(FS_PORT),
     useSSL: false,
     accessKey: FS_ACCESS_KEY,
     secretKey: FS_SECRET_KEY,

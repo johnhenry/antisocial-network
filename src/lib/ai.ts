@@ -9,13 +9,13 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { Ollama } from "ollama";
 import { OllamaFunctions } from "@langchain/community/experimental/chat_models/ollama_functions";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { MODEL_FUNCTIONS, OLLAMA_LOCATION } from "@/config/mod";
+import { MODEL_FUNCTIONS, OLLAMA_ORIGIN } from "@/config/mod";
 import { JsonOutputFunctionsParser } from "@langchain/core/output_parsers/openai_functions";
 import { getSettingsObject } from "@/lib/database/settings";
 import { RunnableLike } from "@langchain/core/runnables";
 import { getEncoding } from "js-tiktoken";
 import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
-import TOOLS  from "@/tools/handlers";
+import TOOLS from "@/tools/handlers";
 import { Agent, Post } from "@/types/mod";
 import { Tool } from "@/types/tools";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
@@ -75,13 +75,13 @@ export const respondT = async (
 
   const responses = [];
   const ollama = new Ollama({
-    host: OLLAMA_LOCATION,
+    host: OLLAMA_ORIGIN,
   });
   for (const toolname of tools) {
     const currentTool: Tool | undefined = TOOLS[toolname];
 
     if (currentTool) {
-      const {name, handler, description, ...descriptor } = currentTool;
+      const { name, handler, description, ...descriptor } = currentTool;
       const response = await ollama.chat({
         model,
         messages: ollamaMessages,
@@ -89,14 +89,16 @@ export const respondT = async (
       });
       if (response.message.tool_calls) {
         for (const tool of response.message.tool_calls) {
-          try{
+          try {
             const functionResponse = await handler(
               tool.function.arguments,
             );
             // Add function response to the conversation
             responses.push(`[${name}] ${functionResponse}`);
-          }catch(e){
-            responses.push(`[${name}] There was an error: ${(e as Error).message}`);
+          } catch (e) {
+            responses.push(
+              `[${name}] There was an error: ${(e as Error).message}`,
+            );
           }
         }
       }
@@ -172,7 +174,7 @@ export const respond = async (
       }
       case "ollama":
       default: {
-        arg.baseUrl = OLLAMA_LOCATION;
+        arg.baseUrl = OLLAMA_ORIGIN;
         invoker = new ChatOllama(arg);
       }
     }
@@ -212,7 +214,7 @@ export const respondFunc = async (
 
   const invoker = new OllamaFunctions({
     ...parameters,
-    baseUrl: OLLAMA_LOCATION,
+    baseUrl: OLLAMA_ORIGIN,
     model,
   }).bind(functions);
   const prompt = ChatPromptTemplate.fromMessages(messages);
@@ -229,7 +231,7 @@ export const embed = async (prompt: string = genRandSurrealQLString()) => {
       case "ollama":
       default: {
         const ollama = new Ollama({
-          host: OLLAMA_LOCATION,
+          host: OLLAMA_ORIGIN,
         });
         const { embedding } = await ollama.embeddings({
           model,
@@ -252,7 +254,7 @@ export const describe = async (base64data: string) => {
       default: {
         const invoker = new OllamaLangchain({
           model,
-          baseUrl: OLLAMA_LOCATION,
+          baseUrl: OLLAMA_ORIGIN,
         }).bind({
           images: [base64data],
         });
