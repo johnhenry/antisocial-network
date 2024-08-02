@@ -90,6 +90,16 @@ The applications must be installed on the system running to run the application.
    ```
    (--legacy-peer-deps solve a know dependency issue that should be resolved in very the future.)
 
+### Alternative Installation: Docker
+
+It might be easier to run the application using [docker](https://www.docker.com/)
+
+You won't need to install SurrealDB or MinIO, but you will still need to install ollama and pull the models.
+
+```shell
+docker compose up
+```
+
 ### Application
 
 1. From the application directory,
