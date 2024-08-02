@@ -28,7 +28,6 @@ e.g. Mixture of agents.
 
 ## Better options for chunking
 
-- Semantic Chunking
 - Agentic Chunking
 
 ## More Slash Commands and HTTP Endpoints
@@ -96,7 +95,8 @@ e.g. Mixture of agents.
 
 ## Containerization
 
-- Dockerize/
+- Dockerize
+  - Improve docker-compose.yml
 - Nvidia Nim
 
 ## Other considerations
