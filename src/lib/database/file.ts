@@ -17,7 +17,8 @@ import { RecordId, StringRecordId } from "surrealdb.js";
 import { getSettingsObject } from "@/lib/database/settings";
 import createLog from "@/lib/database/log";
 
-import semanticChunker from "@/lib/chunkers/semantic";
+import createSentenceChunker from "@/lib/chunkers/sentence";
+
 import { describe, embed, summarize } from "@/lib/ai";
 import hash from "@/lib/util/hash";
 import base64to from "@/lib/util/base64-to";
@@ -71,7 +72,7 @@ export const createFile = async (
             case "agentic":
             case "semantic":
             default:
-              chunker = semanticChunker;
+              chunker = createSentenceChunker();
               break;
           }
           let data, metadata, text;
@@ -109,7 +110,7 @@ export const createFile = async (
           if (chunk) {
             let previousPostId;
             // embed chunks
-            for await (const { chunk, embedding } of chunker(text)) {
+            for await (const [chunk, embedding] of chunker(text)) {
               const post = await createPost(chunk, {
                 embedding,
                 container: newFile,
