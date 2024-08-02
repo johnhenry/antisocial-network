@@ -271,7 +271,6 @@ export const createPost = async (
     target,
     streaming = false,
     depth = 2 ** 2,
-    container,
     dropLog = false,
     bibliography,
   }: {
@@ -282,7 +281,6 @@ export const createPost = async (
     target?: Post;
     streaming?: boolean;
     depth?: number;
-    container?: File;
     dropLog?: boolean;
     bibliography?: Post[];
   } = {},
@@ -330,7 +328,6 @@ export const createPost = async (
           tools: inputTools,
           source: source ? source.id : undefined,
           target: target ? target.id : undefined,
-          container,
           bibliography: bibliography && bibliography.length
             ? bibliography.map((post) => post.id)
             : undefined,
@@ -343,7 +340,6 @@ export const createPost = async (
         embedding: await embed(""),
         source: source ? source.id : undefined,
         target: target ? target.id : undefined,
-        container,
         bibliography,
       }) as Post[];
     } else if (content === false) {
@@ -374,7 +370,6 @@ export const createPost = async (
         files: createdFiles,
         source: source ? source.id : undefined,
         target: target ? target.id : undefined,
-        container,
         bibliography,
       }) as Post[];
     } else {
@@ -509,42 +504,43 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
     `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM agent where <-${REL_REMEMBERS}<-(post where id = $id)`,
   );
 
-  // // remembers
+  // // container
   queries.push(
     `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM file where ->${REL_CONTAINS}->(post where id = $id)`,
   );
 
   const db = await getDB();
-  const [
-    [post],
-    [before],
-    [after],
-    elicits,
-    remembers,
-    [container],
-  ]: [[Post], [Post], [Post], Post[], Agent[], [File]] = await db
-    .query(queries.join(";"), {
-      id,
-    });
-  if (post.target) {
-    post.target = replaceContentWithLinks(post.target);
-  }
-
-  const obj: PostPlus = {
-    post: replaceContentWithLinks(post, true),
-    before: before ? replaceContentWithLinks(before, true) : undefined,
-    after: after ? replaceContentWithLinks(after, true) : undefined,
-    elicits: elicits
-      ? await Promise.all(
-        elicits.filter((x) => x).map((post) =>
-          replaceContentWithLinks(post, true)
-        ),
-      )
-      : undefined,
-    remembers,
-    container,
-  };
   try {
+    const [
+      [post],
+      [before],
+      [after],
+      elicits,
+      remembers,
+      [container],
+    ]: [[Post], [Post], [Post], Post[], Agent[], [File]] = await db
+      .query(queries.join(";"), {
+        id,
+      });
+    if (post.target) {
+      post.target = replaceContentWithLinks(post.target);
+    }
+
+    const obj: PostPlus = {
+      post: replaceContentWithLinks(post, true),
+      before: before ? replaceContentWithLinks(before, true) : undefined,
+      after: after ? replaceContentWithLinks(after, true) : undefined,
+      elicits: elicits
+        ? await Promise.all(
+          elicits.filter((x) => x).map((post) =>
+            replaceContentWithLinks(post, true)
+          ),
+        )
+        : undefined,
+      remembers,
+      container,
+    };
+
     return obj;
   } finally {
     await db.close();

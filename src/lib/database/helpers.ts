@@ -64,7 +64,7 @@ export const getEntity = async <
     const [table] = id.toString().split(":");
     const query = `SELECT *
           FROM type::table($table)
-          WHERE private IS NOT true
+          WHERE hidden IS NOT true
           ORDER BY timestamp DESC
           FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
     const [[entity]] = await db.query<[[T]]>(query, {
@@ -101,7 +101,7 @@ export const getLatest =
       if (limit < 0) {
         const query = `SELECT *
           FROM type::table($table)
-          WHERE private IS NOT true
+          WHERE hidden IS NOT true
           ORDER BY timestamp DESC
           FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
         // return all
@@ -123,7 +123,7 @@ export const getLatest =
 
         const query =
           `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist FROM type::table($table) WHERE embedding <|${limit}|> $embedded
-          WHERE private IS NOT true
+          WHERE hidden IS NOT true
           ORDER BY dist DESC
           FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
         // const query =
@@ -141,7 +141,7 @@ export const getLatest =
         const query = `
             SELECT *
             FROM type::table($table)
-            WHERE private IS NOT true
+            WHERE hidden IS NOT true
             ORDER BY timestamp DESC
             LIMIT $limit
             START $start

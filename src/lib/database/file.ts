@@ -117,13 +117,12 @@ export const createFile = async (
             for await (const [chunk, embedding] of chunker(text)) {
               const post = await createPost(chunk, {
                 embedding,
-                container: newFile,
                 dropLog: !logChunk,
               }) as Post;
               await relate(newFile.id, REL_CONTAINS, post.id);
               if (previousPostId) {
                 await relate(previousPostId, REL_PRECEDES, post.id, {
-                  container: newFile,
+                  container: newFile.id,
                 });
               }
               previousPostId = post.id;
