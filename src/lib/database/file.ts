@@ -69,11 +69,13 @@ export const createFile = async (
         {
           const settings = await getSettingsObject();
           let chunker;
-          switch (settings.chunker) {
+          switch (settings.chunkingstrategy) {
             case "semantic":
               chunker = createSemanticChunker();
+              break;
             case "sentence":
               chunker = createSentenceChunker();
+              break;
             default:
               chunker = defaultChunker;
               break;
@@ -109,7 +111,6 @@ export const createFile = async (
             date,
             owner: owner ? owner.id : undefined,
           }) as File[];
-
           if (chunk) {
             let previousPostId;
             // embed chunks
