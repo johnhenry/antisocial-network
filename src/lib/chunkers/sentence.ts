@@ -12,9 +12,10 @@ const splitter = function* (text: string, split: number = 2 ** 8) {
   }
 };
 
-export const create = (
+export const createUnembededSentenceChunker = (
   { split = 0 }: { split?: number } = {},
 ): Chunker<string, string> => {
+  // TODO: this can probably be synchronous, but I need ot update some types
   return async function* (text: string) {
     const doc = compromise(text);
     const sentences = doc.sentences().out("array");
@@ -38,7 +39,7 @@ export const createSentenceChunker = ({
   embed?: typeof defaultEmbed;
   split?: number;
 } = {}): Chunker => {
-  const sentence = create({ split });
+  const sentence = createUnembededSentenceChunker({ split });
   return async function* (text: string) {
     for await (const chunk of sentence(text)) {
       yield [chunk, await embed(chunk)];

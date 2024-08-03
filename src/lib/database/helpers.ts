@@ -123,7 +123,7 @@ export const getLatest =
 
         const query =
           `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist FROM type::table($table) WHERE embedding <|${limit}|> $embedded
-          WHERE hidden IS NOT true
+          AND hidden IS NOT true
           ORDER BY dist DESC
           FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
         // const query =

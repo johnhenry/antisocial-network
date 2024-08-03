@@ -360,10 +360,10 @@ export const SETTINGS_DEFAULT: Setting[] = [
   },
   {
     name: "chunkingstrategy",
-    label: "Chunking Strategy*",
+    label: "Chunking Strategy",
     type: "select",
-    options: ["sentence", "semantic", "full", "agentic (coming soon)"],
-    defaultValue: "sentence",
+    options: ["sentence", "semantic", "full", "agentic*"],
+    defaultValue: "semantic",
   },
   {
     name: "charLimit",

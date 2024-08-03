@@ -19,6 +19,7 @@ import createLog from "@/lib/database/log";
 
 import createSentenceChunker from "@/lib/chunkers/sentence";
 import createSemanticChunker from "@/lib/chunkers/semantic";
+import createAgenticChunker from "@/lib/chunkers/agentic";
 import defaultChunker from "@/lib/chunkers/default";
 
 import { describe, embed, summarize } from "@/lib/ai";
@@ -76,6 +77,10 @@ export const createFile = async (
             case "sentence":
               chunker = createSentenceChunker();
               break;
+            case "agentic":
+              chunker = createAgenticChunker();
+              break;
+            case "full":
             default:
               chunker = defaultChunker;
               break;
