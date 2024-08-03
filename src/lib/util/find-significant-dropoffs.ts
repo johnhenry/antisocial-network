@@ -15,24 +15,29 @@ const findSignificantDropoffs = (dropoffs: Dropoff[], zScoreThreshold = 2) => {
     .map((d) => d.index)
     .sort((a, b) => a - b);
 };
-export default findSignificantDropoffs;
 
-// // JavaScript version using TensorFlow.js
-// import * as tf from '@tensorflow/tfjs';
+// JavaScript version using TensorFlow.js
+// import * as tf from "@tensorflow/tfjs";
 
-// const findSignificantDropoffs = (dropoffs, zScoreThreshold = 2) => {
-//     const dropoffValues = dropoffs.map(d => d.dropoff);
-//     const dropoffTensor = tf.tensor1d(dropoffValues);
+// const findSignificantDropoffs = (dropoffs: Dropoff[], zScoreThreshold = 2) => {
+//   const dropoffValues = dropoffs.map((d) => d.dropoff);
+//   const dropoffTensor = tf.tensor1d(dropoffValues);
 
-//     const mean = tf.mean(dropoffTensor);
-//     const stdDev = tf.sqrt(tf.mean(tf.square(tf.sub(dropoffTensor, mean))));
+//   const mean = tf.mean(dropoffTensor);
+//   const stdDev = tf.sqrt(tf.mean(tf.square(tf.sub(dropoffTensor, mean))));
 
-//     const zScores = tf.div(tf.sub(dropoffTensor, mean), stdDev);
-//     const significantMask = tf.greater(zScores, zScoreThreshold);
+//   const zScores = tf.div(tf.sub(dropoffTensor, mean), stdDev);
+//   const significantMask = tf.greater(zScores, zScoreThreshold);
 
-//     const significantIndices = tf.whereAsync(significantMask);
+//   const significantIndices = tf.whereAsync(significantMask);
 
-//     return significantIndices.array().then(indices =>
-//         indices.map(([index]) => dropoffs[index].index).sort((a, b) => a - b)
-//     );
+//   return significantIndices.then((indicies) => indicies.array()).then((
+//     indices,
+//   ) =>
+//     indices.map(([index]) => dropoffs[index].index).sort((
+//       a,
+//       b,
+//     ) => a - b)
+//   );
 // };
+export default findSignificantDropoffs;

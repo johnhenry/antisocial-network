@@ -18,7 +18,7 @@ const cteateChunker = async function* (
   }
 
   // Step 2: Determine chunk boundaries based on statistically significant dropoffs
-  const chunkBoundaries = findSignificantDropoffs(
+  const chunkBoundaries = await findSignificantDropoffs(
     similarityDropoffs,
     zScoreThreshold,
   );

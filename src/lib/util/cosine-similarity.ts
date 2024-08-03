@@ -2,11 +2,10 @@ import dotProduct from "@/lib/util/dot-product";
 import norm from "@/lib/util/norm";
 const cosineSimilarity = (vectorA: number[], vectorB: number[]) =>
   dotProduct(vectorA, vectorB) / (norm(vectorA) * norm(vectorB));
-export default cosineSimilarity;
 
-// import * as tf from '@tensorflow/tfjs';
+// import * as tf from "@tensorflow/tfjs";
 
-// const cosineSimilarity = (a, b) => {
+// const cosineSimilarity = (a: number[], b: number[]) => {
 //   const aTensor = tf.tensor(a);
 //   const bTensor = tf.tensor(b);
 //   const dotProduct = tf.sum(tf.mul(aTensor, bTensor));
@@ -14,3 +13,4 @@ export default cosineSimilarity;
 //   const magnitudeB = tf.sqrt(tf.sum(tf.square(bTensor)));
 //   return dotProduct.div(magnitudeA.mul(magnitudeB)).dataSync()[0];
 // };
+export default cosineSimilarity;
