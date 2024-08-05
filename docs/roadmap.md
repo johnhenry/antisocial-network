@@ -47,6 +47,7 @@ e.g. Mixture of agents.
   - @bob@bill might cause a sequential response where
     - Alt: `@bob|bill`
   - bob answers first, them bill responds.
+  - Plugins.
 
 ### Create more
 
