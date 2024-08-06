@@ -10,7 +10,7 @@ services:
     ports:
       - "3000:3000"
     command: >
-      sh ./run.sh
+      sh ./docker.run.sh
     environment:
       - DB_HOSTNAME=surrealdb
       - FS_HOSTNAME=minio
