@@ -124,7 +124,7 @@ const fix = (forwards: Forward[], doc: string) => {
   return [sequential, simultaneous];
 };
 
-const processPost = async (original: string, startingForward?:Forward=['#abc',["#123"]]) => {
+const processPost = async (original: string, startingForward:Forward=[]) => {
   const match = new RegExp(MENTION_MATCH.source, MENTION_MATCH.flags);
   const forwards: Forward[] = [];
   if(startingForward){
@@ -166,11 +166,9 @@ const processPost = async (original: string, startingForward?:Forward=['#abc',["
       return `${padStart}${head(forward).join(",")}${padEnd}`;
     },
   );
-  return [
-    dehydrated,
-    original,
-    fix(forwards, dehydrated),
-  ];
+
+  const [sequential, simultaneous] = fix(forwards, dehydrated);
+  return {original, dehydrated, sequential, simultaneous};
 };
 
 export const blankPost = async (

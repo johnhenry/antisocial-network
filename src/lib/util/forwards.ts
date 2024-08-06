@@ -1,7 +1,7 @@
 export type Forward = (string | Forward)[];
 
 export const MENTION_MATCH =
-  /(?<padStart>^|\s)((?:(?:@?agent:)|@|#{1,2})[a-zA-Z0-9_$€£¥%=+.?&-]*[a-zA-Z0-9_$€£¥%]+)([|,](?:(?:@?agent:)|@|#{1,2})[a-zA-Z0-9_$€£¥%=+.?&-]*[a-zA-Z0-9_$€£¥%]+)*(?<padEnd>\s|$)*?/g;
+  /(?<padStart>^|\s)((?:(?:@?agent:)|@|#+)[a-zA-Z0-9_$€£¥%=+.?&-]*[a-zA-Z0-9_$€£¥%]+)([|,](?:(?:@?agent:)|@|#+)[a-zA-Z0-9_$€£¥%=+.?&-]*[a-zA-Z0-9_$€£¥%]+)*(?<padEnd>\s|$)*?/g;
 
 export const head = (tree: Forward) => tree.filter((s) => !Array.isArray(s));
 export const tail = (tree: Forward) => tree.find((s) => Array.isArray(s));
