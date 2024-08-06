@@ -8,7 +8,11 @@ export const tail = (tree: Forward) => tree.find((s) => Array.isArray(s));
 export const docSort = (doc: string) => (a: string, b: string) => {
   return doc.indexOf(a) - doc.indexOf(b);
 };
-export const merge = (tree1: Forward, tree2: Forward, doc: string): Forward => {
+export const merge = (
+  tree1: Forward,
+  tree2: Forward,
+  doc: string = "",
+): Forward => {
   const h1 = head(tree1);
   const h2 = head(tree2);
   const h = new Set([...h1, ...h2]);

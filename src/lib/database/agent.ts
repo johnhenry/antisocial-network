@@ -259,7 +259,7 @@ export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
   const ADDITIONAL_FIELDS = `string::concat("", id) as id`;
   // select target
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding FROM agent where id = $id FETCH source, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding FROM agent where id = $id FETCH source, mentions, target, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
   );
   // select incoming relationships
   // remembered
@@ -315,11 +315,11 @@ const mergeRelevant = async (posts: Post[]) => {
 
 export const agentResponse = async (
   agent: Agent & { content: string },
-  { streaming = false, conversation = [], relevant = [], replaceRootMessage}: {
+  { streaming = false, conversation = [], relevant = [], replaceRootMessage }: {
     streaming?: boolean;
     conversation?: Post[];
     relevant?: Post[];
-    replaceRootMessage?:string;
+    replaceRootMessage?: string;
   } = {},
 ): Promise<LangchainGenerator | BaseMessageChunk> => {
   let relevantKnowledge;

@@ -25,7 +25,6 @@ import { embed, tokenize } from "@/lib/ai";
 import { getDB, relate } from "@/lib/db";
 import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
-import parsePostContent from "@/lib/util/parse-post-content";
 import parsePostContentNew from "@/lib/util/parse-post-content-new";
 import { createFiles } from "@/lib/database/file";
 import createLog from "@/lib/database/log";
@@ -44,7 +43,7 @@ import hash from "@/lib/util/hash";
 
 import TOOLS from "@/hashtools/mod";
 
-import {tail} from "@/lib/util/forwards";
+import { tail } from "@/lib/util/forwards";
 
 export const getConversation = async (
   post?: Post,
@@ -159,7 +158,16 @@ export const getRelevant = async ({
 ///////
 
 export const generatePost = async (
-  { tools, target, streaming = false, source, bibliography, depth, forward, replaceRootMessage}: {
+  {
+    tools,
+    target,
+    streaming = false,
+    source,
+    bibliography,
+    depth,
+    forward,
+    replaceRootMessage,
+  }: {
     tools?: string[];
     target?: Post;
     streaming?: boolean;
@@ -203,7 +211,7 @@ export const generatePost = async (
         streaming,
         conversation,
         relevant,
-        replaceRootMessage
+        replaceRootMessage,
       });
     }
     if (streaming) {
@@ -224,7 +232,7 @@ export const generatePost = async (
       tools,
       bibliography: bibliography.concat(conversation).concat(relevant),
       depth,
-      forward
+      forward,
     }) as Promise<Post>;
   } finally {
     db.close();
@@ -270,19 +278,18 @@ export const aggregatePostReplies = async (
   }
 };
 
-
 export const stringIdToAgent = async (id: string): Promise<Agent> => {
   const db = await getDB();
   try {
     const [[agent]] = await db.query<[[Agent]]>(
       `SELECT * FROM ${TABLE_AGENT} WHERE id = $id`,
-      { id:new StringRecordId(id)},
+      { id: new StringRecordId(id) },
     );
     return agent;
   } finally {
     await db.close();
   }
-}
+};
 
 const processContent = (content: string, {
   embedding,
@@ -328,24 +335,53 @@ const processContent = (content: string, {
       }
     };
     const db = await getDB();
-    try{
-      let {original, dehydrated, sequential, simultaneous}:{original?:string, dehydrated?:string, sequential?:Forward[], simultaneous?:Forward[]} =
-        await parsePostContentNew(content, forward);
+    try {
+      let { original, dehydrated, sequential, simultaneous }: {
+        original?: string;
+        dehydrated?: string;
+        sequential?: Forward[];
+        simultaneous?: Forward[];
+      } = await parsePostContentNew(content, forward);
       let post;
       for (let [toolName] of sequential) {
         toolName = toolName.slice(1);
         const [t, query] = (toolName as string).split("?");
         const params = Object.fromEntries(new URLSearchParams(query).entries());
         const tool = TOOLS[t as string];
-        if(!tool){
+        if (!tool) {
           continue;
         }
-        const { handler, name, description } = tool
+        const { handler, name, description } = tool;
         // TODO: Process Post
         console.log("Processing Post:");
         console.log(`${name} ${description}`);
         const result = await handler(
-          {embedding,
+          {
+            embedding,
+            source,
+            files,
+            tools,
+            target,
+            streaming,
+            depth,
+            dropLog,
+            bibliography,
+            forward,
+            dehydrated,
+            original,
+            simultaneous,
+            name,
+            params,
+          },
+        );
+        ({ post, dehydrated, simultaneous = [], files = [] } = result);
+        if (post) {
+          resolve(post);
+        }
+      }
+      if (dehydrated || files.length) {
+        post = await createPost(dehydrated, {
+          embedding,
           source,
           files,
           tools,
@@ -354,38 +390,27 @@ const processContent = (content: string, {
           depth,
           dropLog,
           bibliography,
-          forward,
-          dehydrated,
-          original,
-          simultaneous,
-          name,
-          params,}
-        );
-        ({post, dehydrated, simultaneous} = result);
-        if (post) {
-          resolve(post);
-        }
-      }
-      if(dehydrated){
-        [post] = await db.create(TABLE_POST, {
-          timestamp: Date.now(),
-          content: dehydrated,
-          embedding: embedding ? embedding : await embed(dehydrated as string),
-          count: tokenize(dehydrated as string).length,
-          hash: hash(dehydrated as string),
-          source: source ? source?.id : undefined,
-          target: target ? target?.id : undefined,
-        }) as Post[];
+          forward: simultaneous,
+          logCreation: resolved,
+          noProcess: true,
+        }) as Post;
         resolve(post);
-        for(const sim of simultaneous||[]){
-          const source = await stringIdToAgent(sim[0] as string);
-          const forward = tail(sim);
-          createPost(false, {source, target:post, depth, streaming, bibliography, forward} );
-        }
       }
-    }catch(e){
+      for (const sim of simultaneous) {
+        const source = await stringIdToAgent(sim[0] as string);
+        const forward = tail(sim);
+        createPost(false, {
+          source,
+          target: post,
+          depth,
+          streaming,
+          bibliography,
+          forward,
+        });
+      }
+    } catch (e) {
       reject(e);
-    }finally{
+    } finally {
       await db.close();
     }
   });
@@ -399,7 +424,7 @@ export const createPost = async (
     embedding,
     source,
     files = [],
-    tools: inputTools,//remove
+    tools: inputTools, //remove
     target,
     streaming = false,
     depth = 2 ** 2,
@@ -407,11 +432,13 @@ export const createPost = async (
     bibliography,
     forward = [],
     replaceRootMessage,
+    logCreation = false,
+    noProcess = false,
   }: {
     embedding?: number[];
     source?: Agent;
     files?: FileProto[];
-    tools?: string[];//remove
+    tools?: string[]; //remove
     target?: Post;
     streaming?: boolean;
     depth?: number;
@@ -419,15 +446,15 @@ export const createPost = async (
     bibliography?: Post[];
     forward?: Forward;
     replaceRootMessage?: string;
+    logCreation?: boolean;
+    noProcess?: boolean;
   } = {},
 ): Promise<Entity | void> => {
   const db = await getDB();
   try {
     let post: Post;
-    const scanned: (string | [string, Agent])[] = [];
-    const mentions: Agent[] = [];
-    const tools: string[] = [];
-    if (content) {
+
+    if (content && !noProcess) {
       // create a message
       if (isSlashCommand(content)) {
         return processCommand(trimSlashCommand(content), {
@@ -442,7 +469,7 @@ export const createPost = async (
           embedding,
           source,
           files,
-          tools: inputTools,//remove
+          tools: inputTools, //remove
           target,
           streaming,
           depth,
@@ -470,31 +497,41 @@ export const createPost = async (
         bibliography,
         depth,
         forward,
-        replaceRootMessage
+        replaceRootMessage,
       });
-    } else if (!content) {
-      // Content undefined, but files possibly provided.
-      if (!files.length) {
+    } else if (!content || noProcess) {
+      if (!content && !files.length) {
         throw new Error("No content or files provided.");
       }
       const createdFiles = await createFiles({ files, owner: source });
-      const contents = createdFiles.map(({ content }) => content);
-      const content = contents.join("\n");
-      [post] = await db.create(TABLE_POST, {
-        timestamp: Date.now(),
-        content: "",
-        embedding: embedding ? embedding : await embed(content),
-        count: tokenize(content).length,
-        hash: hash(content),
-        files: createdFiles,
-        source: source ? source.id : undefined,
-        target: target ? target.id : undefined,
-        bibliography,
-      }) as Post[];
+      const filesIds = createdFiles.map(({ id }) => id);
+      const fileContent = createdFiles.map(({ content }) => content);
+      const mentions: Agent[] = [];
+      for (const sim of forward) {
+        mentions.push(await stringIdToAgent(sim[0] as string));
+      }
+      const finalContent = content || "";
+      const phantomContents =
+        (content ? [content].concat(fileContent) : fileContent).join("\n");
+      [post] = await db
+        .create(TABLE_POST, {
+          timestamp: Date.now(),
+          content: finalContent || "",
+          embedding: embedding ? embedding : await embed(phantomContents),
+          count: tokenize(finalContent).length,
+          hash: hash(phantomContents),
+          files: filesIds,
+          mentions: mentions.map(({ id }) => id),
+          source: source ? source.id : undefined,
+          target: target ? target.id : undefined,
+          bibliography,
+        }) as Post[];
     } else {
       throw new Error("Invalid content provided.");
     }
-    createLog(post, { drop: dropLog });
+    if (logCreation) {
+      createLog(post, { drop: dropLog });
+    }
     if (source) {
       await relate(source.id, REL_INSERTED, post.id);
     }
@@ -514,11 +551,13 @@ export const updatePendingPost = async (
     embedding,
     files = [],
     source,
+    forward = [],
   }: {
     content?: string;
     embedding?: number[];
     files?: FileProto[];
     source?: Agent;
+    forward?: Forward[];
   } = {},
 ): Promise<Post> => {
   if (!(content || "").trim()) {
@@ -526,15 +565,27 @@ export const updatePendingPost = async (
   }
   const db = await getDB();
   try {
-    const mentions: string[] = [];
-    const content_ = await parsePostContent(content as string, mentions);
+    // TODO: what to do with the rest of the data
+    // sequential? original?,
+
+    const { dehydrated }: {
+      original?: string;
+      dehydrated?: string;
+      sequential?: Forward[];
+      simultaneous?: Forward[];
+    } = await parsePostContentNew(content!, forward);
+    const mentions: Agent[] = [];
+    for (const sim of forward) {
+      mentions.push(await stringIdToAgent(sim[0] as string));
+    }
+    const content_ = dehydrated;
     const post = await db.update(id, {
       timestamp: Date.now(),
       hash: hash(content_),
-      raw: content,
       content: content_,
       embedding: embedding ? embedding : await embed(content_),
       source,
+      mentions: mentions.map(({ id }) => id),
     }) as Post;
     await createFiles({ files, owner: source });
     return replaceContentWithLinks(post);
@@ -576,7 +627,7 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
     `;
   // select target
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where id = $id FETCH source, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where id = $id FETCH source, target, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
   );
   // select incoming relationships
   // precedes
@@ -590,7 +641,7 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
   );
   // // elicits
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_ELICITS}<-(post where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_ELICITS}<-(post where id = $id) FETCH mentions`,
   );
   // // remembers
   queries.push(

@@ -79,6 +79,7 @@ export const createPostExternal = async (
     targetId,
     streaming,
     depth = -1,
+    logCreation = true,
   }: {
     embedding?: number[];
     files?: FileProto[];
@@ -86,6 +87,7 @@ export const createPostExternal = async (
     targetId?: string;
     streaming?: boolean;
     depth?: number;
+    logCreation?: boolean;
   } = {},
 ): Promise<EntityExt | void> => {
   const db = await getDB();
@@ -98,6 +100,7 @@ export const createPostExternal = async (
       target,
       streaming,
       depth,
+      logCreation,
     });
     if (result) {
       let mapper: (entity: Entity) => EntityExt;

@@ -40,13 +40,13 @@ export const replaceContentWithLinks = <
   useLink: boolean = true,
 ): T => {
   item.content = render ? renderText(item?.content || "") : item?.content || "";
-
+  console.log(item.content);
   if (item.content && item.mentions && item.mentions.length > 0) {
     for (const mention of item.mentions) {
       const { id: rId, name } = mention;
       const id = rId.toString();
       item.content = item.content.replaceAll(
-        new RegExp(`@${id}`, "g"),
+        new RegExp(`${id}`, "g"),
         useLink ? `<a href="/agent/${id}">@${name}</a>` : `@${name}`,
       );
     }
@@ -66,7 +66,7 @@ export const getEntity = async <
           FROM type::table($table)
           WHERE hidden IS NOT true
           ORDER BY timestamp DESC
-          FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
+          FETCH source, mentions, files, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
     const [[entity]] = await db.query<[[T]]>(query, {
       id,
       table,
@@ -103,7 +103,7 @@ export const getLatest =
           FROM type::table($table)
           WHERE hidden IS NOT true
           ORDER BY timestamp DESC
-          FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
+          FETCH source, mentions, files, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
         // return all
         [
           result,
@@ -125,7 +125,7 @@ export const getLatest =
           `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist FROM type::table($table) WHERE embedding <|${limit}|> $embedded
           AND hidden IS NOT true
           ORDER BY dist DESC
-          FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
+          FETCH source, mentions, files, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
         // const query =
         //   `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist, ${""} OMIT ${""} FROM type::table($table) WHERE embedding <|${limit}|> $embedded ORDER BY dist DESC`;
 
@@ -145,7 +145,7 @@ export const getLatest =
             ORDER BY timestamp DESC
             LIMIT $limit
             START $start
-            FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
+            FETCH source, mentions, files, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography,mbibliography, bibliography.mentions, bibliography.source`;
         [result] = await db.query(query, {
           table,
           limit,
