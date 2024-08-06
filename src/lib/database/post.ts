@@ -26,6 +26,7 @@ import { getDB, relate } from "@/lib/db";
 import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
 import parsePostContent from "@/lib/util/parse-post-content";
+import parsePostContentNew from "@/lib/util/parse-post-content-new";
 import { createFiles } from "@/lib/database/file";
 import createLog from "@/lib/database/log";
 import { getEntity, getLatest } from "@/lib/database/helpers";
@@ -40,6 +41,8 @@ import { toolResponse } from "@/lib/database/tool";
 import { replaceContentWithLinks } from "@/lib/database/helpers";
 
 import hash from "@/lib/util/hash";
+
+import TOOLS from "@/hashtools/mod";
 
 export const getConversation = async (
   post?: Post,
@@ -261,28 +264,143 @@ export const aggregatePostReplies = async (
   }
 };
 
+const processContent = (content: string, {
+  embedding,
+  source,
+  files = [],
+  tools,
+  target,
+  streaming = false,
+  depth = 2 ** 2,
+  dropLog = false,
+  bibliography,
+  forwards = [],
+}: {
+  embedding?: number[];
+  source?: Agent;
+  files?: FileProto[];
+  tools?: string[];
+  target?: Post;
+  streaming?: boolean;
+  depth?: number;
+  dropLog?: boolean;
+  bibliography?: Post[];
+  forwards?: Forward[];
+} = {}): Promise<Post> => {
+  return new Promise(async (rs, rj) => {
+
+    let resolved = false;
+    let rejected = false;
+    const resolve = (post: Post) => {
+      if (!resolved) {
+        rs(post);
+        resolved = true;
+      }
+    };
+    const reject = (e: unknown) => {
+      if (!resolved) {
+        rj(e);
+        resolved = true;
+        rejected = true;
+      }
+    };
+    const db = await getDB();
+    try{
+      let [dehydrated, original, [sequential, simultaneous]] =
+        await parsePostContentNew(content);
+      //
+      for (let [toolName] of sequential) {
+        //   if (depth === 0) {
+        //     return;
+        //   }
+        //   depth -= 1;
+        let inline = false;
+        toolName = toolName.slice(1);
+        if (toolName[0] === "#") {
+          toolName = toolName.slice(1);
+          inline = true;
+        }
+        const tool = TOOLS[toolName as string];
+        if(!tool){
+          continue;
+        }
+        const { handler, name, description } = tool
+        // TODO: Process Post
+        const result = await handler(
+          embedding,
+          source,
+          files,
+          tools,
+          target,
+          streaming,
+          depth,
+          dropLog,
+          bibliography,
+          forwards,
+          dehydrated,
+          original,
+          sequential,
+          simultaneous,
+          toolName,
+        );
+        [dehydrated, simultaneous] = await result;
+      const [post] = await db.create(TABLE_POST, {
+          timestamp: Date.now(),
+          content: dehydrated,
+          embedding: embedding ? embedding : await embed(dehydrated as string),
+          count: tokenize(dehydrated as string).length,
+          hash: hash(dehydrated as string),
+          source: source ? source.id : undefined,
+          target: target ? target.id : undefined,
+        }) as Post[];
+        resolve(post);
+      }
+      if(!resolved){
+        const [post] = await db.create(TABLE_POST, {
+          timestamp: Date.now(),
+          content: dehydrated,
+          embedding: embedding ? embedding : await embed(dehydrated as string),
+          count: tokenize(dehydrated as string).length,
+          hash: hash(dehydrated as string),
+          source: source ? source?.id : undefined,
+          target: target ? target?.id : undefined,
+        }) as Post[];
+        resolve(post);
+      }
+    }catch(e){
+      reject(e);
+    }finally{
+      await db.close();
+    }
+  });
+};
+
+import type { Forward } from "@/lib/util/forwards";
+
 export const createPost = async (
   content: string | undefined | false | null,
   {
     embedding,
     source,
     files = [],
-    tools: inputTools,
+    tools: inputTools,//remove
     target,
     streaming = false,
     depth = 2 ** 2,
     dropLog = false,
     bibliography,
+    forwards = [],
   }: {
     embedding?: number[];
     source?: Agent;
     files?: FileProto[];
-    tools?: string[];
+    tools?: string[];//remove
     target?: Post;
     streaming?: boolean;
     depth?: number;
     dropLog?: boolean;
     bibliography?: Post[];
+    forwards?: Forward[];
   } = {},
 ): Promise<Entity | void> => {
   const db = await getDB();
@@ -301,37 +419,19 @@ export const createPost = async (
           dropLog,
         });
       } else {
-        // create a post
-        const parsed = await parsePostContent(content, scanned);
-        const createdFiles = await createFiles({ files, owner: source });
-        const contents = createdFiles.map(({ content }) => content);
-        contents.unshift(parsed);
-        const content_ = contents.join("\n");
-        for (const scan of scanned) {
-          if (typeof scan === "string") {
-            tools.push(scan.slice(1));
-          } else {
-            const [_, agent] = scan;
-            mentions.push(agent);
-          }
-        }
-        [post] = await db.create(TABLE_POST, {
-          timestamp: Date.now(),
-          content: parsed,
-          embedding: embedding ? embedding : await embed(content_),
-          count: tokenize(content_).length,
-          hash: hash(content_),
-          files: createdFiles,
-          mentions: mentions && mentions.length
-            ? mentions.map((post) => post.id)
-            : undefined,
-          tools: inputTools,
-          source: source ? source.id : undefined,
-          target: target ? target.id : undefined,
-          bibliography: bibliography && bibliography.length
-            ? bibliography.map((post) => post.id)
-            : undefined,
-        }) as Post[];
+        // create a post from content
+        post = await processContent(content, {
+          embedding,
+          source,
+          files,
+          tools: inputTools,//remove
+          target,
+          streaming,
+          depth,
+          dropLog,
+          bibliography,
+          forwards,
+        });
       }
     } else if (content === null) {
       // temporary content will be created later.
@@ -344,7 +444,6 @@ export const createPost = async (
       }) as Post[];
     } else if (content === false) {
       // content will be generated by a tool or an agent.
-
       post = await generatePost({
         tools: inputTools,
         target,
@@ -382,32 +481,6 @@ export const createPost = async (
     if (target) {
       await relate(target.id, REL_ELICITS, post.id);
     }
-    const next = async (depth = 0) => {
-      if (depth === 0) {
-        return;
-      }
-      depth -= 1;
-      if (tools && tools.length) {
-        await createPost(false, {
-          tools,
-          target: post,
-          depth,
-          streaming,
-          bibliography,
-        });
-      } else {
-        for (const source of mentions) {
-          await createPost(false, {
-            source,
-            target: post,
-            depth,
-            streaming,
-            bibliography,
-          });
-        }
-      }
-    };
-    next(depth);
     return replaceContentWithLinks(post);
   } finally {
     await db.close();

@@ -6,6 +6,7 @@ import replaceMentions from "@/lib/util/replace-mentions";
 import { TABLE_AGENT } from "@/config/mod";
 import { createTempAgent } from "@/lib/database/agent";
 import { StringRecordId } from "surrealdb.js";
+import { getAgent } from "@/lib/database/agent";
 
 const getAgentIdByNameOrCreate = async (
   name: string,
@@ -26,8 +27,6 @@ const getAgentIdByNameOrCreate = async (
     await db.close();
   }
 };
-
-import { getAgent } from "@/lib/database/agent";
 
 const replaceAgents = async (
   name: string,

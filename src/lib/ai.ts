@@ -15,7 +15,8 @@ import { getSettingsObject } from "@/lib/database/settings";
 import { RunnableLike } from "@langchain/core/runnables";
 import { getEncoding } from "js-tiktoken";
 import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
-import TOOLS from "@/tools/handlers";
+// import TOOLS from "@/tools/handlers";
+import TOOLS from "@/hashtools/mod";
 import { Agent, Post } from "@/types/mod";
 import { Tool } from "@/types/tools";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
@@ -92,8 +93,9 @@ export const respondT = async (
           try {
             const functionResponse = await handler(
               tool.function.arguments,
-            );
+            ); // TODO: overhaul-tools:  Update this call
             // Add function response to the conversation
+            // I actuallly might move this functioality alltogether.
             responses.push(`[${name}] ${functionResponse}`);
           } catch (e) {
             responses.push(

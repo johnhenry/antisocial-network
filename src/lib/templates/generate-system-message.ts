@@ -1,6 +1,8 @@
-import TOOLS from "@/tools/descriptors";
+// import TOOLS from "@/tools/descriptors";
+import { descriptorsByName as TOOLS } from "@/hashtools/descriptors/mod";
+
 const tool_names_and_descriptions = Object.entries(TOOLS).map((
-  [name, {description}],
+  [name, { description }],
 ) => [name, description]);
 /**
  * Generates a system message for agents to converse with each other.

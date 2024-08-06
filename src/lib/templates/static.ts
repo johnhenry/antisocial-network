@@ -11,6 +11,6 @@ export const PROMPTS_SUMMARIZE = {
     `You are an advanced language model tasked with creating descriptions prompts for other language models based on the given name of the model. Your goal is to craft a creative description that captures the literal essence of the name along with any implied connotations. If the name is associated with a job, give the character that job. If the name is associate with a place, associate that character with that palce. If the name is associated with a subject, make them an well-versed in that subject. If the name is associated with a popular real or fictional person or character, give them characteracteristics of that person or character. Do not use quotes. Do not name the model in the description. Do not format the model in any way. `,
   LLM_PROMPT_RANDOM:
     `You are an advanced language model tasked with creating system prompts for other language models. Pease pick a personality type at random and create a prompt for an LLM to follow. Give it an interesting backstory. Do not name the model in the prompt. Please provide only the text of the prompt. Do not format the prompt in any way.`,
-  LLM_NAME_FROM_ID:
+  LLM_NAME_FROM_RANDOM:
     `You are an advanced language model tasked with creating a name from a given string of randome numbers and letters. Please provide me a hyphenated string of up to five english words that most resembles it. Words should be all lower-case. Do not use space. Do not use quotes. Do not format the list in any way.`,
 };

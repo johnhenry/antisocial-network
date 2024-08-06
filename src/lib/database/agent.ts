@@ -51,11 +51,15 @@ export const nameExists = async (name: string): Promise<boolean> => {
 };
 
 export const createTempAgent = async (
-  { name, context }: { name?: string; context?: string } = {},
+  { name, context, id_suffix }: {
+    name?: string;
+    context?: string;
+    id_suffix?: string;
+  } = {},
 ): Promise<AgentTemp> => {
   const db = await getDB();
   try {
-    const id = new RecordId(TABLE_AGENT, genRandSurrealQLString());
+    const id = new RecordId(TABLE_AGENT, id_suffix ?? genRandSurrealQLString());
     const embedding = await embed(name + id.toString());
     const [agent] = await db.create(TABLE_AGENT, {
       timestamp: Date.now(),
