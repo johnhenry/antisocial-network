@@ -215,6 +215,7 @@ export type AgentParameters = {
   useMMap?: boolean;
   vocabOnly?: boolean;
   format?: "json";
+  seed?: -1;
 };
 
 export type Relationship = {

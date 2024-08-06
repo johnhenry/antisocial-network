@@ -463,6 +463,16 @@ const Page: FC<Props> = ({ params }) => {
                   data-obfo-cast="number"
                 />
               </label>
+              <label>
+                seed
+                <input
+                  name="seed"
+                  type="number"
+                  onChange={taint}
+                  defaultValue={agent.parameters.seed}
+                  data-obfo-cast="number"
+                />
+              </label>
             </details>
           </form>
         </header>

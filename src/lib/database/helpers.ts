@@ -33,7 +33,7 @@ export const replaceAgentIdWithName = async (
 };
 
 export const replaceContentWithLinks = <
-  T extends { content?: string; mentions?: Post[] },
+  T extends { content?: string; mentions?: Agent[] },
 >(
   item: T,
   render: boolean = false,
@@ -42,7 +42,7 @@ export const replaceContentWithLinks = <
   item.content = render ? renderText(item?.content || "") : item?.content || "";
 
   if (item.content && item.mentions && item.mentions.length > 0) {
-    for (const mention of item.mentions as Agent[]) {
+    for (const mention of item.mentions) {
       const { id: rId, name } = mention;
       const id = rId.toString();
       item.content = item.content.replaceAll(

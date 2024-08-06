@@ -281,7 +281,7 @@ export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   logitsAll: undefined,
   lowVram: undefined,
   mainGpu: 0,
-  model: undefined,
+  model: MODEL_BASIC,
   baseUrl: undefined,
   mirostat: 0,
   mirostatEta: 0.1,
@@ -309,6 +309,7 @@ export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   useMMap: undefined,
   vocabOnly: undefined,
   format: undefined,
+  seed:-1
 };
 
 export const SETTINGS_DEFAULT: Setting[] = [

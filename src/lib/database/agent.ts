@@ -315,10 +315,11 @@ const mergeRelevant = async (posts: Post[]) => {
 
 export const agentResponse = async (
   agent: Agent & { content: string },
-  { streaming = false, conversation = [], relevant = [] }: {
+  { streaming = false, conversation = [], relevant = [], replaceRootMessage}: {
     streaming?: boolean;
     conversation?: Post[];
     relevant?: Post[];
+    replaceRootMessage?:string;
   } = {},
 ): Promise<LangchainGenerator | BaseMessageChunk> => {
   let relevantKnowledge;
@@ -326,7 +327,7 @@ export const agentResponse = async (
   let systemMessage;
   if (conversation.length) {
     relevantKnowledge = await mergeRelevant(relevant);
-    messages = mapPostsToMessages(conversation);
+    messages = mapPostsToMessages(conversation, replaceRootMessage);
     systemMessage = [
       "system",
       await generateSystemMessage(Boolean(relevantKnowledge)),

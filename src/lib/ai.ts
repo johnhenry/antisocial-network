@@ -1,3 +1,5 @@
+import type { DescriptorFull } from "@/hashtools/types";
+
 // import { encode as gpt3Encoder } from "gpt-3-encoder";
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
@@ -18,7 +20,6 @@ import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
 // import TOOLS from "@/tools/handlers";
 import TOOLS from "@/hashtools/mod";
 import { Agent, Post } from "@/types/mod";
-import { Tool } from "@/types/tools";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 
 type FunctionDescriptor = {
@@ -79,14 +80,14 @@ export const respondT = async (
     host: OLLAMA_ORIGIN,
   });
   for (const toolname of tools) {
-    const currentTool: Tool | undefined = TOOLS[toolname];
+    const currentTool: DescriptorFull | undefined = TOOLS[toolname];
 
     if (currentTool) {
-      const { name, handler, description, ...descriptor } = currentTool;
+      const { name, handler, description } = currentTool;
       const response = await ollama.chat({
         model,
         messages: ollamaMessages,
-        tools: [currentTool],
+        // tools: [currentTool], // TODO: remove
       });
       if (response.message.tool_calls) {
         for (const tool of response.message.tool_calls) {
@@ -152,6 +153,8 @@ export const respond = async (
     ...parameters,
     model,
   };
+
+  console.log({ repo, model });
 
   try {
     let invoker: Invoker;

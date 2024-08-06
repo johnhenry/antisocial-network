@@ -36,7 +36,7 @@ const getAgentIdFromName = async (name: string): Promise<`agent:${string}`> => {
   // return `agent:${name}`;
 };
 const confirmAgentId = async (id: string): Promise<`agent:${string}`> => {
-  if (id.startsWith("agent:")) {
+  if (!id.startsWith("agent:")) {
     return getAgentIdFromName(id);
   }
   const rid = new StringRecordId(id);
@@ -124,7 +124,7 @@ const fix = (forwards: Forward[], doc: string) => {
   return [sequential, simultaneous];
 };
 
-const processPost = async (original: string, startingForward:Forward=[]) => {
+export const processPost = async (original: string, startingForward:Forward=[]) => {
   const match = new RegExp(MENTION_MATCH.source, MENTION_MATCH.flags);
   const forwards: Forward[] = [];
   if(startingForward){
@@ -177,7 +177,7 @@ export const blankPost = async (
     mentions?: boolean | string[];
     hashtags?: boolean | string[];
   } = {},
-) => {
+):Promise<string> => {
   const match = new RegExp(MENTION_MATCH.source, MENTION_MATCH.flags);
   const blanked = await replaceAll(
     original,
@@ -206,10 +206,7 @@ export const blankPost = async (
       return `${padStart}${exec![0]}${padEnd}`;
     },
   );
-  return [
-    blanked,
-    original,
-  ];
+  return blanked;
 };
 
 export default processPost;

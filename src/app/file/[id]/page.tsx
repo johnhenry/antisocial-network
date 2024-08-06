@@ -6,6 +6,7 @@ import { getFilePlusExternal, updateFileExternal } from "@/lib/database/mod";
 
 import obfo from "obfo";
 import DynamicLoader from "@/components/dynamic-loader";
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: {

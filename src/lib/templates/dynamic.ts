@@ -46,6 +46,7 @@ export const generateUserMessage = (post: Post) =>
 
 export const mapPostsToMessages = (
   posts: Post[],
+  replaceRootMessage?: string
 ): [string, string][] => {
   const messages: [string, string][] = [];
   for (const post of posts) {
@@ -53,6 +54,9 @@ export const mapPostsToMessages = (
       "user",
       generateUserMessage(post),
     ]);
+  }
+  if(replaceRootMessage && messages?.length){
+    messages[0][1] = replaceRootMessage;
   }
   return messages;
 };
