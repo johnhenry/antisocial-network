@@ -74,18 +74,6 @@ export const createTempAgent = async (
   }
 };
 
-export const deleteAgent = async (recordId: RecordId): Promise<boolean> => {
-  const db = await getDB();
-  try {
-    const response = await db.delete(recordId);
-    return true;
-  } catch (err) {
-    return false;
-  } finally {
-    db.close();
-  }
-};
-
 const combineQualities = (
   description: string = "",
   qualities: [string, string][],

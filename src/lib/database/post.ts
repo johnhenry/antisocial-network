@@ -27,7 +27,7 @@ import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
 import parsePostContent from "@/lib/util/parse-post-content";
 import { createFiles } from "@/lib/database/file";
-import createLog from "@/lib/database/log";
+import { createLog } from "@/lib/database/log";
 import { getEntity, getLatest } from "@/lib/database/helpers";
 import { RecordId, StringRecordId } from "surrealdb.js";
 import {
@@ -73,7 +73,16 @@ export const getConversation = async (
       }
       currentPost = T;
     }
-    return posts;
+    // many posts to a single target, so gotta fetch them all!
+    // if we fetch the children's targets as well?
+    /// that might give an agent more info when generating?
+    const postIds = posts.map((p) => p.id);
+    const [postsThatTarget] = await db.query<[[Post]]>(
+      `SELECT * FROM ${TABLE_POST} WHERE target IN ($postIds)`,
+      { postIds },
+    );
+    // should probably de-dupe? maybe? following targets of targets should not be dupes so maybe not?
+    return [...posts, ...postsThatTarget];
   } finally {
     await db.close();
   }
@@ -407,7 +416,8 @@ export const createPost = async (
         }
       }
     };
-    next(depth);
+    // was this supposed to be awaited?
+    await next(depth);
     return replaceContentWithLinks(post);
   } finally {
     await db.close();
