@@ -9,7 +9,7 @@ import type {
   Post,
 } from "@/types/mod";
 import type { BaseMessageChunk } from "@langchain/core/messages";
-import createLog from "@/lib/database/log";
+import { createLog } from "@/lib/database/log";
 import {
   DEFAULT_PARAMETERS_AGENT,
   REL_BOOKMARKS,
@@ -69,6 +69,18 @@ export const createTempAgent = async (
     }) as AgentTemp[];
     createLog(agent, { type: "created-temp" });
     return agent;
+  } finally {
+    db.close();
+  }
+};
+
+export const deleteAgent = async (recordId: RecordId): Promise<boolean> => {
+  const db = await getDB();
+  try {
+    const response = await db.delete(recordId);
+    return true;
+  } catch (err) {
+    return false;
   } finally {
     db.close();
   }

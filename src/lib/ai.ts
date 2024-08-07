@@ -236,6 +236,8 @@ export const embed = async (prompt: string = genRandSurrealQLString()) => {
     switch (repo) {
       case "openai": {
         arg.apiKey = settings.apikeyopenai;
+        // set the vector dimensions to match the length the database needs
+        arg.dimensions = 768;
         const llm = new OpenAIEmbeddings(arg);
         const embedding = await llm.embedQuery(prompt);
         return embedding;
