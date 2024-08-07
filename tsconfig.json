@@ -31,5 +31,6 @@
     ".next/types/**/*.ts",
     "src/tools/javascript"
   ],
+  "moduleDirectories": ["node_modules", "src"],
   "exclude": ["node_modules"]
 }

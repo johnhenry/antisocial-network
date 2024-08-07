@@ -159,7 +159,7 @@ const Page: FC<Props> = ({ params }) => {
             <label>
               Format
               <select
-                name="model"
+                name="format"
                 defaultValue={agent.parameters.format}
                 onChange={taint}
               >

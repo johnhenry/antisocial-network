@@ -9,7 +9,7 @@ import type {
   Post,
 } from "@/types/mod";
 import type { BaseMessageChunk } from "@langchain/core/messages";
-import createLog from "@/lib/database/log";
+import { createLog } from "@/lib/database/log";
 import {
   DEFAULT_PARAMETERS_AGENT,
   REL_BOOKMARKS,
@@ -83,7 +83,7 @@ const combineQualities = (
     qualities.map(([k, v]) => `- ${k}\n  - ${v}`).join("\n").trim();
 };
 
-const genCharacter = async ({
+export const genCharacter = async ({
   name,
   parameters = DEFAULT_PARAMETERS_AGENT,
   description = "",
@@ -177,6 +177,7 @@ export const createAgent = async ({
         image,
       }),
     }) as Agent[];
+    1;
     createLog(agent);
     if (files) {
       await createFiles({ files, owner: agent });

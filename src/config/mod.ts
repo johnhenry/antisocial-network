@@ -371,6 +371,12 @@ export const SETTINGS_DEFAULT: Setting[] = [
     type: "number",
     defaultValue: CHAR_LIMIT,
   },
+  {
+    name: "embedding_vector_size",
+    label: "Embedding Vector Size",
+    type: "number",
+    defaultValue: SIZE_EMBEDDING_VECTOR,
+  },
 ];
 
 export const AI_SAYINGS: [string, string][] = [

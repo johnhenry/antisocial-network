@@ -27,7 +27,7 @@ import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
 import parsePostContent from "@/lib/util/parse-post-content";
 import { createFiles } from "@/lib/database/file";
-import createLog from "@/lib/database/log";
+import { createLog } from "@/lib/database/log";
 import { getEntity, getLatest } from "@/lib/database/helpers";
 import { RecordId, StringRecordId } from "surrealdb.js";
 import {
@@ -375,6 +375,7 @@ export const createPost = async (
     } else {
       throw new Error("Invalid content provided.");
     }
+
     createLog(post, { drop: dropLog });
     if (source) {
       await relate(source.id, REL_INSERTED, post.id);

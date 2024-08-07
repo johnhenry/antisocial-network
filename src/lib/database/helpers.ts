@@ -71,6 +71,9 @@ export const getEntity = async <
       id,
       table,
     });
+    if (!entity) {
+      throw new Error(`Entity not found: ${id}`);
+    }
 
     const result = await replaceContentWithLinks<T>(entity);
 
@@ -167,3 +170,19 @@ export const getLatest =
       db.close();
     }
   };
+
+import { RecordId } from "surrealdb.js";
+
+export const deleteEntityById = async (
+  recordId: RecordId,
+): Promise<boolean> => {
+  const db = await getDB();
+  try {
+    await db.delete(recordId);
+    return true;
+  } catch (err) {
+    return false;
+  } finally {
+    db.close();
+  }
+};
