@@ -19,6 +19,7 @@ import TOOLS from "@/tools/handlers";
 import { Agent, Post } from "@/types/mod";
 import { Tool } from "@/types/tools";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
+import { SIZE_EMBEDDING_VECTOR } from "@/config/mod";
 
 type FunctionDescriptor = {
   name: string;
@@ -237,7 +238,8 @@ export const embed = async (prompt: string = genRandSurrealQLString()) => {
       case "openai": {
         arg.apiKey = settings.apikeyopenai;
         // set the vector dimensions to match the length the database needs
-        arg.dimensions = 768;
+        arg.dimensions = settings.embedding_vector_size ||
+          SIZE_EMBEDDING_VECTOR;
         const llm = new OpenAIEmbeddings(arg);
         const embedding = await llm.embedQuery(prompt);
         return embedding;

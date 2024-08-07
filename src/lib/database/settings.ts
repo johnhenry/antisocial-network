@@ -33,11 +33,27 @@ export const getSettingsObject = async (): Promise<
   return settings || {};
 };
 
+const castAsNumber = [
+  "embedding_vector_size",
+];
+const castAsBoolean: string[] = [];
+
 export const updateSettings = async (
   settings: Setting[],
 ): Promise<Setting[]> => {
   const db = await getDB();
   try {
+    for (const setting of settings) {
+      if (castAsNumber.includes(setting.name)) {
+        setting.defaultValue = Number(setting.defaultValue);
+      }
+      if (castAsBoolean.includes(setting.name)) {
+        setting.defaultValue =
+          (setting.defaultValue as string).toLowerCase() === "true"
+            ? true
+            : false;
+      }
+    }
     // Fetch current settings
     await db.update(new StringRecordId("settings:current"), {
       data: settings,
