@@ -1,5 +1,13 @@
 {
   "extends": "next/core-web-vitals",
+  "overrides": [
+    {
+      "files": ["tests/**/*"],
+      "env": {
+        "jest": true
+      }
+    }
+  ],
   "rules": {
     // "indent": [
     //   "error",

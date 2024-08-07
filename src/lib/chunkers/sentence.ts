@@ -40,6 +40,7 @@ export const createSentenceChunker = ({
   split?: number;
 } = {}): Chunker => {
   const sentence = createUnembededSentenceChunker({ split });
+  //@ts-ignore
   return async function* (text: string) {
     for await (const chunk of sentence(text)) {
       yield [chunk, await embed(chunk)];

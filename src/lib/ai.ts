@@ -4,7 +4,7 @@ import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
 import type { BaseMessageChunk } from "@langchain/core/messages";
 import type { ChatPromptValueInterface } from "@langchain/core/prompt_values";
 import { ChatGroq } from "@langchain/groq";
-import { OpenAI } from "@langchain/openai";
+import { OpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { Ollama } from "ollama";
 import { OllamaFunctions } from "@langchain/community/experimental/chat_models/ollama_functions";
@@ -226,8 +226,20 @@ export const respondFunc = async (
 export const embed = async (prompt: string = genRandSurrealQLString()) => {
   const settings = await getSettingsObject();
   const [repo, model] = settings.modelembedding!.split("::");
+
+  const arg: Record<any, any> = {
+    model,
+    repo,
+  };
+
   try {
     switch (repo) {
+      case "openai": {
+        arg.apiKey = settings.apikeyopenai;
+        const llm = new OpenAIEmbeddings(arg);
+        const embedding = await llm.embedQuery(prompt);
+        return embedding;
+      }
       case "ollama":
       default: {
         const ollama = new Ollama({

@@ -30,6 +30,7 @@ const cteateChunker = async function* (
     const chunkText = chunk.map((item) => item[0]).join(" ");
     const chunkEmbedding = await embed(chunkText);
 
+    //@ts-ignore
     yield [chunkText, chunkEmbedding];
 
     startIndex = endIndex;

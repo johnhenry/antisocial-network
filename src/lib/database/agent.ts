@@ -83,7 +83,7 @@ const combineQualities = (
     qualities.map(([k, v]) => `- ${k}\n  - ${v}`).join("\n").trim();
 };
 
-const genCharacter = async ({
+export const genCharacter = async ({
   name,
   parameters = DEFAULT_PARAMETERS_AGENT,
   description = "",

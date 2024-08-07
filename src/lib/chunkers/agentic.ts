@@ -109,6 +109,7 @@ const createAgenticChunker = ({
 
       if (i === sentences.length - 1) {
         const lastChunk = currentChunk.join(" ").trim();
+        //@ts-ignore
         yield [lastChunk, await embed(lastChunk)];
         break;
       }
@@ -121,6 +122,7 @@ const createAgenticChunker = ({
 
       if (shouldBreak) {
         const nextChunk = currentChunk.join(" ").trim();
+        //@ts-ignore
         yield [nextChunk, await embed(nextChunk)];
         currentChunk = [];
       }
