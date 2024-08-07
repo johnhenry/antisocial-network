@@ -71,6 +71,9 @@ export const getEntity = async <
       id,
       table,
     });
+    if (!entity) {
+      throw new Error(`Entity not found: ${id}`);
+    }
 
     const result = await replaceContentWithLinks<T>(entity);
 
@@ -175,7 +178,7 @@ export const deleteEntityById = async (
 ): Promise<boolean> => {
   const db = await getDB();
   try {
-    const response = await db.delete(recordId);
+    await db.delete(recordId);
     return true;
   } catch (err) {
     return false;

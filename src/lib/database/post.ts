@@ -375,6 +375,7 @@ export const createPost = async (
     } else {
       throw new Error("Invalid content provided.");
     }
+
     createLog(post, { drop: dropLog });
     if (source) {
       await relate(source.id, REL_INSERTED, post.id);

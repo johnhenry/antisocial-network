@@ -83,7 +83,7 @@ export const updateSettingsObject = async (
     const oldSettings = await getSettings();
     for (const [name, value] of Object.entries(oldSettings)) {
       const setting = oldSettings.find((s) => s.name === name)!;
-      const newSetting = { ...setting };
+      const newSetting = { ...value, ...setting };
       if (newSetting) {
         if (value !== null) {
           newSetting.defaultValue = value.defaultValue;

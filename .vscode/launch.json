@@ -2,6 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "[Spec]",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run test:watch"
+    },
+    {
       "name": "[Server]",
       "type": "node-terminal",
       "request": "launch",
