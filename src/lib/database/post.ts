@@ -225,7 +225,7 @@ export const generatePost = async (
     }) as Post;
     return post;
   } catch (e) {
-    console.error("XXXX", e);
+    throw e;
   } finally {
     db.close();
   }
