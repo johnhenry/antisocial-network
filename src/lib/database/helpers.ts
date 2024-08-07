@@ -167,3 +167,19 @@ export const getLatest =
       db.close();
     }
   };
+
+import { RecordId } from "surrealdb.js";
+
+export const deleteEntityById = async (
+  recordId: RecordId,
+): Promise<boolean> => {
+  const db = await getDB();
+  try {
+    const response = await db.delete(recordId);
+    return true;
+  } catch (err) {
+    return false;
+  } finally {
+    db.close();
+  }
+};

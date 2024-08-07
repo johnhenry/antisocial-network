@@ -1,5 +1,4 @@
 import { createLog as originalCreateLog } from "@/lib/database/log";
-
 jest.mock("@/lib/database/log", () => ({
   ...jest.requireActual("@/lib/database/log"),
   createLog: jest.fn(),
@@ -7,7 +6,8 @@ jest.mock("@/lib/database/log", () => ({
 }));
 
 import createPost, { getConversation } from "@/lib/database/post";
-import { deleteById } from "./test-helpers";
+import { deleteEntityById } from "@/lib/database/helpers";
+
 import { Agent, Post } from "@/types/mod";
 import { TABLE_AGENT, TABLE_POST } from "@/config/mod";
 import { createAgent } from "@/lib/database/agent";
@@ -15,7 +15,7 @@ import { createAgent } from "@/lib/database/agent";
 describe("posts", () => {
   it("should be able to create a post", async () => {
     const post = (await createPost("hello world 3")) as Post;
-    await deleteById(post.id);
+    await deleteEntityById(post.id);
   });
 
   it(
@@ -26,9 +26,9 @@ describe("posts", () => {
       const post3 = (await createPost("sub post 2", { target: post })) as Post;
       const conversation = await getConversation(post, -1);
       expect(conversation.length).toBe(3);
-      await deleteById(post.id);
-      await deleteById(post2.id);
-      await deleteById(post3.id);
+      await deleteEntityById(post.id);
+      await deleteEntityById(post2.id);
+      await deleteEntityById(post3.id);
     },
     10000,
   );
@@ -54,10 +54,10 @@ describe("posts", () => {
         { target: post },
       )) as Post;
 
-      await deleteById(post.id);
-      await deleteById(questionToAgentPost.id);
-      await deleteById(questionAboutQuestionPost.id);
-      await deleteById(skyPost.id);
+      await deleteEntityById(post.id);
+      await deleteEntityById(questionToAgentPost.id);
+      await deleteEntityById(questionAboutQuestionPost.id);
+      await deleteEntityById(skyPost.id);
     },
     30000,
   );

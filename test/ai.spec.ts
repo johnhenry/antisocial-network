@@ -1,18 +1,20 @@
-import { describe, expect } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import { embed, respond, summarize } from "@/lib/ai";
-import { updateModelEmbeddingSetting } from "./test-helpers";
+import { updateSettingsObject } from "@/lib/database/settings";
 
 describe("ai", () => {
   it("should be able to create an embedding using ollama", async () => {
-    await updateModelEmbeddingSetting("ollama::nomic-embed-text:latest");
-
+    await (updateSettingsObject({
+      "modelembedding": "ollama::nomic-embed-text:latest",
+    }));
     const output = await embed("hello world");
     expect(output).toBeTruthy();
   });
 
   it("should be able to create an embedding using openai", async () => {
-    await updateModelEmbeddingSetting("openai::text-embedding-3-large");
-
+    await (updateSettingsObject({
+      "modelembedding": "ollama::nomic-embed-text:latest",
+    }));
     const output = await embed("hello world");
     expect(output).toBeTruthy();
   });

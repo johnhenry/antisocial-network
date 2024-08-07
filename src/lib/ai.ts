@@ -226,7 +226,7 @@ export const respondFunc = async (
 
 export const embed = async (prompt: string = genRandSurrealQLString()) => {
   const settings = await getSettingsObject();
-  const [repo, model] = settings.modelembedding!.split("::");
+  const [repo, model] = (settings.modelembeddinga as string).split("::");
 
   const arg: Record<any, any> = {
     model,
@@ -263,7 +263,7 @@ export const embed = async (prompt: string = genRandSurrealQLString()) => {
 
 export const describe = async (base64data: string) => {
   const settings = await getSettingsObject();
-  const [repo, model] = settings.modelvision!.split("::");
+  const [repo, model] = (settings.modelvision as string).split("::");
   try {
     switch (repo) {
       case "ollama":

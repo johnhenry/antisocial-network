@@ -24,7 +24,7 @@ declare module "surreal.js" {
 }
 
 declare module "@/tools/descriptors" {
-  import { RegisteredDescriptor  } from "@/types/tools";
+  import { RegisteredDescriptor } from "@/types/tools";
   // declare const tools: { [key: string]: Tool };
   // export = tools;
   export default Record<string, RegisteredDescriptor>;
@@ -32,7 +32,9 @@ declare module "@/tools/descriptors" {
 
 declare module "@/tools/descriptors" {
   import { Tool } from "@/types/tools";
-  // declare const tools: { [key: string]: Tool };
-  // export = tools;
   export default Record<string, Tool>;
+}
+
+declare module "@jest/globals" {
+  export default any;
 }

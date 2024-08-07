@@ -9,7 +9,7 @@ jest.mock("@/lib/database/log", () => ({
 }));
 
 import { createAgent, genCharacter } from "@/lib/database/agent";
-import { deleteById } from "./test-helpers";
+import { deleteEntityById } from "@/lib/database/helpers";
 
 describe("agent", () => {
   it("should generate a character with default parameters", async () => {
@@ -23,7 +23,7 @@ describe("agent", () => {
     const name = "test_agent";
     const result = await createAgent({ name });
     expect(result.id).toBeDefined();
-    const deleteResult = await deleteById(result.id);
+    const deleteResult = await deleteEntityById(result.id);
     expect(deleteResult).toBeTruthy();
   }, 10000);
 });
