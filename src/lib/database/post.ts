@@ -27,7 +27,7 @@ import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
 import parsePostContentNew from "@/lib/util/parse-post-content-new";
 import { createFiles } from "@/lib/database/file";
-import createLog from "@/lib/database/log";
+import { createLog } from "@/lib/database/log";
 import { getEntity, getLatest } from "@/lib/database/helpers";
 import { RecordId, StringRecordId } from "surrealdb.js";
 import {

@@ -6,7 +6,7 @@ import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
 import type { BaseMessageChunk } from "@langchain/core/messages";
 import type { ChatPromptValueInterface } from "@langchain/core/prompt_values";
 import { ChatGroq } from "@langchain/groq";
-import { OpenAI } from "@langchain/openai";
+import { OpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { Ollama } from "ollama";
 import { OllamaFunctions } from "@langchain/community/experimental/chat_models/ollama_functions";
@@ -21,6 +21,7 @@ import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
 import TOOLS from "@/hashtools/mod";
 import { Agent, Post } from "@/types/mod";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
+import { SIZE_EMBEDDING_VECTOR } from "@/config/mod";
 
 type FunctionDescriptor = {
   name: string;
@@ -228,9 +229,24 @@ export const respondFunc = async (
 
 export const embed = async (prompt: string = genRandSurrealQLString()) => {
   const settings = await getSettingsObject();
-  const [repo, model] = settings.modelembedding!.split("::");
+  const [repo, model] = (settings.modelembedding as string).split("::");
+
+  const arg: Record<any, any> = {
+    model,
+    repo,
+  };
+
   try {
     switch (repo) {
+      case "openai": {
+        arg.apiKey = settings.apikeyopenai;
+        // set the vector dimensions to match the length the database needs
+        arg.dimensions = settings.embedding_vector_size ||
+          SIZE_EMBEDDING_VECTOR;
+        const llm = new OpenAIEmbeddings(arg);
+        const embedding = await llm.embedQuery(prompt);
+        return embedding;
+      }
       case "ollama":
       default: {
         const ollama = new Ollama({
@@ -250,7 +266,7 @@ export const embed = async (prompt: string = genRandSurrealQLString()) => {
 
 export const describe = async (base64data: string) => {
   const settings = await getSettingsObject();
-  const [repo, model] = settings.modelvision!.split("::");
+  const [repo, model] = (settings.modelvision as string).split("::");
   try {
     switch (repo) {
       case "ollama":

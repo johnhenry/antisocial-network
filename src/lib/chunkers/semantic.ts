@@ -29,9 +29,7 @@ const cteateChunker = async function* (
     const chunk = corpus.slice(startIndex, endIndex);
     const chunkText = chunk.map((item) => item[0]).join(" ");
     const chunkEmbedding = await embed(chunkText);
-
     yield [chunkText, chunkEmbedding];
-
     startIndex = endIndex;
   }
 };

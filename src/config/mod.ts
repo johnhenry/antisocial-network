@@ -379,6 +379,12 @@ export const SETTINGS_DEFAULT: Setting[] = [
     options: ["5m", "10m", "20m", "30m", "1h", "2h", "3h", "4h", "5h"],
     defaultValue: "20m",
   },
+  {
+    name: "embedding_vector_size",
+    label: "Embedding Vector Size",
+    type: "number",
+    defaultValue: SIZE_EMBEDDING_VECTOR,
+  },
 ];
 
 export const AI_SAYINGS: [string, string][] = [

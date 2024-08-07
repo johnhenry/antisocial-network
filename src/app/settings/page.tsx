@@ -38,7 +38,7 @@ const SettingsForm = ({
           return (
             <label key={name}>
               <span>{label}</span>
-              <select name={name} defaultValue={defaultValue}>
+              <select name={name} defaultValue={defaultValue as string}>
                 {options!.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -51,7 +51,11 @@ const SettingsForm = ({
           return (
             <label key={name}>
               <span>{label}</span>
-              <input type={type} name={name} defaultValue={defaultValue} />
+              <input
+                type={type}
+                name={name}
+                defaultValue={defaultValue as string}
+              />
             </label>
           );
         }

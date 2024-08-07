@@ -7,6 +7,7 @@ import openmeteoweather from "./openmeteoweather/descriptor";
 const descriptors = { subtraction, timetool, javascript, openmeteoweather };
 
 // @ts-ignore am I doing this wrong?
+// TODO: This file will be deleted.
 const registry: Record<string, RegisteredDescriptor> = {};
 const register = (
   descriptor: Descriptor,

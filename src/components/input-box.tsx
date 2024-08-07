@@ -1,5 +1,5 @@
 "use client";
-
+import { FileProto } from "@/types/mod";
 import type {
   FC,
   ReactNode,
@@ -76,10 +76,7 @@ const InputBox: FC<InputBoxProps> = ({
   };
 
   const attach: ChangeEventHandler = async (event) => {
-    // @ts-ignore
-    // Type error: This expression is not callable.
-    //  Type 'typeof import("obfo")' has no call signatures.
-    const files = obfo<FileProto[]>(filePicker.current);
+    const files = obfo<FileProto[]>(filePicker.current!);
     if (!files || !files.length) {
       return;
     }

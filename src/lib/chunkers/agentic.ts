@@ -11,7 +11,8 @@ const decideBoundary = async (
 ): Promise<boolean> => {
   const settings = await getSettingsObject();
 
-  const [repo, model] = (parameters?.model || settings.modeltools)!.split("::");
+  const [repo, model] = ((parameters?.model || settings.modeltools) as string)
+    .split("::");
 
   const messages = [
     {

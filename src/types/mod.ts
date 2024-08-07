@@ -229,7 +229,7 @@ export type Setting = {
   name: string;
   label: string;
   type: string;
-  defaultValue?: string;
+  defaultValue?: string | number | boolean;
   options?: string[];
 };
 
