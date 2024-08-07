@@ -189,6 +189,7 @@ export const createAgent = async ({
         image,
       }),
     }) as Agent[];
+    1;
     createLog(agent);
     if (files) {
       await createFiles({ files, owner: agent });

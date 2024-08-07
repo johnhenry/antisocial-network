@@ -1,11 +1,10 @@
 // you need to import the original function before replacing it
 import { createLog as originalCreateLog } from "@/lib/database/log";
-import { createLog as mockCreateLog } from "./log.mock";
 
 // tests complain if there are console.logs after they finish
 jest.mock("@/lib/database/log", () => ({
   ...jest.requireActual("@/lib/database/log"),
-  createLog: mockCreateLog,
+  createLog: jest.fn(),
   sendNotification: jest.fn(),
 }));
 
