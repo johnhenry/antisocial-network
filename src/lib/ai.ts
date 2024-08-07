@@ -226,7 +226,7 @@ export const respondFunc = async (
 
 export const embed = async (prompt: string = genRandSurrealQLString()) => {
   const settings = await getSettingsObject();
-  const [repo, model] = (settings.modelembeddinga as string).split("::");
+  const [repo, model] = (settings.modelembedding as string).split("::");
 
   const arg: Record<any, any> = {
     model,

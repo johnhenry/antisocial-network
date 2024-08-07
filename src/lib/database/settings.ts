@@ -81,16 +81,17 @@ export const updateSettingsObject = async (
   try {
     const newSettings: Setting[] = [];
     const oldSettings = await getSettings();
-    for (const [name, value] of Object.entries(settings)) {
-      const setting = oldSettings.find((s) => s.name === name);
-      if (setting) {
+    for (const [name, value] of Object.entries(oldSettings)) {
+      const setting = oldSettings.find((s) => s.name === name)!;
+      const newSetting = { ...setting };
+      if (newSetting) {
         if (value !== null) {
-          setting.defaultValue = value;
+          newSetting.defaultValue = value.defaultValue;
         } else {
           const originalSetting = SETTINGS_DEFAULT.find((s) => s.name === name);
-          setting.defaultValue = originalSetting?.defaultValue || undefined;
+          newSetting.defaultValue = originalSetting?.defaultValue || undefined;
         }
-        newSettings.push(setting);
+        newSettings.push(newSetting);
       }
     }
     // Fetch current settings
