@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "[Spec]",
+      "name": "[Test]",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run test:watch"

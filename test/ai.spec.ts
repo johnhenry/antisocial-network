@@ -1,13 +1,6 @@
-describe("place holder", () => {
-  it("should hold the pace", async () => {
-    expect(true).toBeTruthy();
-  });
-});
-
 import { describe, expect, it } from "@jest/globals";
 import { embed, respond, summarize } from "@/lib/ai";
 import { updateSettingsObject } from "@/lib/database/settings";
-
 describe("ai", () => {
   it("should be able to create an embedding using ollama", async () => {
     await (updateSettingsObject({

@@ -1,16 +1,11 @@
-// you need to import the original function before replacing it
-import { createLog as originalCreateLog } from "@/lib/database/log";
-
+import { createAgent, genCharacter } from "@/lib/database/agent";
+import { deleteEntityById } from "@/lib/database/helpers";
 // tests complain if there are console.logs after they finish
 jest.mock("@/lib/database/log", () => ({
   ...jest.requireActual("@/lib/database/log"),
   createLog: jest.fn(),
   sendNotification: jest.fn(),
 }));
-
-import { createAgent, genCharacter } from "@/lib/database/agent";
-import { deleteEntityById } from "@/lib/database/helpers";
-
 describe("agent", () => {
   it("should generate a character with default parameters", async () => {
     const character = await genCharacter();

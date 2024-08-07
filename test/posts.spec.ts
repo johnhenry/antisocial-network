@@ -1,9 +1,3 @@
-// describe("place holder", () => {
-//   it("should hold the pace", async () => {
-//     expect(true).toBeTruthy();
-//   });
-// });
-
 import { describe, expect, it } from "@jest/globals";
 import createPost, { getConversation } from "@/lib/database/post";
 import { deleteEntityById } from "@/lib/database/helpers";
