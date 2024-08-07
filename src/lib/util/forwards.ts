@@ -27,17 +27,17 @@ export const merge = (
   }
   return [...h];
 };
-
+const { log } = console;
 export const print = (tree: Forward, indent = 0) => {
   for (let i = 0; i < tree.length; i++) {
     const item = tree[i];
     if (Array.isArray(item)) {
       // This is a nested mention tree
-      console.log(`${" ".repeat(indent)}->:`);
+      log(`${" ".repeat(indent)}->:`);
       print(item, indent + 2);
     } else {
       // This is a string (message)
-      console.log(`${" ".repeat(indent)}${item}`);
+      log(`${" ".repeat(indent)}${item}`);
     }
   }
 };

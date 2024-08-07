@@ -484,3 +484,28 @@ export const aggregateResponse = async (
   }
   return results as BaseMessageChunk;
 };
+
+export const cloneAgent = async (
+  identifier: StringRecordId,
+  { name = "", suffix = "_0" }: { name?: string; suffix?: string } = {},
+): Promise<Agent> => {
+  name = name.trim();
+  const db = await getDB();
+  try {
+    const agent = await db.select<Agent>(identifier);
+    const { id, ...rest } = agent;
+    const newName = name ? name : agent.name + suffix;
+    if (await nameExists(newName)) {
+      throw new Error(`Agent with name: ${newName} exists`);
+    }
+    const [newAgent] = await db.create(TABLE_AGENT, {
+      ...rest,
+      timestamp: Date.now(),
+      name: newName,
+    }) as [Agent];
+
+    return newAgent;
+  } finally {
+    await db.close();
+  }
+};

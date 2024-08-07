@@ -12,7 +12,6 @@ const tool_names_and_descriptions = Object.entries(TOOLS).map((
  *
  * @example
  * const message = generateSystemMessage(true);
- * console.log(message);
  */
 export const generateSystemMessage = (
   useRelevantKnowledge = true,

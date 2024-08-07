@@ -309,7 +309,7 @@ export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   useMMap: undefined,
   vocabOnly: undefined,
   format: undefined,
-  seed:-1
+  seed: -1,
 };
 
 export const SETTINGS_DEFAULT: Setting[] = [
@@ -371,6 +371,13 @@ export const SETTINGS_DEFAULT: Setting[] = [
     label: "Character Limit",
     type: "number",
     defaultValue: CHAR_LIMIT,
+  },
+  {
+    name: "ollamaKeepAlive",
+    label: "Ollama Keep Alive",
+    type: "select",
+    options: ["5m", "10m", "20m", "30m", "1h", "2h", "3h", "4h", "5h"],
+    defaultValue: "20m",
   },
 ];
 

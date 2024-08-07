@@ -188,17 +188,7 @@ export const generatePost = async (
     let content;
     let mentions;
     let out;
-    if (tools && tools.length) {
-      out = await toolResponse(tools, {
-        target,
-        streaming,
-        conversation,
-        source,
-      });
-      // if (target?.source) {
-      //   mentions = [target.source];
-      // }
-    } else if (source) {
+    if (source) {
       if (conversation.length) {
         relevant = await getRelevant(
           { conversation, agent: source },
@@ -224,8 +214,7 @@ export const generatePost = async (
       const chunk = out as BaseMessageChunk;
       content = chunk.content as string;
     }
-
-    return createPost(content, {
+    const post = await createPost(content, {
       source,
       target,
       streaming,
@@ -233,7 +222,10 @@ export const generatePost = async (
       bibliography: bibliography.concat(conversation).concat(relevant),
       depth,
       forward,
-    }) as Promise<Post>;
+    }) as Post;
+    return post;
+  } catch (e) {
+    console.error("XXXX", e);
   } finally {
     db.close();
   }
@@ -354,7 +346,7 @@ const processContent = (content: string, {
         const { handler, name, description } = tool;
         // TODO: Process Post
         console.log("Processing Post:");
-        console.log(`${name} ${description}`);
+        console.log(`${name} ${description} w/ ${toolName} `);
         const result = await handler(
           {
             embedding,
@@ -620,11 +612,13 @@ export const replaceAgentIdWithName = async (
   }
 };
 
+const ADDITIONAL_FIELDS =
+  `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source
+    `;
+
 export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
   const queries = [];
-  const ADDITIONAL_FIELDS =
-    `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source
-    `;
+
   // select target
   queries.push(
     `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where id = $id FETCH source, target, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,

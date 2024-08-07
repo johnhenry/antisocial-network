@@ -15,3 +15,5 @@ export { PiMagnifyingGlassPlusBold as IconSearch } from "react-icons/pi";
 
 export { PiArrowFatLinesLeftFill as IconArrowLeft } from "react-icons/pi";
 export { PiArrowFatLinesRightFill as IconArrowRight } from "react-icons/pi";
+
+export { LiaCloneSolid as IconClone } from "react-icons/lia";

@@ -152,10 +152,8 @@ export const respond = async (
   const arg: Record<any, any> = {
     ...parameters,
     model,
+    keepAlive: settings.ollamaKeepAlive || "20m",
   };
-
-  console.log({ repo, model });
-
   try {
     let invoker: Invoker;
     switch (repo) {

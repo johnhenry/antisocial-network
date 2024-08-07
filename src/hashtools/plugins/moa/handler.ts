@@ -132,8 +132,6 @@ export const mixtureOfAgents: Handler = (
       .join("\n\n");
 
     const prompt = generatePrompt(indent`${dehydrated}`);
-    console.log(text);
-    console.log(prompt);
 
     let response = await summarize(
       text,

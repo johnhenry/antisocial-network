@@ -5,7 +5,6 @@ import type { Handler } from "@/types/tools";
  * @returns The current time as a string in the format "YYYY-MM-DD HH:mm:ss".
  * @example
  * const currentTimeInEST = getCurrentTimeForTimezone(-5);
- * console.log(currentTimeInEST); // Output: current time in EST
  */
 const handler: Handler = ({ offset }: { offset: number }) => {
   const now = new Date();

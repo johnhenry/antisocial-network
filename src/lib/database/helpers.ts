@@ -40,14 +40,15 @@ export const replaceContentWithLinks = <
   useLink: boolean = true,
 ): T => {
   item.content = render ? renderText(item?.content || "") : item?.content || "";
-  console.log(item.content);
   if (item.content && item.mentions && item.mentions.length > 0) {
     for (const mention of item.mentions) {
-      const { id: rId, name } = mention;
+      const { id: rId } = mention;
       const id = rId.toString();
       item.content = item.content.replaceAll(
         new RegExp(`${id}`, "g"),
-        useLink ? `<a href="/agent/${id}">@${name}</a>` : `@${name}`,
+        useLink
+          ? `<a href="/agent/${id}" title="${mention.content}">@${mention.name}</a>`
+          : `@${mention.name}`,
       );
     }
   }

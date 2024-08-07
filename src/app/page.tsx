@@ -23,7 +23,7 @@ import useLocalStorage from "@/lib/hooks/use-localstorage";
 import { MASQUERADE_KEY } from "@/config/mod";
 import Masquerade from "@/components/masquerade";
 import { IconFile, IconAgent, IconPost, IconSearch } from "@/components/icons";
-
+import { getPostExternal } from "@/lib/database/mod";
 const SearchOptions = ({
   searchCount,
   setSearchCount,
@@ -104,6 +104,7 @@ const getFetchChildren = (start = 0) => {
 };
 
 import orderByTimeStampAndRemoveDuplicates from "@/lib/util/order-and-remove-duplicates";
+import { getPost } from "@/lib/database/post";
 const Page: FC<PageProps> = ({}) => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
@@ -168,7 +169,7 @@ const Page: FC<PageProps> = ({}) => {
         break;
       case "post":
         const post = entity as PostExt;
-        setPrepended([post]);
+        getPostExternal(post.id).then((post) => setPrepended([post]));
         break;
       case "file":
       case "agent":

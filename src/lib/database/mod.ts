@@ -31,6 +31,7 @@ import createPost, {
 } from "@/lib/database/post";
 import { getFile, getFilePlus, getFiles } from "@/lib/database/file";
 import {
+  cloneAgent,
   getAgent,
   getAgentPlus,
   getAgents,
@@ -277,6 +278,21 @@ export const updateAgentExternal = async (
     const identifier = new StringRecordId(id);
     const updatedAgent = await updateAgent(identifier, options) as Agent;
     return mapAgentToAgentExt(updatedAgent);
+  } catch (e) {
+    if (e instanceof Error) {
+      return mapErrorToErrorExt(e);
+    }
+    throw e;
+  }
+};
+export const cloneAgentExternal = async (
+  id: string,
+  { name, suffix }: { name?: string; suffix?: string } = {},
+): Promise<AgentExt | ErrorExt> => {
+  try {
+    const identifier = new StringRecordId(id);
+    const clonedAgent = await cloneAgent(identifier, { name, suffix });
+    return mapAgentToAgentExt(clonedAgent);
   } catch (e) {
     if (e instanceof Error) {
       return mapErrorToErrorExt(e);
