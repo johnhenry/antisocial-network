@@ -331,15 +331,18 @@ export const agentResponse = async (
   } = {},
 ): Promise<LangchainGenerator | BaseMessageChunk> => {
   let relevantKnowledge;
-  let messages: string[][];
+  let messages: [string, string][];
   let systemMessage;
   if (conversation.length) {
     relevantKnowledge = await mergeRelevant(relevant);
-    messages = mapPostsToMessages(conversation).slice(
-      0,
-      -rewind,
-    ).concat(content);
-
+    messages = mapPostsToMessages(conversation);
+    if (rewind) {
+      messages = messages.slice(
+        0,
+        -rewind,
+      );
+    }
+    messages = messages.concat(content);
     systemMessage = [
       "system",
       await generateSystemMessage(Boolean(relevantKnowledge)),

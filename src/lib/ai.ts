@@ -1,39 +1,21 @@
-import type { DescriptorFull } from "@/hashtools/types";
 import type { Agent, Post } from "@/types/mod";
-// import { encode as gpt3Encoder } from "gpt-3-encoder";
-import { ChatOllama } from "@langchain/community/chat_models/ollama";
-import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
 import type { BaseMessageChunk } from "@langchain/core/messages";
-import type { ChatPromptValueInterface } from "@langchain/core/prompt_values";
+
+import { ChatOllama } from "@langchain/ollama";
+import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
 import { ChatGroq } from "@langchain/groq";
 import { OpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { Ollama } from "ollama";
-import { OllamaFunctions } from "@langchain/community/experimental/chat_models/ollama_functions";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { MODEL_FUNCTIONS, OLLAMA_ORIGIN } from "@/config/mod";
-import { JsonOutputFunctionsParser } from "@langchain/core/output_parsers/openai_functions";
+import { OLLAMA_ORIGIN } from "@/config/mod";
 import { getSettingsObject } from "@/lib/database/settings";
 import { RunnableLike } from "@langchain/core/runnables";
 import { getEncoding } from "js-tiktoken";
 import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
-// import TOOLS from "@/tools/handlers";
-
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 import { SIZE_EMBEDDING_VECTOR } from "@/config/mod";
-
-type FunctionDescriptor = {
-  name: string;
-  description: string;
-  parameters: Record<string, any>;
-};
-
-type FunctionsForOllama = {
-  functions?: FunctionDescriptor[];
-  function_call?: {
-    name: string;
-  };
-};
+import { createLogError } from "@/lib/database/log";
 
 type Invoker =
   | ChatGroq
@@ -47,15 +29,13 @@ export const respond = async (
     invocation = {},
     parameters = {},
     streaming = false,
-    tools = [],
-    target,
     source,
+    target,
   }: {
     messages?: [string, string][];
     invocation?: Record<string, any>;
     parameters?: Record<string, any>;
     streaming?: boolean;
-    tools?: string[];
     target?: Post;
     source?: Agent;
   } = {},
@@ -107,38 +87,17 @@ export const respond = async (
         }
       });
     }
-    return chain.invoke(invocation);
+    const output = await chain.invoke(invocation);
+    return output;
   } catch (error) {
+    createLogError(error as Error, {
+      repo,
+      model,
+      source: source?.id,
+      target: target?.id,
+    });
     throw error;
   }
-};
-
-export const respondFunc = async (
-  {
-    messages = [],
-    invocation = {},
-    parameters = {},
-    functions = {},
-  }: {
-    messages?: [string, string][];
-    invocation?: Record<string, any>;
-    parameters?: Record<string, any>;
-    functions?: FunctionsForOllama;
-  } = {},
-): Promise<
-  BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
-> => {
-  const [repo, model] = MODEL_FUNCTIONS.split("::");
-
-  const invoker = new OllamaFunctions({
-    ...parameters,
-    baseUrl: OLLAMA_ORIGIN,
-    model,
-  }).bind(functions);
-  const prompt = ChatPromptTemplate.fromMessages(messages);
-  return prompt.pipe(invoker).pipe(new JsonOutputFunctionsParser()).invoke(
-    invocation,
-  );
 };
 
 export const embed = async (prompt: string = genRandSurrealQLString()) => {

@@ -1,6 +1,6 @@
 import type { Entity, Log, LogExt } from "@/types/mod";
 import { print as printToConsole } from "@/lib/util/logging";
-import { TABLE_LOG } from "@/config/mod";
+import { TABLE_ERROR, TABLE_LOG } from "@/config/mod";
 import { getDB } from "@/lib/db";
 import { getLatest } from "@/lib/database/helpers";
 import { mapLogToLogExt } from "@/lib/util/convert-types";
@@ -16,8 +16,25 @@ export const sendNotification = (log: Log) => {
   });
 };
 
+export const createLogError = async (
+  error: Error,
+  metadata?: Record<string, any>,
+) => {
+  const db = await getDB();
+  try {
+    return await db.create(TABLE_ERROR, {
+      timestamp: Date.now(),
+      message: error.message,
+      stack: error.stack,
+      metadata,
+    }) as Log[];
+  } finally {
+    db.close();
+  }
+};
+
 export const createLog = async (
-  target: Exclude<Entity, void | Error>,
+  target: Exclude<Entity, void>,
   { type = "created", content, metadata, print = true, drop = false }: {
     type?: string;
     content?: string;

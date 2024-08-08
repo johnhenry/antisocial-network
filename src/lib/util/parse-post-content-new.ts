@@ -1,20 +1,19 @@
 import type { Forward } from "@/lib/util/forwards";
 
-import { Agent, AgentTemp } from "@/types/mod";
-import { recordMatch } from "@/lib/util/match";
 import { getDB } from "@/lib/db";
-import { replaceAndAccumulate } from "@/lib/util/replace-mentions";
-import replaceMentions from "@/lib/util/replace-mentions";
 import { TABLE_AGENT } from "@/config/mod";
-import { createTempAgent, nameExists } from "@/lib/database/agent";
+import { createTempAgent } from "@/lib/database/agent";
 import { StringRecordId } from "surrealdb.js";
 import { docSort, head, MENTION_MATCH, merge, tail } from "@/lib/util/forwards";
 import replaceAll from "@/lib/util/replace-all";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 import { summarize } from "@/lib/ai";
-const getAgentIdFromName = async (name: string): Promise<`agent:${string}`> => {
+const getAgentIdFromName = async (
+  name: string,
+  context?: string,
+): Promise<`agent:${string}`> => {
   if (name.startsWith("agent:")) {
-    return confirmAgentId(name);
+    return confirmAgentId(name, context);
   }
   const db = await getDB();
   try {
@@ -28,16 +27,19 @@ const getAgentIdFromName = async (name: string): Promise<`agent:${string}`> => {
     if (agent) {
       return agent.id;
     }
-    const temp = await createTempAgent({ name });
+    const temp = await createTempAgent({ name, context });
     return temp.id.toString() as `agent:${string}`;
   } finally {
     await db.close();
   }
   // return `agent:${name}`;
 };
-const confirmAgentId = async (id: string): Promise<`agent:${string}`> => {
+const confirmAgentId = async (
+  id: string,
+  context?: string,
+): Promise<`agent:${string}`> => {
   if (!id.startsWith("agent:")) {
-    return getAgentIdFromName(id);
+    return getAgentIdFromName(id, context);
   }
   const rid = new StringRecordId(id);
   const db = await getDB();
@@ -57,7 +59,7 @@ const confirmAgentId = async (id: string): Promise<`agent:${string}`> => {
       id_suffix,
       PROMPTS_SUMMARIZE.LLM_NAME_FROM_RANDOM,
     );
-    const newAgent = await createTempAgent({ name, id_suffix });
+    const newAgent = await createTempAgent({ name, id_suffix, context });
     return newAgent.id.toString() as `agent:${string}`;
   } finally {
     await db.close();
@@ -124,10 +126,13 @@ const fix = (forwards: Forward[], doc: string) => {
   return [sequential, simultaneous];
 };
 
-export const processPost = async (original: string, startingForward:Forward=[]) => {
+export const processPost = async (
+  original: string,
+  startingForward: Forward = [],
+) => {
   const match = new RegExp(MENTION_MATCH.source, MENTION_MATCH.flags);
   const forwards: Forward[] = [];
-  if(startingForward){
+  if (startingForward) {
     forwards.push(startingForward);
   }
   const dehydrated = await replaceAll(
@@ -152,7 +157,7 @@ export const processPost = async (original: string, startingForward:Forward=[]) 
             if (match.startsWith("@")) {
               match = match.slice(1);
             }
-            const id = await getAgentIdFromName(match);
+            const id = await getAgentIdFromName(match, original);
             current.push(id);
           }
         }
@@ -168,7 +173,7 @@ export const processPost = async (original: string, startingForward:Forward=[]) 
   );
 
   const [sequential, simultaneous] = fix(forwards, dehydrated);
-  return {original, dehydrated, sequential, simultaneous};
+  return { original, dehydrated, sequential, simultaneous };
 };
 
 export const blankPost = async (
@@ -177,7 +182,7 @@ export const blankPost = async (
     mentions?: boolean | string[];
     hashtags?: boolean | string[];
   } = {},
-):Promise<string> => {
+): Promise<string> => {
   const match = new RegExp(MENTION_MATCH.source, MENTION_MATCH.flags);
   const blanked = await replaceAll(
     original,

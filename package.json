@@ -33,6 +33,7 @@
     "@langchain/community": "^0.2.11",
     "@langchain/core": "^0.2.6",
     "@langchain/groq": "^0.0.13",
+    "@langchain/ollama": "^0.0.3",
     "@langchain/openai": "^0.2.1",
     "compromise": "^14.13.0",
     "compromise-paragraphs": "^0.1.0",

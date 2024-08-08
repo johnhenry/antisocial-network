@@ -133,6 +133,7 @@ export const ALL_TABLES = [
   "tool",
   "log",
   "cron",
+  "error",
 ];
 export const [
   TABLE_SETTINGS,
@@ -142,6 +143,7 @@ export const [
   TABLE_TOOL,
   TABLE_LOG,
   TABLE_CRON,
+  TABLE_ERROR,
 ] = ALL_TABLES;
 
 //
