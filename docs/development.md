@@ -8,7 +8,7 @@ These applications can make development easier, but are not required.
   [Edge](https://microsoft.com/edge) w/ [Dev Tools Extension](https://marketplace.visualstudio.com/items?itemName=ms-edgedevtools.vscode-edge-devtools) OR [Chrome](https://google.com/chrome)
 
   There's a launch configuration for debugging in the `.vscode` folder.
-  Use the "Edge+" or "Chrome+" to launch the full application in a browser.
+  Use the "Edge[S]" or "Chrome[S]" to launch the full application in a browser.
   I recommend edge because of the Dev Tools Extension for browser debugging.
 
 - [surrealist desktop app](https://surrealdb.com/surrealist)

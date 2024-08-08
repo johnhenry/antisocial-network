@@ -1,5 +1,5 @@
 import type { DescriptorFull } from "@/hashtools/types";
-
+import type { Agent, Post } from "@/types/mod";
 // import { encode as gpt3Encoder } from "gpt-3-encoder";
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
@@ -18,8 +18,7 @@ import { RunnableLike } from "@langchain/core/runnables";
 import { getEncoding } from "js-tiktoken";
 import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
 // import TOOLS from "@/tools/handlers";
-import TOOLS from "@/hashtools/mod";
-import { Agent, Post } from "@/types/mod";
+
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 import { SIZE_EMBEDDING_VECTOR } from "@/config/mod";
 
@@ -42,79 +41,6 @@ type Invoker =
   | ChatAnthropic
   | ChatOllama;
 
-import { langchainToOllama } from "@/lib/util/message-format";
-
-export const respondT = async (
-  {
-    messages = [],
-    invocation = {},
-    parameters = {},
-    streaming = false,
-    tools = [],
-    target,
-    source,
-  }: {
-    messages?: [string, string][];
-    invocation?: Record<string, any>;
-    parameters?: Record<string, any>;
-    streaming?: boolean;
-    tools?: string[];
-    target?: Post;
-    source?: Agent;
-  } = {},
-): Promise<
-  BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
-> => {
-  const settings = await getSettingsObject();
-  const [repo, model] = (parameters?.model || settings.modeltools).split("::");
-  const arg: Record<any, any> = {
-    ...parameters,
-    model,
-  };
-
-  const id = target?.source?.id.toString();
-
-  const ollamaMessages = (messages || []).map(langchainToOllama);
-
-  const responses = [];
-  const ollama = new Ollama({
-    host: OLLAMA_ORIGIN,
-  });
-  for (const toolname of tools) {
-    const currentTool: DescriptorFull | undefined = TOOLS[toolname];
-
-    if (currentTool) {
-      const { name, handler, description } = currentTool;
-      const response = await ollama.chat({
-        model,
-        messages: ollamaMessages,
-        // tools: [currentTool], // TODO: remove
-      });
-      if (response.message.tool_calls) {
-        for (const tool of response.message.tool_calls) {
-          try {
-            const functionResponse = await handler(
-              tool.function.arguments,
-            ); // TODO: overhaul-tools:  Update this call
-            // Add function response to the conversation
-            // I actuallly might move this functioality alltogether.
-            responses.push(`[${name}] ${functionResponse}`);
-          } catch (e) {
-            responses.push(
-              `[${name}] There was an error: ${(e as Error).message}`,
-            );
-          }
-        }
-      }
-    } else {
-      responses.push(`Tool: ${toolname} not found`);
-    }
-  }
-
-  const content = `${id ? `@${id}\n` : ""}${responses.join("\n\n")}`;
-  return content as unknown as BaseMessageChunk;
-};
-
 export const respond = async (
   {
     messages = [],
@@ -136,18 +62,6 @@ export const respond = async (
 ): Promise<
   BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
 > => {
-  if (tools && tools.length > 0) {
-    return respondT({
-      messages,
-      invocation,
-      parameters,
-      tools,
-      streaming,
-      target,
-      source,
-    });
-  }
-
   const settings = await getSettingsObject();
   const [repo, model] = (parameters?.model || settings.model).split("::");
   const arg: Record<any, any> = {

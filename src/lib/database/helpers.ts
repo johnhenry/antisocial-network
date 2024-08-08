@@ -1,13 +1,12 @@
-import type { Agent, Entity, Post } from "@/types/mod";
+import type { Agent, Post } from "@/types/mod";
+import { RecordId } from "surrealdb.js";
 
 import { getDB } from "@/lib/db";
 import { StringRecordId } from "surrealdb.js";
 import { TABLE_AGENT } from "@/config/mod";
 
 import renderText from "@/lib/util/render-text";
-import { recordMatch } from "@/lib/util/match";
-import replaceMentions from "@/lib/util/replace-mentions";
-import { embed } from "../ai";
+import { embed } from "@/lib/ai";
 
 export const replaceAgentIdWithName = async (
   id: string,
@@ -67,7 +66,7 @@ export const getEntity = async <
           FROM type::table($table)
           WHERE hidden IS NOT true
           ORDER BY timestamp DESC
-          FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography, bibliography, bibliography.mentions, bibliography.source`;
+          FETCH source, target, files, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography, bibliography, bibliography.mentions, bibliography.source`;
     const [[entity]] = await db.query<[[T]]>(query, {
       id,
       table,
@@ -107,7 +106,7 @@ export const getLatest =
           FROM type::table($table)
           WHERE hidden IS NOT true
           ORDER BY timestamp DESC
-          FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography, bibliography, bibliography.mentions, bibliography.source`;
+          FETCH source, target, files, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography, bibliography, bibliography.mentions, bibliography.source`;
         // return all
         [
           result,
@@ -129,7 +128,7 @@ export const getLatest =
           `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist FROM type::table($table) WHERE embedding <|${limit}|> $embedded
           AND hidden IS NOT true
           ORDER BY dist DESC
-          FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography, bibliography, bibliography.mentions, bibliography.source`;
+          FETCH source, target, files, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography, bibliography, bibliography.mentions, bibliography.source`;
         // const query =
         //   `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist, ${""} OMIT ${""} FROM type::table($table) WHERE embedding <|${limit}|> $embedded ORDER BY dist DESC`;
 
@@ -149,7 +148,7 @@ export const getLatest =
             ORDER BY timestamp DESC
             LIMIT $limit
             START $start
-            FETCH source, target, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography, bibliography, bibliography.mentions, bibliography.source`;
+            FETCH source, target, files, target.mentions, target.bibliography, target.source,mentions, mentions.source, mentions.bibliography, bibliography, bibliography.mentions, bibliography.source`;
         [result] = await db.query(query, {
           table,
           limit,
@@ -172,16 +171,70 @@ export const getLatest =
     }
   };
 
-import { RecordId } from "surrealdb.js";
-
 export const deleteEntityById = async (
   recordId: RecordId,
 ): Promise<boolean> => {
   const db = await getDB();
   try {
-    await db.delete(recordId);
-    return true;
-  } catch (err) {
+    // TODO: I believe all relationships are deleted, but I should investigate further
+    const table = recordId.tb;
+    const postDeletionQueries = [];
+    switch (table) {
+      case "agent":
+        // CRON
+        // remove agent id from Cron
+        postDeletionQueries.push(
+          `UPDATE cron SET agent = NONE WHERE agent = $recordId`,
+        );
+        // POSTS
+        // remove source id from Posts
+        postDeletionQueries.push(
+          `UPDATE post SET source = NONE WHERE source = $recordId`,
+        );
+        // remove mentions id from Posts
+        postDeletionQueries.push(
+          `UPDATE post SET mentions = array::remove(mentions, array::find_index(mentions, $recordId)) WHERE mentions CONTAINS $recordId`,
+        );
+        // FILES
+        // remove owner id from Files
+        postDeletionQueries.push(
+          `UPDATE file SET owner = NONE WHERE owner = $recordId`,
+        );
+        // delete target agent
+        postDeletionQueries.push(`DELETE $recordId`);
+        break;
+      case "post":
+        // TARGET POSTS
+        // find all posts that that have this id as a target and update them to remove the target
+        postDeletionQueries.push(
+          `UPDATE post SET target = NONE WHERE target = $recordId`,
+        );
+        // CRON
+        // remove post id from Cron
+        postDeletionQueries.push(
+          `UPDATE cron SET post = NONE WHERE post = $recordId`,
+        );
+        // BIBLIOGRAPHY
+        // find all post that have this id in the bibliography and update them to remove the bibliography
+        postDeletionQueries.push(
+          `UPDATE post SET bibliography = array::remove(bibliography, array::find_index(bibliography, $recordId)) WHERE bibliography CONTAINS $recordId`,
+        );
+        // POST
+        postDeletionQueries.push(`DELETE $recordId`);
+        break;
+      case "file":
+        // delete target file
+        postDeletionQueries.push(`DELETE $recordId`);
+        break;
+      default:
+        postDeletionQueries.push(`DELETE $recordId`);
+    }
+    const results = await db.query(postDeletionQueries.join(";"), {
+      recordId,
+    });
+    return !!results.flat().length;
+  } catch (error) {
+    console.error(error);
     return false;
   } finally {
     db.close();

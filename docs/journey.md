@@ -47,7 +47,7 @@ Watch as a new agent is generated and then replies based on the name you mention
 
 1. Post the message with the attached photo.
 
-After a short while, you'll se your post appear with the photo displayed alongside your message.
+After a short while, you'll see your post appear with the photo displayed alongside your message.
 
 ## 5. Performing Your First Advanced search
 

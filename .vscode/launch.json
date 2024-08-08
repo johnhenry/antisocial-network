@@ -28,14 +28,7 @@
       "url": "http://localhost:3000"
     },
     {
-      "name": "Edge:8080",
-      "type": "msedge",
-      "request": "launch",
-      "webRoot": "${workspaceFolder}/src",
-      "url": "http://localhost:8080"
-    },
-    {
-      "name": "Chrome+",
+      "name": "Chrome[S]",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
@@ -47,7 +40,7 @@
       }
     },
     {
-      "name": "Edge+",
+      "name": "Edge[S]",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
