@@ -22,8 +22,8 @@
     "file:reset": "rm -rf ./.surreal",
     "all:reset": "npm run -s db:reset && npm run -s file:reset",
     "frontend": "npm run -s build && npm start",
-    "test:watch": "node 'node_modules/.bin/jest' --verbose --watch",
-    "test": "node 'node_modules/.bin/jest' --verbose"
+    "test:watch": "node 'node_modules/.bin/jest' --watch",
+    "test": "node 'node_modules/.bin/jest'"
   },
   "browser": {
     "child_process": false

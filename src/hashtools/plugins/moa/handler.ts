@@ -99,7 +99,7 @@ export const mixtureOfAgents: Handler = (
     } finally {
       await db.close();
     }
-    let replaceRootMessage = await blankPost(dehydrated, {
+    const replaceRootMessage = await blankPost(dehydrated, {
       mentions: true,
       hashtags: true,
     });
@@ -109,14 +109,14 @@ export const mixtureOfAgents: Handler = (
     for (let i = 0; i < mentions.length; i++) {
       const source = mentions[i];
       const forward = forwards[i];
-      const pendingPost = createPost(false, {
+      const pendingPost = createPost([["user", replaceRootMessage]], {
         source,
         target: post,
         depth,
         streaming,
         bibliography,
         forward,
-        replaceRootMessage,
+        rewind: 1,
       });
       layers.push(pendingPost.then((pendingPost) => {
         return [pendingPost, source];

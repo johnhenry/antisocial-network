@@ -178,61 +178,61 @@ export const deleteEntityById = async (
   try {
     // TODO: I believe all relationships are deleted, but I should investigate further
     const table = recordId.tb;
-    const postDeletionQueries = [];
+    const deletionTransaction = [];
     switch (table) {
       case "agent":
         // CRON
         // remove agent id from Cron
-        postDeletionQueries.push(
+        deletionTransaction.push(
           `UPDATE cron SET agent = NONE WHERE agent = $recordId`,
         );
         // POSTS
         // remove source id from Posts
-        postDeletionQueries.push(
+        deletionTransaction.push(
           `UPDATE post SET source = NONE WHERE source = $recordId`,
         );
         // remove mentions id from Posts
-        postDeletionQueries.push(
+        deletionTransaction.push(
           `UPDATE post SET mentions = array::remove(mentions, array::find_index(mentions, $recordId)) WHERE mentions CONTAINS $recordId`,
         );
         // FILES
         // remove owner id from Files
-        postDeletionQueries.push(
+        deletionTransaction.push(
           `UPDATE file SET owner = NONE WHERE owner = $recordId`,
         );
         // delete target agent
-        postDeletionQueries.push(`DELETE $recordId`);
+        deletionTransaction.push(`DELETE $recordId`);
         break;
       case "post":
         // TARGET POSTS
         // find all posts that that have this id as a target and update them to remove the target
-        postDeletionQueries.push(
+        deletionTransaction.push(
           `UPDATE post SET target = NONE WHERE target = $recordId`,
         );
         // CRON
         // remove post id from Cron
-        postDeletionQueries.push(
+        deletionTransaction.push(
           `UPDATE cron SET post = NONE WHERE post = $recordId`,
         );
         // BIBLIOGRAPHY
         // find all post that have this id in the bibliography and update them to remove the bibliography
-        postDeletionQueries.push(
+        deletionTransaction.push(
           `UPDATE post SET bibliography = array::remove(bibliography, array::find_index(bibliography, $recordId)) WHERE bibliography CONTAINS $recordId`,
         );
         // POST
-        postDeletionQueries.push(`DELETE $recordId`);
+        deletionTransaction.push(`DELETE $recordId`);
         break;
       case "file":
         // delete target file
-        postDeletionQueries.push(`DELETE $recordId`);
+        deletionTransaction.push(`DELETE $recordId`);
         break;
       default:
-        postDeletionQueries.push(`DELETE $recordId`);
+        deletionTransaction.push(`DELETE $recordId`);
     }
-    const results = await db.query(postDeletionQueries.join(";"), {
+    await db.query(deletionTransaction.join(";"), {
       recordId,
     });
-    return !!results.flat().length;
+    return true;
   } catch (error) {
     console.error(error);
     return false;
