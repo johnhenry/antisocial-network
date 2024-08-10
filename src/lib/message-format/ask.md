@@ -12,6 +12,8 @@ Because we probably won't get it on the first try, add some logging/debugging st
 Put the tests in parse.test.mjs. Test should be expansive.
 They should test for properly calculated length, properly set file types, proper nesting, etc. They should use multiple example strings to parse.
 
+See: https://falcon.readthedocs.io/en/stable/user/recipes/multipart-mixed.html
+
 Here's an example of the input string:
 
 ```plaintext

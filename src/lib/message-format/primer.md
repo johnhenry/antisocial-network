@@ -1,79 +1,81 @@
-# primer.md
-
 # Multipart Message Format Primer
 
-## Introduction
+## Overview
 
-Multipart messages are a way to send multiple pieces of content in a single message. This format is similar to that used in email (MIME) and HTTP file uploads. See "rfc1867.relevant.md" for relevant parts of the specification.
+The multipart message format is a way to encapsulate multiple parts of content within a single message. This format is commonly used for email attachments, form data submissions, and other scenarios where mixed content types need to be transmitted together.
 
 ## Basic Structure
 
 A multipart message consists of:
 
-1. Headers
-2. A boundary declaration
-3. Multiple parts, each separated by the boundary
-
-### Headers
-
-Headers provide metadata about the message. Common headers include:
-
-- `Content-Type`: Specifies the type of content (e.g., `multipart/mixed`)
-- `Content-Length`: The total length of the message
-- `Boundary`: A unique string that separates different parts of the message
+1. A boundary string
+2. Multiple parts, each separated by the boundary
 
 ### Boundary
 
-The boundary is a unique string that separates different parts of the message. It's declared in the `Content-Type` header and used throughout the message body.
+- The message starts with a boundary string prefixed with two hyphens (--).
+- The same boundary string is used to separate each part.
+- The last boundary is followed by two additional hyphens to indicate the end of the message.
 
 ### Parts
 
-Each part of a multipart message can contain:
+Each part of a multipart message contains:
 
-- Its own set of headers
-- Content
-- Nested multipart messages (in the case of complex structures)
+1. Headers
+2. A blank line
+3. Content
 
-## How It Works
+## Headers
 
-1. **Message Start**: The message begins with headers, including the Content-Type that declares it's a multipart message and specifies the boundary.
+- Headers provide metadata about each part.
+- Each header is on a separate line in the format: `Key: Value`
+- Common headers include:
+  - Content-Disposition: Indicates if the part is inline content or an attachment
+  - Name: The name of the part
+  - Content-Type: The MIME type of the content
+  - Content-Transfer-Encoding: The encoding used for the content (e.g., quoted-printable)
 
-2. **Part Separation**: Each part starts with a boundary line (`--boundary`).
+## Content
 
-3. **Part Structure**: Each part has its own headers followed by a blank line and then the content.
+- The content follows the headers, separated by a blank line.
+- Content can be text, binary data, or even nested multipart messages.
 
-4. **Message End**: The last boundary line is followed by two hyphens (`--boundary--`).
+## Nested Structures
+
+- A part can itself be a multipart message, allowing for nested structures.
+- Nested parts use their own boundary, different from the parent message.
 
 ## Example
 
 ```
-Content-Type: multipart/mixed; boundary="XYZ"
-
---XYZ
+--boundary123
+Content-Disposition: post
+Name: text_part
 Content-Type: text/plain
 
-This is the first part.
---XYZ
-Content-Type: text/html
+This is the text content.
+--boundary123
+Content-Disposition: file
+Name: image.jpg
+Content-Type: image/jpeg
 
-<h1>This is the second part.</h1>
---XYZ--
+[Binary data for the image]
+--boundary123--
 ```
-
-## Parsing Process
-
-1. Identify the main boundary from the headers.
-2. Split the message body using the boundary.
-3. For each part:
-   a. Parse its headers
-   b. Extract its content
-   c. If it's a nested multipart message, repeat the process
-4. Construct a structured representation of the message.
 
 ## Special Considerations
 
-1. **Nested Structures**: Parts can themselves be multipart messages, leading to complex nested structures.
+1. Boundaries are assumed to be cryptographically secure and won't appear in the content.
+2. Line endings can be either \r\n or \n.
+3. Non-ASCII characters are supported (assumed UTF-8 encoding).
+4. Quoted-printable encoding is used for certain content types.
+5. Empty parts (with no content) are allowed.
 
-2. **Content-Disposition**: If Content-Deposition is "file", the part is an attachment; otherwise it's considered a post. Files will alway be base64 encoded.
+## Parsing Notes
 
-3. **Whitespace**: Be cautious of leading/trailing whitespace in boundaries and content -- it counts as part of the message
+- The parser should be strict about header formatting.
+- Malformed headers should cause the parser to skip that part.
+- The parser should handle nested structures recursively.
+- Content length should be calculated in bytes.
+
+This primer provides a basic understanding of the multipart message format as implemented in our parser. It covers the structure, key components, and special considerations for working with this format.

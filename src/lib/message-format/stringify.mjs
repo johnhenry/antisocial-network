@@ -1,94 +1,95 @@
-// stringify.mjs
-import crypto from "crypto";
+import crypto from "node:crypto";
 
-const BASE58_ALPHABET =
-  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+export function stringify(obj, options = {}) {
+  const defaultOptions = {
+    showBoundaries: true,
+    replyIndent: undefined,
+    lineEnding: "\n",
+  };
+  const opts = { ...defaultOptions, ...options };
 
-function generateBase58Boundary(length = 16) {
-  const bytes = crypto.randomBytes(length);
-  let boundary = "";
-  for (let i = 0; i < length; i++) {
-    boundary += BASE58_ALPHABET[bytes[i] % BASE58_ALPHABET.length];
+  function generateBoundary() {
+    return crypto.randomBytes(16).toString("hex");
   }
-  return boundary;
-}
 
-function calculateContentLength(content) {
-  return Buffer.from(content).length;
-}
-
-function stringifyHeaders(headers) {
-  return Object.entries(headers)
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
-}
-
-function stringifyContent(content, indent) {
-  return content
-    .split("\n")
-    .map((line) => " ".repeat(indent) + line)
-    .join("\n");
-}
-
-function stringifyAttachment(attachment, options, indent) {
-  const headers = stringifyHeaders(attachment.headers);
-  const content = attachment.content
-    ? Buffer.from(attachment.content).toString("base64")
-    : "";
-  return `${headers}\n\n${" ".repeat(indent)}${content}`;
-}
-
-export function stringify(messages, options = {}) {
-  const { indent = 0, showBoundary = true } = options;
-
-  function stringifyMessage(message, currentIndent = 0) {
-    const boundary = generateBase58Boundary();
+  function stringifyPart(part, indent = "") {
+    const boundary = generateBoundary();
     let result = "";
 
-    // Headers
-    result += stringifyHeaders(message.headers) + "\n\n";
-
-    // Content
-    if (message.content) {
-      const contentLength = calculateContentLength(message.content);
-      result = result.replace(
-        /^Content-length: xxx$/m,
-        `Content-length: ${contentLength}`
-      );
-      result += stringifyContent(message.content, currentIndent) + "\n";
+    if (opts.showBoundaries) {
+      result += `${indent}--${boundary}${opts.lineEnding}`;
     }
 
-    // Attachments
-    if (message.attachments && message.attachments.length > 0) {
-      message.attachments.forEach((attachment) => {
-        if (showBoundary) result += `\n--${boundary}\n`;
-        result +=
-          stringifyAttachment(attachment, options, currentIndent) + "\n";
+    // Add headers
+    result += `${indent}Content-Disposition: ${
+      part.contentDisposition || "post"
+    }${opts.lineEnding}`;
+    result += `${indent}Name: ${part.name}${opts.lineEnding}`;
+    if (part.source)
+      result += `${indent}Source: ${part.source}${opts.lineEnding}`;
+    if (part.type)
+      result += `${indent}Content-Type: ${part.type}${opts.lineEnding}`;
+
+    if (part.attachments && part.attachments.length > 0) {
+      result += `${indent}Boundary: ${boundary}${opts.lineEnding}`;
+    }
+
+    result += opts.lineEnding; // Empty line after headers
+
+    // Add content
+    if (part._) {
+      const contentLines = part._.split(/\r?\n/);
+      const indentStr =
+        typeof opts.replyIndent === "number"
+          ? " ".repeat(opts.replyIndent)
+          : opts.replyIndent || "";
+      const indentedContent = contentLines
+        .map((line, index) => `${indent}${index === 0 ? "" : indentStr}${line}`)
+        .join(opts.lineEnding);
+      result += indentedContent + opts.lineEnding;
+    }
+
+    // Add attachments
+    if (part.attachments && part.attachments.length > 0) {
+      const newIndent = opts.replyIndent
+        ? indent +
+          (typeof opts.replyIndent === "number"
+            ? " ".repeat(opts.replyIndent)
+            : opts.replyIndent)
+        : indent;
+      part.attachments.forEach((attachment) => {
+        result += stringifyPart(
+          {
+            contentDisposition: "file",
+            name: attachment.name,
+            type: attachment.type,
+            _: attachment._,
+          },
+          newIndent
+        );
       });
+      if (opts.showBoundaries) {
+        result += `${indent}--${boundary}--${opts.lineEnding}`;
+      }
     }
 
-    // Responses
-    if (message.responses && message.responses.length > 0) {
-      message.responses.forEach((response) => {
-        if (showBoundary) result += `\n--${boundary}\n`;
-        result += stringifyMessage(response, currentIndent + indent);
-      });
-    }
-
-    if (
-      showBoundary &&
-      (message.attachments?.length > 0 || message.responses?.length > 0)
-    ) {
-      result += `\n--${boundary}--\n`;
-    }
-
-    // console.log("Stringified message:", result); // Debug log
     return result;
   }
 
-  const output = messages
-    .map((message) => stringifyMessage(message))
-    .join("\n");
-  // console.log("Final output:", output); // Debug log
-  return output;
+  if (!Array.isArray(obj)) {
+    throw new Error("Input must be an array of parts");
+  }
+
+  const mainBoundary = generateBoundary();
+  let result = "";
+
+  obj.forEach((part, index) => {
+    result += stringifyPart(part, "");
+  });
+
+  if (opts.showBoundaries) {
+    result += `--${mainBoundary}--${opts.lineEnding}`;
+  }
+
+  return result;
 }

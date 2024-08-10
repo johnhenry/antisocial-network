@@ -1,142 +1,210 @@
-// demo.mjs
-import { parse } from "./parse.mjs";
 import { stringify } from "./stringify.mjs";
+import { parse } from "./parse.mjs";
 
-const { log } = console;
-// const log = () => {};
-const logSection = (title) => {
-  log("\n" + "=".repeat(32));
-  log(title);
-  log("=".repeat(32) + "\n");
-};
+console.log("Advanced Multipart Message Format Library Demo");
+console.log("==============================================");
 
-// Sample nested messages structure
-const sampleMessages = [
-  {
-    headers: {
-      "Content-Disposition": "post",
-      Name: "Alice",
-      Source: "user:alice123",
-      "Content-Type": "text/plain",
-    },
-    content: "Hello everyone! I have an announcement to make.",
-    responses: [
-      {
-        headers: {
-          "Content-Disposition": "post",
-          Name: "Bob",
-          Source: "user:bob456",
-        },
-        content: "Looking forward to hearing it, Alice!",
-      },
-      {
-        headers: {
-          "Content-Disposition": "post",
-          Name: "Charlie",
-          Source: "user:charlie789",
-        },
-        content: "Is it about the new project?",
-        responses: [
-          {
-            headers: {
-              "Content-Disposition": "post",
-              Name: "Alice",
-              Source: "user:alice123",
-            },
-            content: "You guessed it, Charlie! I'll share more details soon.",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    headers: {
-      "Content-Disposition": "post",
-      Name: "Alice",
-      Source: "user:alice123",
-    },
-    content: "Here are the details of our new project!",
-    attachments: [
-      {
-        headers: {
-          "Content-Disposition": "file",
-          Name: "project_plan.pdf",
-          "Content-Type": "application/pdf",
-          "Content-Transfer-Encoding": "base64",
-        },
-        content: "ABDZJRU5ErkJproject_plan_pdf==",
-      },
-      {
-        headers: {
-          "Content-Disposition": "file",
-          Name: "team_photo.jpg",
-          "Content-Type": "image/jpeg",
-          "Content-Transfer-Encoding": "base64",
-        },
-        content: "ABDZJRU5ErkJteam_photo_jpg==",
-      },
-    ],
-    responses: [
-      {
-        headers: {
-          "Content-Disposition": "post",
-          Name: "Bob",
-          Source: "user:bob456",
-        },
-        content: "This looks great! I'm excited to get started.",
-      },
-    ],
-  },
-];
-
-// Demo
-async function runDemo() {
-  // logSection("1. Stringify Messages (Default Options)");
-  // const stringified = stringify(sampleMessages);
-  // log(stringified);
-  // logSection("2. Parse Stringified Messages");
-  // const parsed = parse(stringified);
-  // log("Parsed structure:");
-  // log(JSON.stringify(parsed, null, 2));
-  // logSection("3. Stringify Messages with Indentation");
-  // const indentedStringified = stringify(sampleMessages, { indent: 2 });
-  // log(indentedStringified);
-  // logSection("4. Stringify Messages without Boundaries");
-  // const noBoundariesStringified = stringify(sampleMessages, {
-  //   showBoundary: false,
-  // });
-  // log(noBoundariesStringified);
-  // logSection("5. Parse and Verify Specific Elements");
-  // const reparsed = parse(stringified);
-  // log("Parsed structure:");
-  // log(JSON.stringify(reparsed, null, 2));
-  // if (reparsed[0] && reparsed[0].content) {
-  //   log("First message content:", reparsed[0].content);
-  // } else {
-  //   log("Error: Unable to access first message content");
-  // }
-  // if (reparsed[0] && reparsed[0].responses) {
-  //   log("Number of responses to first message:", reparsed[0].responses.length);
-  // } else {
-  //   log("Error: Unable to access responses of first message");
-  // }
-  // if (reparsed[1] && reparsed[1].attachments && reparsed[1].attachments[0]) {
-  //   log("First attachment name:", reparsed[1].attachments[0].headers.Name);
-  // } else {
-  //   log("Error: Unable to access first attachment name");
-  // }
-  logSection("6. Roundtrip Test");
-  const roundtrip = parse(stringify(sampleMessages));
-  console.log(JSON.stringify(sampleMessages, null, 2));
-  console.log(stringify(sampleMessages));
-  console.log({ roundtrip });
-
-  log("Roundtrip result:");
-  log(JSON.stringify(roundtrip, null, 2));
-  log(
-    "Roundtrip successful:",
-    JSON.stringify(roundtrip) === JSON.stringify(sampleMessages)
-  );
+// Helper function to generate a long string
+function generateLongString(baseString, repeat) {
+  return Array(repeat).fill(baseString).join(" ");
 }
 
-runDemo().catch(console.error);
+// Helper function to demonstrate stringify and parse
+function demonstrateStringifyAndParse(title, input, stringifyOptions = {}) {
+  console.log(`\n${title}:`);
+  console.log("Input:", JSON.stringify(input, null, 2));
+
+  const stringified = stringify(input, stringifyOptions);
+  console.log(stringified);
+
+  const parsed = parse(stringified);
+  console.log("Parsed (first part):", JSON.stringify(parsed[0], null, 2));
+
+  console.log(
+    "Input matches parsed:",
+    JSON.stringify(input) === JSON.stringify(parsed)
+  );
+
+  return { stringified, parsed };
+}
+
+// 1. Long string message
+const longString = generateLongString(
+  "This is a very long message that will be repeated multiple times to test the handling of large content in our multipart message format library.",
+  20
+);
+
+demonstrateStringifyAndParse("1. Long string message", [
+  {
+    name: "long_content",
+    type: "text/plain",
+    _: longString,
+  },
+]);
+
+// // 2. Nested structure with indentation
+// const nestedStructure = [
+//   {
+//     name: "thread_root",
+//     type: "text/plain",
+//     _: "This is the root of a conversation thread.",
+//     attachments: [
+//       {
+//         name: "reply1",
+//         type: "text/plain",
+//         _: "This is a reply to the root message.",
+//         attachments: [
+//           {
+//             name: "reply1_1",
+//             type: "text/plain",
+//             _: "This is a reply to the first reply.",
+//           },
+//           {
+//             name: "reply1_2",
+//             type: "text/plain",
+//             _: "This is another reply to the first reply.",
+//           },
+//         ],
+//       },
+//       {
+//         name: "reply2",
+//         type: "text/plain",
+//         _: "This is another reply to the root message.",
+//         attachments: [
+//           {
+//             name: "reply2_1",
+//             type: "text/plain",
+//             _: "This is a reply to the second reply.",
+//           },
+//         ],
+//       },
+//     ],
+//   },
+// ];
+
+// const { stringified: indentedString, parsed: indentedParsed } =
+//   demonstrateStringifyAndParse(
+//     "2. Nested structure with indentation",
+//     nestedStructure,
+//     {
+//       replyIndent: 2,
+//       lineEnding: "\n",
+//     }
+//   );
+
+// // 3. Interaction between parse and stringify
+// console.log("\n3. Interaction between parse and stringify:");
+// const reparsed = parse(
+//   stringify(indentedParsed, { replyIndent: 4, lineEnding: "\r\n" })
+// );
+// console.log(
+//   "Re-parsed structure matches original:",
+//   JSON.stringify(nestedStructure) === JSON.stringify(reparsed)
+// );
+
+// // 4. Mixed content types
+// const mixedContent = [
+//   {
+//     name: "text_content",
+//     type: "text/plain",
+//     _: "This is a plain text content.",
+//   },
+//   {
+//     name: "html_content",
+//     type: "text/html",
+//     _: "<html><body><h1>This is HTML content</h1><p>With some <strong>formatting</strong>.</p></body></html>",
+//   },
+//   {
+//     name: "json_content",
+//     type: "application/json",
+//     _: JSON.stringify({ key: "value", nested: { array: [1, 2, 3] } }),
+//   },
+// ];
+
+// demonstrateStringifyAndParse("4. Mixed content types", mixedContent);
+
+// // 5. Unicode and special characters
+// const unicodeContent = [
+//   {
+//     name: "unicode_text",
+//     type: "text/plain",
+//     _: "Unicode text: こんにちは世界, Здравствуй, мир, مرحبا بالعالم",
+//   },
+//   {
+//     name: "special_chars",
+//     type: "text/plain",
+//     _: "Special characters: !@#$%^&*()_+{}|:\"<>?`-=[]\\;',./",
+//   },
+// ];
+
+// demonstrateStringifyAndParse(
+//   "5. Unicode and special characters",
+//   unicodeContent
+// );
+
+// // 6. Simulate a complex document structure
+// const documentStructure = [
+//   {
+//     name: "document",
+//     type: "text/plain",
+//     _: "Title: Complex Document Structure\n\nThis document demonstrates a complex nested structure with various content types.",
+//     attachments: [
+//       {
+//         name: "section1",
+//         type: "text/plain",
+//         _: "1. Introduction\n\nThis section introduces the main concepts.",
+//         attachments: [
+//           {
+//             name: "subsection1_1",
+//             type: "text/plain",
+//             _: "1.1 Background\n\nProvides necessary background information.",
+//           },
+//           {
+//             name: "subsection1_2",
+//             type: "text/plain",
+//             _: "1.2 Objectives\n\nOutlines the main objectives of the document.",
+//           },
+//         ],
+//       },
+//       {
+//         name: "section2",
+//         type: "text/plain",
+//         _: "2. Methodology\n\nThis section describes the methodology used.",
+//         attachments: [
+//           {
+//             name: "subsection2_1",
+//             type: "text/plain",
+//             _: "2.1 Data Collection\n\nExplains the data collection process.",
+//           },
+//           {
+//             name: "subsection2_2",
+//             type: "text/plain",
+//             _: "2.2 Data Analysis\n\nDescribes the data analysis techniques employed.",
+//           },
+//         ],
+//       },
+//       {
+//         name: "section3",
+//         type: "text/plain",
+//         _: "3. Results and Discussion\n\nThis section presents the results and discusses their implications.",
+//       },
+//       {
+//         name: "section4",
+//         type: "text/plain",
+//         _: "4. Conclusion\n\nThis section summarizes the main findings and concludes the document.",
+//       },
+//     ],
+//   },
+// ];
+
+// const { stringified: documentString, parsed: documentParsed } =
+//   demonstrateStringifyAndParse(
+//     "6. Complex document structure",
+//     documentStructure,
+//     {
+//       replyIndent: 2,
+//       lineEnding: "\n",
+//     }
+//   );
+
+// console.log("\nComplex Demo completed.");
