@@ -34,7 +34,7 @@
       "url": "http://localhost:3000"
     },
     {
-      "name": "server|chrome",
+      "name": "w/chrome",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
@@ -46,7 +46,7 @@
       }
     },
     {
-      "name": "server|edge",
+      "name": "w/edge",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",

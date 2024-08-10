@@ -8,14 +8,13 @@ import {
   REL_INSERTED,
   REL_PRECEDES,
 } from "@/config/mod";
-import { getEntity, getLatest } from "@/lib/database/helpers";
+export { getFile, getFiles } from "@/lib/database/helpers";
 
 import { getDB, relate } from "@/lib/db";
 
 import { StringRecordId } from "surrealdb.js";
 
 import { getSettingsObject } from "@/lib/database/settings";
-// import createLog from "@/lib/database/log";
 
 import createSentenceChunker from "@/lib/chunkers/sentence";
 import createSemanticChunker from "@/lib/chunkers/semantic";
@@ -30,9 +29,6 @@ import parsePDF from "@/lib/parsers/pdf";
 import { createPost } from "@/lib/database/post";
 
 import { putObject } from "@/lib/fs/mod";
-
-export const getFile = getEntity<File>;
-export const getFiles = getLatest<File>(TABLE_FILE);
 
 export const createFiles = async (
   { files, owner, chunk = true, logChunk = false }: {

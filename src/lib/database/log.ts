@@ -2,9 +2,8 @@ import type { Entity, Log } from "@/types/mod";
 import { print as printToConsole } from "@/lib/util/logging";
 import { TABLE_ERROR, TABLE_LOG } from "@/config/mod";
 import { getDB } from "@/lib/db";
-import { getLatest } from "@/lib/database/helpers";
 import { mapLogToLogExt } from "@/lib/util/convert-types";
-export const getLogs = getLatest<Log>(TABLE_LOG);
+export { getLogs } from "@/lib/database/helpers";
 export const sendNotification = (log: Log) => {
   const HOST = "http://localhost:3000";
   fetch(`${HOST}/api/notifications`, {

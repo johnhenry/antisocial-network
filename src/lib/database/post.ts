@@ -28,7 +28,7 @@ import processCommand from "@/lib/util/command";
 import parsePostContentNew from "@/lib/util/parse-post-content-new";
 import { createFiles } from "@/lib/database/file";
 import { createLog } from "@/lib/database/log";
-import { getEntity, getLatest } from "@/lib/database/helpers";
+export { getPost, getPosts } from "@/lib/database/helpers";
 import { RecordId, StringRecordId } from "surrealdb.js";
 import {
   agentResponse,
@@ -585,9 +585,6 @@ export const updatePendingPost = async (
     await db.close();
   }
 };
-
-export const getPost = getEntity<Post>;
-export const getPosts = getLatest<Post>(TABLE_POST);
 
 export const replaceAgentIdWithName = async (
   id: string,

@@ -28,11 +28,8 @@ import { RecordId } from "surrealdb.js";
 import removeValuesFromObject from "@/lib/util/removeValuesFromObject";
 import { createFiles } from "@/lib/database/file";
 
-import { getEntity, getLatest } from "@/lib/database/helpers";
+export { getAgent, getAgents } from "@/lib/database/helpers";
 import { respond } from "@/lib/ai";
-
-export const getAgent = getEntity<Agent>;
-export const getAgents = getLatest<Agent>(TABLE_AGENT);
 
 export const nameExists = async (name: string): Promise<boolean> => {
   const db = await getDB();

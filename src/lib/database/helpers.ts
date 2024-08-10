@@ -1,13 +1,10 @@
-import type { Agent, Post } from "@/types/mod";
+import type { Agent, File, Log, Post } from "@/types/mod";
 import { RecordId } from "surrealdb.js";
-
 import { getDB } from "@/lib/db";
 import { StringRecordId } from "surrealdb.js";
-import { TABLE_AGENT } from "@/config/mod";
-
+import { TABLE_AGENT, TABLE_FILE, TABLE_LOG, TABLE_POST } from "@/config/mod";
 import renderText from "@/lib/util/render-text";
 import { embed } from "@/lib/ai";
-
 export const replaceAgentIdWithName = async (
   id: string,
 ): Promise<string | null> => {
@@ -54,7 +51,7 @@ export const replaceContentWithLinks = <
   return item;
 };
 
-export const getEntity = async <
+const getEntity = async <
   T extends { [x: string]: unknown; content?: string },
 >(
   id: StringRecordId,
@@ -91,7 +88,7 @@ export const getEntity = async <
 //   ? `SELECT *, vector::similarity::cosine(embedding, $embedded) AS dist, ${ADDITIONAL_FIELDS} OMIT ${OMIT_FIELDS} FROM type::table($table) WHERE embedding <|${size}|> $embedded ORDER BY dist DESC`
 //   : `SELECT *, ${ADDITIONAL_FIELDS} OMIT ${OMIT_FIELDS} FROM type::table($table) ORDER BY timestamp DESC Limit ${size}`;
 
-export const getLatest =
+const getLatest =
   <T extends { [x: string]: unknown; content?: string }>(table: string) =>
   async (
     start: number,
@@ -240,3 +237,10 @@ export const deleteEntityById = async (
     db.close();
   }
 };
+export const getLogs = getLatest<Log>(TABLE_LOG);
+export const getFile = getEntity<File>;
+export const getFiles = getLatest<File>(TABLE_FILE);
+export const getAgent = getEntity<Agent>;
+export const getAgents = getLatest<Agent>(TABLE_AGENT);
+export const getPost = getEntity<Post>;
+export const getPosts = getLatest<Post>(TABLE_POST);

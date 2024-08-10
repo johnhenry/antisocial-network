@@ -14,6 +14,7 @@ export const GET = async (_: unknown, options: GETOptions) => {
     const { params } = options;
     const identifier = decodeURIComponent(params.id || "");
     const [__, id] = identifier.split(":");
+    // return new Response("Not found.", { status: 404 });
     const file = await getFile(new StringRecordId(identifier));
     const data = await getObject(id);
     return new Response(data as unknown as string, {
