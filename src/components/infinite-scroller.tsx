@@ -1,14 +1,10 @@
-import type { HasId, HasTimestamp } from "@/types/misc";
+import type { HasId } from "@/types/misc";
 
 import React, {
   useState,
   useEffect,
   useRef,
-  ReactElement,
   ComponentType,
-  ElementType,
-  RefObject,
-  ReactNode,
   ComponentClass,
 } from "react";
 

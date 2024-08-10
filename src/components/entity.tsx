@@ -18,7 +18,7 @@ type EntityProps = EntityExt & {
 };
 
 const Entity: FC<EntityProps> = (entity) => {
-  const [type, id] = entity.id.split(":");
+  const [type] = entity.id.split(":");
   switch (type) {
     case "post":
       return <Post {...(entity as PostExt)} className="entity post" />;

@@ -67,13 +67,13 @@ PROMPTS_SUMMARIZE.LLM_DESCRIPTION ==
 
 import indenturedServant from "@/lib/util/indentured-savant";
 
-const MAYBE_PILE = [
-  `
-Encourage the language model to be creative and think beyond the obvious associations when generating character descriptions. While the *name* and *initial message* provide a starting point, the model should be encouraged to explore unexpected connections, unique combinations, and imaginative twists. Prompt the model to consider alternative interpretations, subvert stereotypes, and inject novelty into the descriptions. Encourage the use of vivid sensory details, metaphors, and figurative language to bring the characters to life in innovative ways. Emphasize the importance of originality and surprise, pushing the model to generate descriptions that stand out and captivate the reader's imagination. At the same time, maintain a balance between creativity and coherence, ensuring that the descriptions still align with the core associations of the *name* and the tone of the *initial message*.`,
-  `
-Focus on createing a description that is imaginative creating a vivid, immersive, and cohesive providing a clear and engaging depiction of the model based on the *name*
-and the *initial message*.`,
-];
+// const MAYBE_PILE = [
+//   `
+// Encourage the language model to be creative and think beyond the obvious associations when generating character descriptions. While the *name* and *initial message* provide a starting point, the model should be encouraged to explore unexpected connections, unique combinations, and imaginative twists. Prompt the model to consider alternative interpretations, subvert stereotypes, and inject novelty into the descriptions. Encourage the use of vivid sensory details, metaphors, and figurative language to bring the characters to life in innovative ways. Emphasize the importance of originality and surprise, pushing the model to generate descriptions that stand out and captivate the reader's imagination. At the same time, maintain a balance between creativity and coherence, ensuring that the descriptions still align with the core associations of the *name* and the tone of the *initial message*.`,
+//   `
+// Focus on createing a description that is imaginative creating a vivid, immersive, and cohesive providing a clear and engaging depiction of the model based on the *name*
+// and the *initial message*.`,
+// ];
 
 export const generateDescriptionPromptWithFirstMessage = (
   name?: string,

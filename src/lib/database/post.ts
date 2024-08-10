@@ -35,7 +35,6 @@ import {
   aggregateResponse,
   updateAgent,
 } from "@/lib/database/agent";
-import { toolResponse } from "@/lib/database/tool";
 
 import { replaceContentWithLinks } from "@/lib/database/helpers";
 
@@ -188,7 +187,6 @@ export const generatePost = async (
     const conversation = await getConversation(target, -1);
     let relevant: Post[] = [];
     let content;
-    let mentions;
     let out;
     if (source) {
       if (conversation.length) {
@@ -315,7 +313,6 @@ const processContent = (content: string, {
     }
     depth -= 1;
     let resolved = false;
-    let rejected = false;
     const resolve = (post: Post) => {
       if (!resolved) {
         rs(post);
@@ -326,7 +323,6 @@ const processContent = (content: string, {
       if (!resolved) {
         rj(e);
         resolved = true;
-        rejected = true;
       }
     };
     const db = await getDB();

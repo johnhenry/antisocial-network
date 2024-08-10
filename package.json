@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "dev:build": "nodemon",
     "start": "next start",
     "lint": "next lint",
     "deno:run": "deno run --importmap=import_map.json --unstable-sloppy-imports --allow-env --allow-read --allow-net",
@@ -22,8 +23,9 @@
     "file:reset": "rm -rf ./.surreal",
     "all:reset": "npm run -s db:reset && npm run -s file:reset",
     "frontend": "npm run -s build && npm start",
+    "test": "node 'node_modules/.bin/jest'",
     "test:watch": "node 'node_modules/.bin/jest' --watch",
-    "test": "node 'node_modules/.bin/jest'"
+    "kill-port": "npx kill-port"
   },
   "browser": {
     "child_process": false
@@ -77,6 +79,7 @@
     "eslint": "^8",
     "eslint-config-next": "15.0.0-rc.0",
     "jest": "^29.7.0",
+    "nodemon": "^3.1.4",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.2.4",

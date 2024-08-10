@@ -1,4 +1,4 @@
-import type { Descriptor, Handler, Tool } from "@/types/tools";
+import type { Descriptor } from "@/types/tools";
 
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";

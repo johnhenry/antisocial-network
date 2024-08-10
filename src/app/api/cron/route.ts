@@ -1,13 +1,13 @@
 import type { Cron } from "@/types/mod";
 import type { NextRequest } from "next/server";
 import type { NextRoute } from "@/types/network";
-import { createCron, getAllCron } from "@/lib/database/cron";
+import { getAllCron } from "@/lib/database/cron";
 import { mapCronToCronExt } from "@/lib/util/convert-types";
 
 import { cron } from "@/lib/util/command";
 
 export const GET: NextRoute = async (
-  request: unknown,
+  _request: unknown,
 ) => {
   // view all cron jobs
   return new Response(

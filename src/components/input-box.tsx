@@ -34,7 +34,6 @@ import fileToBase64 from "@/lib/util/to-base64";
 import { createPostExternal } from "@/lib/database/mod";
 import { useSearchParams } from "next/navigation";
 import TextareaWithPopup from "@/components/text-pop";
-import { Mutable } from "next/dist/client/components/router-reducer/router-reducer-types";
 const InputBox: FC<InputBoxProps> = ({
   Wrapper,
   entityReady,

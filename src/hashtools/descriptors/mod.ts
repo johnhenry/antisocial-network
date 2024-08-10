@@ -3,7 +3,7 @@ import mixtureOfAgents from "@/hashtools/plugins/moa/descriptor";
 const descriptors: Record<string, Descriptor> = { mixtureOfAgents };
 
 export const descriptorsByName: Record<string, DescriptorSingleName> = {};
-for (const [id, descriptor] of Object.entries(descriptors)) {
+for (const [_, descriptor] of Object.entries(descriptors)) {
   if (Array.isArray(descriptor.name)) {
     for (const name of descriptor.name) {
       descriptorsByName[name] = { ...descriptor, name };

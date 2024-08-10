@@ -1,14 +1,7 @@
 "use client";
-import DynamicLoader from "@/components/dynamic-loader";
 
 import type { FC, ComponentClass } from "react";
-import type {
-  PostExt,
-  EntityExt,
-  AgentPlusExt,
-  RequiredWith,
-  LogExt,
-} from "@/types/mod";
+import type { PostExt, EntityExt, AgentPlusExt, LogExt } from "@/types/mod";
 import { useEffect, useState } from "react";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
 import { getPostsExternal } from "@/lib/database/mod";
@@ -104,7 +97,6 @@ const getFetchChildren = (start = 0) => {
 };
 
 import orderByTimeStampAndRemoveDuplicates from "@/lib/util/order-and-remove-duplicates";
-import { getPost } from "@/lib/database/post";
 const Page: FC<PageProps> = ({}) => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");

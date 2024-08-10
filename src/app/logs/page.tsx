@@ -1,6 +1,5 @@
 "use client";
-import type { FC, ComponentClass } from "react";
-import type { LogExt } from "@/types/mod";
+import type { FC } from "react";
 import InfiniteScroller from "@/components/infinite-scroller";
 import { getLogsExternal } from "@/lib/database/mod";
 import { usePathname } from "next/navigation";

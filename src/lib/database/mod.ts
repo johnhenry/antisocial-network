@@ -3,9 +3,7 @@ import { ALL_TABLES } from "@/config/mod";
 import type {
   Agent,
   AgentExt,
-  AgentPlus,
   AgentPlusExt,
-  Cron,
   CronExt,
   Entity,
   EntityExt,
@@ -32,7 +30,6 @@ import createPost, {
 import { getFile, getFilePlus, getFiles } from "@/lib/database/file";
 import {
   cloneAgent,
-  getAgent,
   getAgentPlus,
   getAgents,
   updateAgent,
@@ -72,7 +69,7 @@ export const sourceNTarget = async (
 };
 
 export const createPostExternal = async (
-  content: string | undefined | false,
+  content: string | undefined,
   {
     embedding,
     files,

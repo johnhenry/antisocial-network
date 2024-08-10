@@ -1,11 +1,3 @@
-const truncateLegacy = (str: string, words: number): string => {
-  const stringArray = str.split(" ");
-  if (stringArray.length > words) {
-    return stringArray.slice(0, words).join(" ") + "...";
-  }
-  return stringArray.join(" ");
-};
-
 const truncate = (str: string, maxLength: number = Infinity): string => {
   if (str.length > maxLength) {
     const truncatedString = str.slice(0, maxLength);
@@ -22,7 +14,10 @@ const truncate = (str: string, maxLength: number = Infinity): string => {
  * @param suggesteLength - The suggested length of the truncated string.
  * @returns The truncated string.
  */
-export const truncateHTML = (htmtstr: string, suggesteLength: number = 16): string => {
+export const truncateHTML = (
+  htmtstr: string,
+  suggesteLength: number = 16,
+): string => {
   let truncated = htmtstr;
   let length = 0;
   let inTag = false;

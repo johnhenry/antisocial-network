@@ -1,4 +1,4 @@
-import type { Entity, Log, LogExt } from "@/types/mod";
+import type { Entity, Log } from "@/types/mod";
 import { print as printToConsole } from "@/lib/util/logging";
 import { TABLE_ERROR, TABLE_LOG } from "@/config/mod";
 import { getDB } from "@/lib/db";
@@ -34,7 +34,7 @@ export const createLogError = async (
 };
 
 export const createLog = async (
-  target: Exclude<Entity, void>,
+  target: Exclude<Entity, Error | void>,
   { type = "created", content, metadata, print = true, drop = false }: {
     type?: string;
     content?: string;
@@ -57,14 +57,16 @@ export const createLog = async (
     }) as Log[];
     sendNotification(log);
     const l = { ...log, id: log.id.toString() };
-    const separator = "--".repeat(30);
-    printToConsole(separator);
-    printToConsole(`[${new Date(log.timestamp)}]`, `[${log.id.toString()}]`);
-    if (log["metadata"]) {
-      printToConsole("[metadata]  ", log.metadata);
+    if (print) {
+      const separator = "--".repeat(30);
+      printToConsole(separator);
+      printToConsole(`[${new Date(log.timestamp)}]`, `[${log.id.toString()}]`);
+      if (log["metadata"]) {
+        printToConsole("[metadata]  ", log.metadata);
+      }
+      printToConsole(l.content);
+      printToConsole(separator);
     }
-    printToConsole(l.content);
-    printToConsole(separator);
     return log;
   } finally {
     db.close();

@@ -32,7 +32,7 @@ const Notifier: FC<Props> = ({
     const eventSource = new EventSource("/api/notifications");
     eventSource.onmessage = (event) => {
       const notification = JSON.parse(event.data);
-      const { id, timestamp, target, type, content, metadata } = notification;
+      const { target, type } = notification;
       const record = `${type}:${target}`;
       if (seen.has(record)) {
         return;

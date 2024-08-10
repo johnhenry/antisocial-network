@@ -1,19 +1,14 @@
 import type { NextRequest } from "next/server";
 import type { NextRoute } from "@/types/network";
 import type { Cron } from "@/types/mod";
-import {
-  createCron,
-  getAllCron,
-  getCron,
-  invokeCron,
-} from "@/lib/database/cron";
+import { getAllCron, getCron } from "@/lib/database/cron";
 import { RecordId, StringRecordId } from "surrealdb.js";
 import { mapCronToCronExt } from "@/lib/util/convert-types";
 
 import { cron } from "@/lib/util/command";
 
 export const GET: NextRoute<{ id: string }> = async (
-  request: unknown,
+  _request: unknown,
   { params: { id } },
 ) => {
   if (id === "schedules") {

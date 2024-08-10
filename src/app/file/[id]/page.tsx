@@ -17,7 +17,7 @@ const Page: FC<Props> = ({ params }) => {
   const [file, setFile] = useState<FileExt | null>(null);
   const [dirty, setDirty] = useState(false);
   const formRef = useRef(null);
-  const [bookmarkers, setBookmarkers] = useState<AgentExt[]>([]);
+  const [_bookmarkers, setBookmarkers] = useState<AgentExt[]>([]);
 
   const taint = () => setDirty(true);
   const indetifier = decodeURIComponent(params.id || "");

@@ -111,7 +111,8 @@ const TextareaWithPopup: FC<Props> = ({
     const caretRect = dummyElement.getBoundingClientRect();
     document.body.removeChild(dummyElement);
 
-    const textareaRect = textarea.getBoundingClientRect();
+    // const textareaRect = textarea.getBoundingClientRect();
+    // I'm going to leave this here because it might be useful in the future
     return {
       top: caretRect.height + window.scrollY,
       left: currentLineLength * 8 + window.scrollX,
@@ -327,14 +328,12 @@ const TextareaWithPopup: FC<Props> = ({
   type RenderOptionOptions = {
     triggerChar: string;
     option: Option;
-    role?: string;
     selected?: boolean;
   };
 
   const renderOption: FC<RenderOptionOptions> = ({
     triggerChar,
     option,
-    role,
     selected,
   }) => {
     return (
@@ -387,7 +386,6 @@ const TextareaWithPopup: FC<Props> = ({
                     triggerChar,
                     option,
                     selected: popup.selectedIndex === index,
-                    role: "option",
                   })
                 )
               )}

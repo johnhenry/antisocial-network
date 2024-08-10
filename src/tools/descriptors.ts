@@ -17,7 +17,7 @@ const register = (
   registry[name] = { description, name, ...descriptor };
 };
 
-for (const [name, descriptor] of Object.entries(descriptors)) {
+for (const [_name, descriptor] of Object.entries(descriptors)) {
   register(descriptor);
 }
 

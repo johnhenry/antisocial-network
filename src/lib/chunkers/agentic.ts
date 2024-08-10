@@ -11,7 +11,7 @@ const decideBoundary = async (
 ): Promise<boolean> => {
   const settings = await getSettingsObject();
 
-  const [repo, model] = ((parameters?.model || settings.modeltools) as string)
+  const [_repo, model] = ((parameters?.model || settings.modeltools) as string)
     .split("::");
 
   const messages = [
@@ -78,7 +78,7 @@ Should a new chunk start? Respond using the provided function.`,
 
   const toolCall = response.message.tool_calls[0];
   if (toolCall.function.name === "decide_new_chunk") {
-    const { isTrue, confidence, explanation } = toolCall.function.arguments;
+    const { isTrue } = toolCall.function.arguments;
     return isTrue;
   }
 

@@ -36,9 +36,9 @@ import { createCron, cronState, invokeCron } from "@/lib/database/cron";
  */
 
 export const agent = async (
-  [command, ...tokens]: (string | number)[],
+  [command]: (string | number)[],
   args: { [x: string]: any },
-  { files, target, source, streaming }: CommandOptions,
+  { files }: CommandOptions,
 ): Promise<Agent | AgentTemp | void> => {
   switch (command) {
     case "create": {
@@ -63,9 +63,9 @@ export const agent = async (
 };
 
 export const file = async (
-  [command, ...tokens]: (string | number)[],
+  [command]: (string | number)[],
   args: { [x: string]: any },
-  { files, target, source, streaming }: CommandOptions,
+  { source }: CommandOptions,
 ) => {
   switch (command) {
     case "create": {
@@ -94,7 +94,7 @@ export const file = async (
 };
 
 export const post = async (
-  [command, ...tokens]: (string | number)[],
+  [command]: (string | number)[],
   args: { [x: string]: any },
   { files, target, source, streaming, keep }: CommandOptions,
 ): Promise<Entity | void> => {
@@ -172,7 +172,7 @@ export const post = async (
 export const cron = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
-  { files, target, source, streaming }: CommandOptions,
+  { target, source }: CommandOptions,
 ): Promise<Entity | void> => {
   switch (command) {
     case "create": {
@@ -220,7 +220,7 @@ const generateEphemeralId = (tb = "log"): RecordIdEphemeral => ({
 export const debug = async (
   [command, ...tokens]: (string | number)[],
   args: { [x: string]: any },
-  { files, target, source, streaming, keep }: CommandOptions,
+  {}: CommandOptions,
 ): Promise<Log | void> => {
   switch (command) {
     case "go":

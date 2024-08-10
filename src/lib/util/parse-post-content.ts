@@ -1,4 +1,4 @@
-import { Agent, AgentTemp } from "@/types/mod";
+import { Agent } from "@/types/mod";
 import { recordMatch } from "@/lib/util/match";
 import { getDB } from "@/lib/db";
 import { replaceAndAccumulate } from "@/lib/util/replace-mentions";

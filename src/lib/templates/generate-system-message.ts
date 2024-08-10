@@ -1,4 +1,3 @@
-// import TOOLS from "@/tools/descriptors";
 import { descriptorsByName as TOOLS } from "@/hashtools/descriptors/mod";
 
 const tool_names_and_descriptions = Object.entries(TOOLS).map((

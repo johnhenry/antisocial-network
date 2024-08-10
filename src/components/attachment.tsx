@@ -1,4 +1,4 @@
-import type { FC, ReactNode, ComponentClass } from "react";
+import type { FC } from "react";
 import type { FileExt } from "@/types/mod";
 import Image from "next/image";
 type AttachmentProps = {

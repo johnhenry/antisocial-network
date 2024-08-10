@@ -1,23 +1,12 @@
 const DEFAULT_LEVELS = 1;
-import type { Forward } from "@/lib/util/forwards";
 import { createFiles } from "@/lib/database/file";
-import { merge } from "@/lib/util/forwards";
-import type {
-  Agent,
-  Entity,
-  File,
-  FileProto,
-  LangchainGenerator,
-  Post,
-  PostPlus,
-} from "@/types/mod";
+import type { Agent, Post } from "@/types/mod";
 import { TABLE_POST } from "@/config/mod";
 import indenturedServant from "@/lib/util/indentured-savant";
 const indent = indenturedServant(2);
 import { blankPost } from "@/lib/util/parse-post-content-new";
 
 import { embed, summarize, tokenize } from "@/lib/ai";
-import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 import hash from "@/lib/util/hash";
 
 import { Handler } from "@/hashtools/types";
@@ -26,16 +15,33 @@ import { createPost, stringIdToAgent } from "@/lib/database/post";
 import { tail } from "@/lib/util/forwards";
 
 const generatePrompt = (text: string) =>
-  `You have been provided with a set of responses from various open-source models to the latest user query:
+  `You have been provided with a set of responses from various sources to a query:
+----------------
 
 ${text}
 
-
+----------------
 Your task is to synthesize these responses into a single, high-quality response.
 It is crucial to critically evaluate the information provided in these responses, recognizing that some of it may be biased or incorrect.
+
 Your response should not simply replicate the given answers but should offer a refined, accurate, and comprehensive reply to the instruction.
 Ensure your response is well-structured, coherent, and adheres to the highest standards of accuracy and reliability.
-Responses from models:`;
+
+Giva a straight-forward, no-nonsense answer formatted as though you were ddressing the user yourself. Do not format your response. Do not give it an introduction or a conclusion. Simply provide the answer.
+
+Follow that up with reasoning for your answer including references to answers given by others if relevant.
+
+Example:
+'''
+<Your response>
+
+(<your reasoning behind your response>)
+'''
+
+Responses from models:
+----------------
+
+`;
 
 export const mixtureOfAgents: Handler = (
   {
@@ -54,19 +60,16 @@ export const mixtureOfAgents: Handler = (
   return new Promise(async (rs, rj) => {
     // Because the function may continue after running, we wrap int in a promise and ensure that resolve/reject is only called once.
     let resolved = false;
-    let rejected = false;
     const resolve = (post: any) => {
       if (!resolved) {
         rs(post);
         resolved = true;
-        rejected = false;
       }
     };
     const reject = (e: unknown) => {
       if (!resolved) {
         rj(e);
         resolved = true;
-        rejected = true;
       }
     };
     let post;
@@ -126,9 +129,7 @@ export const mixtureOfAgents: Handler = (
       (post as Post).content,
       (agent as Agent).id.toString(),
     ]);
-    const text = responses.map(([content, id], i) =>
-      indent`[${id!}] ${content!}`
-    )
+    const text = responses.map(([content, id]) => indent`[${id!}] ${content!}`)
       .join("\n\n");
 
     const prompt = generatePrompt(indent`${dehydrated}`);
@@ -140,8 +141,8 @@ export const mixtureOfAgents: Handler = (
 
     levels -= 1;
     if (levels > 0) {
-      response += `${"\n".repeat(4)}}${"-".repeat(2 ** 5)}${"\n".repeat(4)}
-How would you improve this response?
+      response += `${"\n".repeat(4)}${"-".repeat(2 ** 5)}${"\n".repeat(4)}
+Think about how you would improve this response and give what you
 
 #${name}?levels=${levels}
 ${mentions.map((x) => x.id.toString()).join(" ")}`;

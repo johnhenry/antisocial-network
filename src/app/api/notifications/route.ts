@@ -1,10 +1,7 @@
-import { TABLE_LOG } from "@/config/mod";
-import { getDB } from "@/lib/db";
 import getWriteManager from "@/lib/write-space";
 
 // Prevents this route's response from being cached on Vercel
 export const GET = (request: Request) => {
-  const encoder = new TextEncoder();
   // https://upstash.com/blog/sse-streaming-llm-responses
   const ts = new TransformStream();
   const writer = ts.writable.getWriter();

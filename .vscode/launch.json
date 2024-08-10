@@ -2,33 +2,39 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "[Test]",
+      "name": "dev:build",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run build"
+    },
+    {
+      "name": "test:watch",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run test:watch"
     },
     {
-      "name": "[Server]",
+      "name": "server",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev"
     },
     {
-      "name": "Chrome",
+      "name": "chrome",
       "type": "chrome",
       "request": "launch",
       "webRoot": "${workspaceFolder}/src",
       "url": "http://localhost:3000"
     },
     {
-      "name": "Edge",
+      "name": "edge",
       "type": "msedge",
       "request": "launch",
       "webRoot": "${workspaceFolder}/src",
       "url": "http://localhost:3000"
     },
     {
-      "name": "Chrome[S]",
+      "name": "server|chrome",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
@@ -40,7 +46,7 @@
       }
     },
     {
-      "name": "Edge[S]",
+      "name": "server|edge",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",

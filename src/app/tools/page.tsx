@@ -32,7 +32,7 @@ const Page = () => {
     <article>
       <h2>Tools</h2>
       {Object.entries(TOOLS).map(
-        ([name, tool]: [string, RegisteredDescriptor], index, array) => (
+        ([name, tool]: [string, RegisteredDescriptor]) => (
           <Tool key={name} {...tool} />
         )
       )}

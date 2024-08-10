@@ -23,7 +23,6 @@ type PostProps = PostExt & {
 import Attachment from "@/components/attachment";
 import { relateExt, unrelateExt } from "@/lib/database/mod";
 
-// import TOOLS from "@/tools/descriptors";
 import { descriptorsByName as TOOLS } from "@/hashtools/descriptors/mod";
 
 const Post: FC<PostProps> = ({

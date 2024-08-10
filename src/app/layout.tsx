@@ -5,8 +5,6 @@ import { fileURLToPath } from "url";
 import path from "path";
 
 import {
-  IconAgent,
-  IconFile,
   IconTool,
   IconSchedule,
   IconSetting,
