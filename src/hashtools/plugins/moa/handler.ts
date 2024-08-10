@@ -4,7 +4,7 @@ import type { Agent, Post } from "@/types/mod";
 import { TABLE_POST } from "@/config/mod";
 import indenturedServant from "@/lib/util/indentured-savant";
 const indent = indenturedServant(2);
-import { blankPost } from "@/lib/util/parse-post-content-new";
+import { blankPost } from "@/lib/util/parse-post-content";
 
 import { embed, summarize, tokenize } from "@/lib/ai";
 import hash from "@/lib/util/hash";

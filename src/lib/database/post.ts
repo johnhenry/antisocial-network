@@ -25,7 +25,7 @@ import { embed, tokenize } from "@/lib/ai";
 import { getDB, relate } from "@/lib/db";
 import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
-import parsePostContentNew from "@/lib/util/parse-post-content-new";
+import parsePostContent from "@/lib/util/parse-post-content";
 import { createFiles } from "@/lib/database/file";
 import { createLog } from "@/lib/database/log";
 export { getPost, getPosts } from "@/lib/database/helpers";
@@ -332,7 +332,7 @@ const processContent = (content: string, {
         dehydrated?: string;
         sequential?: Forward[];
         simultaneous?: Forward[];
-      } = await parsePostContentNew(content, forward);
+      } = await parsePostContent(content, forward);
       let post;
       for (let [toolName] of sequential) {
         toolName = toolName.slice(1);
@@ -565,7 +565,7 @@ export const updatePendingPost = async (
       dehydrated?: string;
       sequential?: Forward[];
       simultaneous?: Forward[];
-    } = await parsePostContentNew(content!, forward);
+    } = await parsePostContent(content!, forward);
     const mentions: Agent[] = [];
     for (const sim of forward) {
       mentions.push(await stringIdToAgent(sim[0] as string));
