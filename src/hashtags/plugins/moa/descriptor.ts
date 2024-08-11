@@ -1,4 +1,4 @@
-import type { Descriptor } from "@/hashtools/types";
+import type { Descriptor } from "@/hashtags/types";
 
 export const mixtureOfAgents: Descriptor = {
   "name": ["moa", "mixture-of-agents"],

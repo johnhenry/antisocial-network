@@ -1,5 +1,5 @@
 import { getAllAgentNamesAndIds } from "@/lib/database/mod";
-import { descriptorsByName as TOOLS } from "@/hashtools/descriptors/mod";
+import { descriptorsByName as TOOLS } from "@/hashtags/descriptors/mod";
 
 export type Option = {
   id: number;

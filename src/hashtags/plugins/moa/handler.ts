@@ -9,7 +9,7 @@ import { blankPost } from "@/lib/util/parse-post-content";
 import { embed, summarize, tokenize } from "@/lib/ai";
 import hash from "@/lib/util/hash";
 
-import { Handler } from "@/hashtools/types";
+import { Handler } from "@/hashtags/types";
 import { getDB } from "@/lib/db";
 import { createPost, stringIdToAgent } from "@/lib/database/post";
 import { tail } from "@/lib/util/forwards";

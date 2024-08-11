@@ -1,5 +1,5 @@
-import type { Descriptor, DescriptorSingleName } from "@/hashtools/types";
-import mixtureOfAgents from "@/hashtools/plugins/moa/descriptor";
+import type { Descriptor, DescriptorSingleName } from "@/hashtags/types";
+import mixtureOfAgents from "@/hashtags/plugins/moa/descriptor";
 const descriptors: Record<string, Descriptor> = { mixtureOfAgents };
 
 export const descriptorsByName: Record<string, DescriptorSingleName> = {};

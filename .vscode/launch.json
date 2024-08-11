@@ -5,33 +5,53 @@
       "name": "dev:build",
       "type": "node-terminal",
       "request": "launch",
-      "command": "npm run build"
+      "command": "npm run build",
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/src/**",
+        "!/node_modules/**"
+      ]
     },
     {
       "name": "test:watch",
       "type": "node-terminal",
       "request": "launch",
-      "command": "npm run test:watch"
+      "command": "npm run test:watch",
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/src/**",
+        "!/node_modules/**"
+      ]
     },
     {
       "name": "server",
       "type": "node-terminal",
       "request": "launch",
-      "command": "npm run dev"
+      "command": "npm run dev",
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/src/**",
+        "!/node_modules/**"
+      ]
     },
     {
       "name": "chrome",
       "type": "chrome",
       "request": "launch",
       "webRoot": "${workspaceFolder}/src",
-      "url": "http://localhost:3000"
+      "url": "http://localhost:3000",
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/src/**",
+        "!/node_modules/**"
+      ]
     },
     {
       "name": "edge",
       "type": "msedge",
       "request": "launch",
       "webRoot": "${workspaceFolder}/src",
-      "url": "http://localhost:3000"
+      "url": "http://localhost:3000",
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/src/**",
+        "!/node_modules/**"
+      ]
     },
     {
       "name": "w/chrome",
@@ -43,7 +63,11 @@
         "pattern": "- Local:.+(https?://.+)",
         "uriFormat": "%s",
         "action": "debugWithChrome"
-      }
+      },
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/src/**",
+        "!/node_modules/**"
+      ]
     },
     {
       "name": "w/edge",
@@ -56,6 +80,10 @@
         "uriFormat": "%s",
         "action": "debugWithEdge"
       }
+      // "resolveSourceMapLocations": [
+      //   "${workspaceFolder}/src/**",
+      //   "!/node_modules/**"
+      // ]
     }
   ]
 }

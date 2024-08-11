@@ -1,6 +1,6 @@
-import { descriptorsByName as TOOLS } from "@/hashtools/descriptors/mod";
+import { descriptorsByName as hashtags } from "@/hashtags/descriptors/mod";
 
-const tool_names_and_descriptions = Object.entries(TOOLS).map((
+const tool_names_and_descriptions = Object.entries(hashtags).map((
   [name, { description }],
 ) => [name, description]);
 /**

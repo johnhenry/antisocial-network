@@ -16,12 +16,12 @@ import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 import { SIZE_EMBEDDING_VECTOR } from "@/config/mod";
 import { createLogError } from "@/lib/database/log";
-
 type Invoker =
   | ChatGroq
   | OpenAI
   | ChatAnthropic
-  | ChatOllama;
+  | ChatOllama
+  | OllamaLangchain;
 
 export const respond = async (
   {
@@ -73,6 +73,7 @@ export const respond = async (
       case "ollama":
       default: {
         arg.baseUrl = OLLAMA_ORIGIN;
+        delete arg.numBatch;
         invoker = new ChatOllama(arg);
       }
     }
@@ -80,6 +81,7 @@ export const respond = async (
     const chain = prompt.pipe(
       invoker as RunnableLike,
     );
+    console.log("Starting invocation", invocation);
     if (streaming) {
       return chain.stream(invocation).then(async function* (textStream) {
         for await (const text of textStream) {
@@ -88,8 +90,10 @@ export const respond = async (
       });
     }
     const output = await chain.invoke(invocation);
+    console.log("Ending Invocation");
     return output;
   } catch (error) {
+    console.log("Invocation Error", error);
     createLogError(error as Error, {
       repo,
       model,
