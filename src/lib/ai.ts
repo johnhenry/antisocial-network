@@ -1,6 +1,5 @@
 import type { Agent, Post } from "@/types/mod";
 import type { BaseMessageChunk } from "@langchain/core/messages";
-
 import { ChatOllama } from "@langchain/ollama";
 import { Ollama as OllamaLangchain } from "@langchain/community/llms/ollama";
 import { ChatGroq } from "@langchain/groq";
@@ -16,6 +15,7 @@ import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 import { SIZE_EMBEDDING_VECTOR } from "@/config/mod";
 import { createLogError } from "@/lib/database/log";
+import { systemLog } from "@/lib/util/logging";
 type Invoker =
   | ChatGroq
   | OpenAI
@@ -81,14 +81,21 @@ export const respond = async (
     const chain = prompt.pipe(
       invoker as RunnableLike,
     );
+    systemLog("AI: Messages", messages.join("\n"));
+    systemLog("AI: Invocation", invocation);
     if (streaming) {
       return chain.stream(invocation).then(async function* (textStream) {
+        systemLog("AI: Start");
         for await (const text of textStream) {
+          systemLog("AI: Output", text);
           yield text;
         }
+        systemLog("AI: End");
       });
     }
     const output = await chain.invoke(invocation);
+    systemLog("AI: Output", output.content);
+
     return output;
   } catch (error) {
     console.error("Invocation Error", error);

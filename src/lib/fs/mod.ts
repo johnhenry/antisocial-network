@@ -38,7 +38,11 @@ export const putObject = async (
   );
 };
 
-export const getObject = async (id: string) => {
+export const getObject = async (
+  id: string,
+  offset?: number,
+  length?: number,
+) => {
   const minioClient = new Minio.Client({
     endPoint: FS_HOSTNAME,
     port: Number(FS_PORT),
@@ -47,6 +51,47 @@ export const getObject = async (id: string) => {
     secretKey: FS_SECRET_KEY,
   });
 
+  if (typeof offset === "number") {
+    const stream = minioClient.getPartialObject(
+      FS_BUCKET,
+      id,
+      offset,
+      length,
+    );
+    return stream;
+  }
   const stream = minioClient.getObject(FS_BUCKET, id);
   return stream;
+};
+
+export const getObjectFull = async (
+  id: string,
+  transform?: (chunk: Buffer) => Buffer | Promise<Buffer>,
+): Promise<Buffer> => {
+  const result: Buffer = await new Promise(async (resolve, reject) => {
+    const minioClient = new Minio.Client({
+      endPoint: FS_HOSTNAME,
+      port: Number(FS_PORT),
+      useSSL: false,
+      accessKey: FS_ACCESS_KEY,
+      secretKey: FS_SECRET_KEY,
+    });
+
+    const stream = await minioClient.getObject(FS_BUCKET, id);
+    let temp = Buffer.alloc(0); // Initializing as an empty buffer
+
+    stream.on("data", (chunk: Buffer) => {
+      temp = Buffer.concat([temp, chunk]); // Appending each chunk to temp
+    });
+
+    stream.on("error", reject);
+
+    stream.on("end", () => {
+      resolve(temp); // Resolving with the final concatenated buffer
+    });
+  });
+  if (typeof transform !== "function") {
+    return result;
+  }
+  return transform(result);
 };

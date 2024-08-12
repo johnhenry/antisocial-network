@@ -1,4 +1,5 @@
 import exifr from "exifr";
+import { systemLog } from "@/lib/util/logging";
 
 import { Agent, File, FilePlus, FileProto, Post } from "@/types/mod";
 import { TABLE_FILE } from "@/config/mod";
@@ -113,6 +114,7 @@ export const createFile = async (
             owner: owner ? owner.id : undefined,
           }) as File[];
           if (chunk) {
+            systemLog("Chunking started:", newFile.id.toString());
             let previousPostId;
             // embed chunks
             for await (const [chunk, embedding] of chunker(text)) {
@@ -128,6 +130,7 @@ export const createFile = async (
               }
               previousPostId = post.id;
             }
+            systemLog("Chunking started: ended!", newFile.id.toString());
           }
         }
         break;

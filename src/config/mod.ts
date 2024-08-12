@@ -10,6 +10,16 @@ import {
   URLPort,
   URLProtocol,
 } from "@/types/url";
+
+/////////
+// Logging
+////////
+
+export const LOG_LEVEL: URLProtocol = read("LOG_LEVEL", {
+  defaultValue: 0,
+  cast: parseInt,
+});
+
 ////////
 // Cronmower
 ////////
@@ -236,7 +246,16 @@ const MODELS_OTHER = read("MODELS_OTHER", {
 });
 
 const MODELS_TOOL = read("MODELS_TOOL", {
-  defaultValue: ["ollama::llama3.1:latest", "ollama::llama3:latest"],
+  defaultValue: ["ollama::llama3.1:latest", "ollama::llama3:latest"].concat([
+    "llama-3.1-405b-reasoning",
+    "llama-3.1-70b-versatile",
+    "llama-3.1-8b-instant",
+    "llama3-70b-8192",
+    "llama3-8b-8192",
+    "mixtral-8x7b-32768",
+    "gemma-7b-it",
+    "gemma2-9b-it",
+  ].map((model) => `groq::${model}`)),
   cast: (s: string) => s.split(","),
 });
 

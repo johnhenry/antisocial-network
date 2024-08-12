@@ -1,19 +1,17 @@
-const DEFAULT_LEVELS = 1;
-import { createFiles } from "@/lib/database/file";
 import type { Agent, Post } from "@/types/mod";
 import { TABLE_POST } from "@/config/mod";
-import indenturedServant from "@/lib/util/indentured-savant";
-const indent = indenturedServant(2);
-import { blankPost } from "@/lib/util/parse-post-content";
-
-import { embed, summarize, tokenize } from "@/lib/ai";
-import hash from "@/lib/util/hash";
-
-import { Handler } from "@/hashtags/types";
-import { getDB } from "@/lib/db";
+import { createFiles } from "@/lib/database/file";
 import { createPost, stringIdToAgent } from "@/lib/database/post";
+import { embed, summarize, tokenize } from "@/lib/ai";
+import { getDB } from "@/lib/db";
+import indenturedServant from "@/lib/util/indentured-savant";
+import { blankPost } from "@/lib/util/parse-post-content";
+import hash from "@/lib/util/hash";
 import { tail } from "@/lib/util/forwards";
+import { Handler } from "@/hashtags/types";
 
+const DEFAULT_LEVELS = 1;
+const indent = indenturedServant(2);
 const generatePrompt = (text: string) =>
   `You have been provided with a set of responses from various sources to a query:
 ----------------
