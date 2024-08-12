@@ -81,7 +81,6 @@ export const respond = async (
     const chain = prompt.pipe(
       invoker as RunnableLike,
     );
-    console.log("Starting invocation", invocation);
     if (streaming) {
       return chain.stream(invocation).then(async function* (textStream) {
         for await (const text of textStream) {
@@ -90,10 +89,9 @@ export const respond = async (
       });
     }
     const output = await chain.invoke(invocation);
-    console.log("Ending Invocation");
     return output;
   } catch (error) {
-    console.log("Invocation Error", error);
+    console.error("Invocation Error", error);
     createLogError(error as Error, {
       repo,
       model,
