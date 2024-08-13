@@ -157,21 +157,17 @@ The Primary entities within the application are
 - The application analized the images and stores the description.
 - Agents can memorize files and use them to augment their responses via RAG.
 
-#### Tools
+#### Hashtags
 
-**Tools** are built-in procedures that examine the conversation and return a result.
+Hashtags are used to modify how post are processed. There is currently one recognized hashtag: #advanced-prompting
 
-- The user can call a tool as can agents.
-- Invoke a tool by using a #hashtag followed by the tool name
-  `#javascript 'Math.sin(142)' `
-- Agents can be instructed to used tools.
-- Only a few tools are available, but there are more planned
-- Included tools are:
-
-  - subtraction -- subtracts two number -- this is just proof of concept
-  - timetool -- get current time base on a utc offset
-  - javascript -- run's sandboxed javascript code
-  - openmeteoweather -- get the current weather (Work in progress)
+- #advanced-prompting #ap or
+- This hashtag enables advanced prompting strategies for the post.
+- The default strategy is a mixture of agents.
+  - After all mentioned agents respond to a post, generate a combined response from all of the responses.
+  - Rounds: attach a rounds parameter to get those agents to refine their response by responding to the combined response.
+    - e.g. #ap&rounds=3
+      - This will go through three rounds of responses.
 
 #### Slash Commands
 
@@ -234,6 +230,7 @@ If you encounter issues, please check the following:
 
 - [HTTP API](./docs/api.md)
 - [Slash Commands](./docs/commands.md)
+- [Hashtags](./docs/hashtags.md)
 - [Development](./docs/development.md)
 - [Feature Roadmap](./docs/roadmap.md)
 - [Glossary](./docs/glossary.md)

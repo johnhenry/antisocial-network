@@ -15,7 +15,8 @@ import { genRandSurrealQLString } from "@/lib/util/gen-random-string";
 import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 import { SIZE_EMBEDDING_VECTOR } from "@/config/mod";
 import { createLogError } from "@/lib/database/log";
-import { systemLog } from "@/lib/util/logging";
+import consola, { LogTable } from "@/lib/util/logging";
+import { renderChatPromptTemplate } from "@/lib/util/render-templates";
 type Invoker =
   | ChatGroq
   | OpenAI
@@ -49,6 +50,13 @@ export const respond = async (
     model,
     keepAlive: settings.ollamaKeepAlive || "20m",
   };
+  consola.info("settings");
+  LogTable.log(settings);
+  console.log({ settings });
+  consola.info("parameters");
+  LogTable.log(parameters);
+  console.log({ parameters });
+
   try {
     let invoker: Invoker;
     switch (repo) {
@@ -81,24 +89,25 @@ export const respond = async (
     const chain = prompt.pipe(
       invoker as RunnableLike,
     );
-    systemLog("AI: Messages", messages.join("\n"));
-    systemLog("AI: Invocation", invocation);
+    consola.start(
+      "Starting inference ",
+      await renderChatPromptTemplate(messages, invocation),
+    );
     if (streaming) {
       return chain.stream(invocation).then(async function* (textStream) {
-        systemLog("AI: Start");
+        consola.start("Output: Start");
         for await (const text of textStream) {
-          systemLog("AI: Output", text);
+          consola.info("Output", text);
           yield text;
         }
-        systemLog("AI: End");
+        consola.info("Output: End");
       });
     }
     const output = await chain.invoke(invocation);
-    systemLog("AI: Output", output.content);
-
+    consola.success("Inference complete:", output.content);
     return output;
   } catch (error) {
-    console.error("Invocation Error", error);
+    consola.error("Invocation Error", error);
     createLogError(error as Error, {
       repo,
       model,

@@ -571,6 +571,12 @@ article.loader {
     display: inline-block;
   }
 }
+
+code,
+pre {
+  white-space: normal;
+}
+
 dl {
   width: 100%;
 }
@@ -615,6 +621,9 @@ article.logs {
     gap: var(--size-gap);
     > .agent-link {
       display: contents;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .img {
       grid-area: im;

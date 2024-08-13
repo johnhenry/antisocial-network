@@ -1,5 +1,5 @@
 import type { Entity, Log } from "@/types/mod";
-import { print as printToConsole } from "@/lib/util/logging";
+import consola from "@/lib/util/logging";
 import { TABLE_ERROR, TABLE_LOG } from "@/config/mod";
 import { getDB } from "@/lib/db";
 import { mapLogToLogExt } from "@/lib/util/convert-types";
@@ -58,13 +58,13 @@ export const createLog = async (
     const l = { ...log, id: log.id.toString() };
     if (print) {
       const separator = "--".repeat(30);
-      printToConsole(separator);
-      printToConsole(`[${new Date(log.timestamp)}]`, `[${log.id.toString()}]`);
+      consola.log(separator);
+      consola.log(`[${new Date(log.timestamp)}]`, `[${log.id.toString()}]`);
       if (log["metadata"]) {
-        printToConsole("[metadata]  ", log.metadata);
+        consola.log("[metadata]  ", log.metadata);
       }
-      printToConsole(l.content);
-      printToConsole(separator);
+      consola.log(l.content);
+      consola.log(separator);
     }
     return log;
   } finally {

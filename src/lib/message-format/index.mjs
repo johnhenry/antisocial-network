@@ -102,7 +102,8 @@ export const stringify = (
           key === "_" ||
           key === "attachments" ||
           key === "Content-Length" ||
-          (!bool && !showHeaders.includes(key))
+          (!bool && !showHeaders.includes(key)) ||
+          value === undefined
         ) {
           continue;
         }

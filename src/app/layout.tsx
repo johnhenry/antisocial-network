@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import path from "path";
 
 import {
-  IconTool,
+  // IconTool,
   IconSchedule,
   IconSetting,
   IconLog,
@@ -53,12 +53,12 @@ const Page: FC<Props> = async ({ children }: Props) => {
               </a>
             </h1>
             <nav>
-              <a href="/tools">
+              {/* <a href="/tools">
                 <span className="menu-icon">
                   <IconTool />
                 </span>
                 <span className="collapse-text-portrait">Tools</span>
-              </a>
+              </a> */}
               <a href="/schedule">
                 <span className="menu-icon">
                   <IconSchedule />

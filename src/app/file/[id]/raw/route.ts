@@ -13,7 +13,6 @@ type GETOptions = {
 
 const getTransformer =
   (options: string, file: File) => async (data: Buffer): Promise<Buffer> => {
-    console.log("OPTS", options);
     return new Promise((resolve) => {
       const opts = options.split(",").reduce((acc, curr) => {
         const [key, value] = curr.split(":");

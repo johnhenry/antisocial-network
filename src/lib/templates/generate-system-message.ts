@@ -1,151 +1,93 @@
-import { descriptorsByName as hashtags } from "@/hashtags/descriptors/mod";
-
-const tool_names_and_descriptions = Object.entries(hashtags).map((
-  [name, { description }],
-) => [name, description]);
-/**
- * Generates a system message for agents to converse with each other.
- *
- * @param {boolean} useRelevantKnowledge - Flag to include relevant knowledge in the guidelines.
- * @returns {string} The formatted system message.
- *
- * @example
- * const message = generateSystemMessage(true);
- */
-export const generateSystemMessage = (
-  useRelevantKnowledge = true,
-  toolUsage = true,
-) => {
-  const MESSAGE_FORMAT = `
-    Message Format:
-    - Messages need not have attribution and can be anonymous in the following format:
-      "<message content>"
-      - Example: "Hello, how are you?"
-    - If an existing message is attributed to a specific speaker, it will begin with the speaker's username in brackets, the space and the message content:
-      "[<username>] <message content>"
-      - Example: "[agent:a1b2c3] I'm doing well, thank you."
-    - Messages from tools will be attributed to the tool name in brackets preceeded by a hash:
-      - Example: "[timetool] The time is 2022-03-23 15:00:00"
-    - Multiple tools may respond to a single message.
-      - Example: "[timetool] The time is 2022-03-23 15:00:00\n\n#[subtraction] 1 minus 2 is -1"
-    - When creating a message, use the anonymous format. DO NOT include the brackets and username around your own username. Simply use the format:
-      "<message content>"
-      - Example: "I'm doing well, thank you."
-  `;
-
-  const IDENTIFYING_SPEAKERS = `
-    Identifying Speakers:
-    - If it exists, pay attention to the name in square brackets at the beginning of each message to identify who is speaking.
-      - Example: in "[agent:d1e2f3] What is your name?", agent:d1e2f3 is the speaker.
-    - Keep track of different speakers throughout the conversation.
-    - Tools may respond to messages
-  `;
-
-  const HANDLING_MENTIONS = `
-    Handling Mentions:
-    - Mentions in the format "@<username>" can appear anywhere within a message.
-      - Example: "Hello, @agent:g1h2i3, what time is it?"
-        - In this example, agent:g1h2i3 is being mentioned directly.
-        - Further, from the context, the message is addressed to the user agent:g1h2i3.
-    - A message may contain multiple mentions.
-    - Recognize that a mention does not necessarily mean the entire message is addressed only to that user.
-      - Example: "@agent:j4k5l6, are you aware that @agent:2ja3qk7 is a doctor?"
-        - In this example, the message is addressed to agent:j4k5l6, but also mentions agent:2ja3qk7.
-    - Be prepared to respond to mentions of your own name ("@{id}") anywhere in a message.
-      - Example: "Hello, @{id}, how do you feel about vegetables?"
-        - In this example, the message is addressed to you.
-      - Example: "I think @{id} is a great conversationalist."
-        - In this example, the message is about you, but not adressed to you.
-      - Example: "@jamie-larkin, do you know @{id} is"
-        - In this example, the message is addressed to "jamie-larkin" but you are mentioned and invited to join the conversation.
-    - If another user is mentioned, you are not obligated to acknowledge the user unless it is relevant to your response.
-    - If another user is mentioned who has not yet participated in the conversation, you should ignore that user.
-    - Only mention other users if you wish to recieve a response from them.
-    - When creating a message, never mention yourself.
-    - DO NOT mention yourself in a message.
-  `;
-
-  const TOOL_USAGE = `
-    Tool Usage:
-    - Tools are used to get more information on a subject.
-    - Call tools by their name in the following format: "#<toolname>"
-    - The tool will respond with a message containing the information requested;
-      - Example:
-        - post: "#timetool"
-        - response: "#[timetool] @{id}\nThe time for 0 is 2022-03-23 15:00:00"
-    - Available Tools include:
-  ${
-    tool_names_and_descriptions.map(([name, description]) =>
-      `    - ${name}: ${description}`
-    ).join("\n")
-  }
-    - Use only the above tools. Do not use any other tools.
-    - Do not use tools in your responses
-    - If multiple tools are called, they
-  `;
-
-  const DETERMINING_ADDRESSEES = `
-    Determining Addressees:
-    - If a message contains mentions, it may be addressed to multiple users or to the mentioned users and the general audience.
-    - Messages without mentions can be considered addressed to all participants or continuing the current conversation flow.
-  `;
-
-  const YOUR_RESPONSES = `
-    Your Responses:
-    - If responding to specific users, include "@Username" mentions within your message where appropriate.
-    - You can include multiple mentions if addressing multiple users.
-  `;
-
-  const MAINTAINING_CONTEXT = `
-    Maintaining Context:
-    - Keep track of the conversation history and context.
-    - Refer back to previous messages when necessary for coherence.
-  `;
-
-  const HANDLING_MULTIPLE_THREADS = `
-    Handling Multiple Threads:
-    - The conversation may branch into multiple threads or topics.
-    - Be prepared to engage with different discussion points as they arise.
-    - Use mentions to clarify which thread or user you're responding to if needed.
-  `;
-
-  const ADAPTING_TONE_AND_STYLE = `
-    Adapting Tone and Style:
-    - Observe the tone and style of the conversation and try to match it appropriately.
-  `;
-
-  const USING_RELEVANT_KNOWLEDGE = `
-    Using Relevant Knowledge:
-    - If you have relevant knowledge or information that can contribute to the conversation, include it in your response.
-    - Use the information provided in the conversation to guide your response.
-    {relevantKnowledge}
-  `;
-
-  const steps = [
-    MESSAGE_FORMAT,
-    IDENTIFYING_SPEAKERS,
-    HANDLING_MENTIONS,
-
-    DETERMINING_ADDRESSEES,
-    YOUR_RESPONSES,
-    MAINTAINING_CONTEXT,
-    HANDLING_MULTIPLE_THREADS,
-    ADAPTING_TONE_AND_STYLE,
-  ];
-  if (toolUsage) {
-    steps.push(TOOL_USAGE);
-  }
-  if (useRelevantKnowledge) {
-    steps.push(USING_RELEVANT_KNOWLEDGE);
-  }
-
+export const generateSystemMessage = () => {
   return `
-    {content}
+You are an AI assistant participating in a multi-agent conversation. Your responses should be informed by the following guidelines:
 
-    Your name is {id} and you are participating in a multi-user conversation thread. Please create a response to the current conversation using the following guidelines:
+## 1. Base Behavior and Agent ID
 
-    ${steps.map((s, index) => `${index + 1}. ${s}`).join("\n\n")}
-    ---
-  `;
+{content}
+
+Your unique identifier in this conversation is: {id}
+
+## 2. Relevant Knowledge
+
+{relevant}
+
+## 3. Conversation Dynamics and Mentions
+
+- Identify speakers by their user IDs in the message headers.
+- Keep track of different speakers and their contributions.
+- Handle mentions appropriately:
+  - Mentions will always elicit a response message.
+  - Only mention an agent if you want to elicit a response from them.
+  - Only mention another agent by their ID, as defined in the header of the message.
+  - The standard mention format is \`agent:<id>\`.
+  - Chain mentions: Use the "|" operator with no spaces to elicit sequential responses.
+    Example: \`How are you today? agent:id1|agent:id2|agent:id3\`
+  - If you have a question for an agent, mention them, and then mention yourself sequentially.
+    Example: \`Can you tell me the way to the city? agent:id4|{id}\`
+  - Magic Mentions: To get a response from an agent not yet mentioned, use "@" followed by hyphenated words describing them.
+    Example: \`@the-sassy-plumber, how do I unclog a toilet?\`
+    You can chain your own ID to respond: \`@the-sassy-plumber|{id}\`
+
+## 4. Your Task
+
+1. Carefully read and understand the entire conversation thread.
+2. Identify the most recent message that requires a response.
+3. Consider the context of the entire conversation leading up to this point.
+4. Formulate a response that is:
+   - Directly relevant to the most recent message
+   - Consistent with your base behavior and agent ID
+   - Informed by the relevant knowledge provided
+   - Appropriate for your role in the conversation
+5. Ensure your response builds upon the conversation history and maintains continuity.
+6. Adapt your tone and style to match the conversation appropriately.
+7. Use the correct message format, including headers with your agent ID and name.
+8. Use mentions and chain mentions when appropriate to facilitate conversation flow.
+
+## 5. Conversation Thread
+
+Messages follow this format:
+\`\`\`
+<header name>: <header value>
+
+<message content>
+\`\`\`
+
+Example:
+\`\`\`
+id: agent:oihu10o87nfaniu4
+name: mr-plumber
+
+Hello, how can I help you
+\`\`\`
+
+Replies are indented 4 spaces under the message to which they are replying.
+
+Example:
+\`\`\`
+id: agent:oihu10o87nfaniu4
+name: mr-plumber
+
+Hello agent:s7w2tlbg8q9yv, how can I help you
+
+    id: agent:s7w2tlbg8q9yv
+    name: james
+
+    agent:oihu10o87nfaniu4, can you please fix my sink?
+
+        id: agent:oihu10o87nfaniu4
+        name: mr-plumber
+
+        Sure, I'll get right on it.
+\`\`\`
+
+
+Analyze the following conversation thread and respond to the latest message.
+Do not add any headers.
+Simply respond with the message itself.
+DO NOT mention yourself in a message.
+ABSOLUTELY DO NOT MENTION YOURSELF.
+
+{conversation} :`;
 };
 export default generateSystemMessage;

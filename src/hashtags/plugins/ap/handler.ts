@@ -5,43 +5,60 @@ import { createPost, stringIdToAgent } from "@/lib/database/post";
 import { embed, summarize, tokenize } from "@/lib/ai";
 import { getDB } from "@/lib/db";
 import indenturedServant from "@/lib/util/indentured-savant";
-import { blankPost } from "@/lib/util/parse-post-content";
 import hash from "@/lib/util/hash";
 import { tail } from "@/lib/util/forwards";
 import { Handler } from "@/hashtags/types";
+import consola from "@/lib/util/logging";
 
-const DEFAULT_LEVELS = 1;
+const DEFAULT_ROUNDS = 1;
+const DEFAULT_STRATEGY = "mixture-of-agents";
 const indent = indenturedServant(2);
 const generatePrompt = (text: string) =>
-  `You have been provided with a set of responses from various sources to a query:
-----------------
+  `# Enhanced Synthesized Response Prompt
+
+You have been provided with a set of responses from various sources to a query:
 
 ${text}
 
-----------------
-Your task is to synthesize these responses into a single, high-quality response.
-It is crucial to critically evaluate the information provided in these responses, recognizing that some of it may be biased or incorrect.
+Your task is to synthesize these responses into a single, high-quality response. Follow these steps:
 
-Your response should not simply replicate the given answers but should offer a refined, accurate, and comprehensive reply to the instruction.
-Ensure your response is well-structured, coherent, and adheres to the highest standards of accuracy and reliability.
+1. Critically evaluate the information, recognizing potential biases, inaccuracies, or conflicts.
+2. Synthesize a comprehensive, accurate response based on the most reliable information.
+3. Provide a straightforward, no-nonsense answer as though addressing the user directly.
+4. Follow your answer with reasoning, including references to specific sources when relevant.
 
-Giva a straight-forward, no-nonsense answer formatted as though you were ddressing the user yourself. Do not format your response. Do not give it an introduction or a conclusion. Simply provide the answer.
+Guidelines:
+- Do not simply replicate the given answers.
+- Ensure your response is well-structured, coherent, and accurate.
+- When sources conflict, explain the discrepancy and justify your chosen stance.
+- If information is uncertain or speculative, clearly indicate this in your response.
+- Stay within the scope of the provided information. If critical information is missing, state this clearly.
+- Do not add an introduction or conclusion to your response.
 
-Follow that up with reasoning for your answer including references to answers given by others if relevant.
+Evaluation Criteria:
+- Accuracy and reliability of information
+- Comprehensiveness of the response
+- Clarity and coherence of explanation
+- Appropriate handling of conflicting or uncertain information
+- Proper attribution to sources when necessary
 
-Example:
-'''
-<Your response>
+Format your response as follows:
+\`\`\`
+<Your synthesized response>
 
-(<your reasoning behind your response>)
-'''
+(<Your reasoning, including:
+ - Justification for your synthesis
+ - Discussion of any conflicting information
+ - Explanation of uncertainty if present
+ - References to specific sources where relevant>)
+\`\`\`
 
 Responses from models:
-----------------
 
+\`
 `;
 
-export const mixtureOfAgents: Handler = (
+export const advancedPrompting: Handler = (
   {
     source,
     target,
@@ -100,24 +117,24 @@ export const mixtureOfAgents: Handler = (
     } finally {
       await db.close();
     }
-    const replaceRootMessage = await blankPost(dehydrated, {
-      mentions: true,
-      hashtags: true,
-    });
 
-    let levels = Number(params.levels) || DEFAULT_LEVELS;
+    let rounds = Number(params.rounds) || DEFAULT_ROUNDS;
+    const strategy = params.strategy || DEFAULT_STRATEGY;
+    if (strategy !== DEFAULT_STRATEGY) {
+      throw new Error(`Invalid strategy: ${strategy}`);
+    }
+
     const layers = [];
     for (let i = 0; i < mentions.length; i++) {
       const source = mentions[i];
       const forward = forwards[i];
-      const pendingPost = createPost([["user", replaceRootMessage]], {
+      const pendingPost = createPost([], {
         source,
         target: post,
         depth,
         streaming,
         bibliography,
         forward,
-        rewind: 1,
       });
       layers.push(pendingPost.then((pendingPost) => {
         return [pendingPost, source];
@@ -127,25 +144,29 @@ export const mixtureOfAgents: Handler = (
       (post as Post).content,
       (agent as Agent).id.toString(),
     ]);
-    const text = responses.map(([content, id]) => indent`[${id!}] ${content!}`)
+    const text = responses.map(([content, id], index) =>
+      `Response ${index}:
+${indent`id:${id!}\n\n${content!}`}`
+    )
       .join("\n\n");
 
     const prompt = generatePrompt(indent`${dehydrated}`);
 
     let response = await summarize(
-      text,
       prompt,
+      text,
     );
 
-    levels -= 1;
-    if (levels > 0) {
+    rounds -= 1;
+    if (rounds > 0) {
       response += `${"\n".repeat(4)}${"-".repeat(2 ** 5)}${"\n".repeat(4)}
 Think about how you would improve this response and give what you
 
-#${name}?levels=${levels}
+#${name}?rounds=${rounds}&strategy=${strategy}
 ${mentions.map((x) => x.id.toString()).join(" ")}`;
     }
-    createPost(response, {
+
+    const res = await createPost(response, {
       source,
       target: post,
       depth,
@@ -154,6 +175,17 @@ ${mentions.map((x) => x.id.toString()).join(" ")}`;
       forward: [],
       // forward: forwards.reduce((a, b) => merge(a as Forward, b as Forward), []),
     });
+
+    if (rounds > 0) {
+      if (rounds === 1) {
+        console.info("Final round");
+      } else {
+        consola.info(`${rounds} rounds left.`);
+      }
+      console.info((res as Post).content);
+    } else {
+      consola.info("Continuing");
+    }
   });
 };
-export default mixtureOfAgents;
+export default advancedPrompting;

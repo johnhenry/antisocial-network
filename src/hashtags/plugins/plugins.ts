@@ -1,4 +1,4 @@
 const plugins = [
-  "mixtureOfAgents",
+  "advancedPrompting",
 ];
 export default plugins;

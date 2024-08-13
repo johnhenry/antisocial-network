@@ -1,6 +1,28 @@
+import { consola, createConsola } from "consola";
 import { LOG_LEVEL } from "@/config/mod";
-const { log, error } = console;
-export { error, error as printError, log, log as print };
-export const systemLog = (...any: string[]) => LOG_LEVEL && log(...any);
-export default systemLog;
-export const systemError = (...any: string[]) => LOG_LEVEL && error(...any);
+const { log, table } = console;
+export const LogTable = createConsola({
+  level: LOG_LEVEL,
+  reporters: [
+    {
+      log: (tabularData) => {
+        table(tabularData);
+      },
+    },
+  ],
+});
+
+export const LogJson = createConsola({
+  level: LOG_LEVEL,
+
+  reporters: [
+    {
+      log: (object: Record<string, any>) => {
+        log(JSON.stringify(object, null, " "));
+      },
+    },
+  ],
+});
+
+consola.level = LOG_LEVEL;
+export default consola;

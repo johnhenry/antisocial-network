@@ -72,6 +72,7 @@ export const mapAgentPlusToAgentPlusExt = (
     remembered,
     bookmarked,
   } = agentPlus;
+
   return {
     agent: mapAgentToAgentExt(agent),
     remembered: remembered ? remembered.map(mapPostToPostExt) : undefined,

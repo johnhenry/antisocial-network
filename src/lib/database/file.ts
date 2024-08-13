@@ -1,5 +1,5 @@
 import exifr from "exifr";
-import { systemLog } from "@/lib/util/logging";
+import consola from "@/lib/util/logging";
 
 import { Agent, File, FilePlus, FileProto, Post } from "@/types/mod";
 import { TABLE_FILE } from "@/config/mod";
@@ -13,7 +13,7 @@ export { getFile, getFiles } from "@/lib/database/helpers";
 
 import { getDB, relate } from "@/lib/db";
 
-import { StringRecordId } from "surrealdb.js";
+import { RecordId, StringRecordId } from "surrealdb.js";
 
 import { getSettingsObject } from "@/lib/database/settings";
 
@@ -29,7 +29,19 @@ import parsePDF from "@/lib/parsers/pdf";
 
 import { createPost } from "@/lib/database/post";
 
-import { putObject } from "@/lib/fs/mod";
+import { getObjectFull, putObject } from "@/lib/fs/mod";
+
+export const getBase64File = async (
+  id: RecordId,
+): Promise<string> => {
+  const db = await getDB();
+  const [_, newId] = id.toString().split(":");
+  try {
+    return (await getObjectFull(newId)).toString("base64");
+  } finally {
+    await db.close();
+  }
+};
 
 export const createFiles = async (
   { files, owner, chunk = true, logChunk = false }: {
@@ -114,7 +126,7 @@ export const createFile = async (
             owner: owner ? owner.id : undefined,
           }) as File[];
           if (chunk) {
-            systemLog("Chunking started:", newFile.id.toString());
+            consola.info("Chunking started:", newFile.id.toString());
             let previousPostId;
             // embed chunks
             for await (const [chunk, embedding] of chunker(text)) {
@@ -130,7 +142,7 @@ export const createFile = async (
               }
               previousPostId = post.id;
             }
-            systemLog("Chunking started: ended!", newFile.id.toString());
+            consola.info("Chunking started: ended!", newFile.id.toString());
           }
         }
         break;

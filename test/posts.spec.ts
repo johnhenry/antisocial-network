@@ -20,8 +20,10 @@ describe("posts", () => {
       const post = (await createPost("main post")) as Post;
       const post2 = (await createPost("sub post", { target: post })) as Post;
       const post3 = (await createPost("sub post 2", { target: post2 })) as Post;
-      const conversation = await getConversation(post3, -1);
-      expect(conversation.length).toBe(3);
+      const conversation = await getConversation(post3);
+      expect(conversation.length).toBe(1);
+      expect(conversation.flat(Infinity).length).toBe(3);
+      // converations have a root node. We''l have to modify this to recursively check.
       await deleteEntityById(post.id);
       await deleteEntityById(post2.id);
       await deleteEntityById(post3.id);

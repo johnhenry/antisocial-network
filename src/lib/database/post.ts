@@ -8,7 +8,6 @@ import type {
   PostPlus,
 } from "@/types/mod";
 import type { BaseMessageChunk } from "@langchain/core/messages";
-
 import {
   REL_BOOKMARKS,
   REL_CONTAINS,
@@ -21,7 +20,6 @@ import {
   TABLE_POST,
 } from "@/config/mod";
 import { embed, tokenize } from "@/lib/ai";
-
 import { getDB, relate } from "@/lib/db";
 import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
@@ -35,19 +33,52 @@ import {
   aggregateResponse,
   updateAgent,
 } from "@/lib/database/agent";
-
 import { replaceContentWithLinks } from "@/lib/database/helpers";
-
 import hash from "@/lib/util/hash";
-
 import hashtags from "@/hashtags/mod";
-
 import { tail } from "@/lib/util/forwards";
+import { getBase64File } from "@/lib/database/file";
+import { stringify } from "@/lib/message-format/index.mjs";
+import vectorSum from "@/lib/util/vector-sum";
+
+export const TreeifyPosts = async (posts: Post[], { attachment = "summary" }: {
+  attachment?: "summary" | "raw ";
+} = {}): Promise<any[]> => {
+  let tree: any[] = [];
+  for (const post of posts) {
+    // assign rendered object
+    const renderedObject: Record<string, any> = {
+      _: post.content,
+      name: post.source?.name,
+      id: post.source?.id.toString(),
+      type: "text/plain ",
+    };
+    if (post.files && post.files.length) {
+      renderedObject.attachments = [];
+      for (const file of post.files) {
+        renderedObject.attachments.push({
+          _: attachment === "summary"
+            ? `description of content: ${file.content}`
+            : await (getBase64File(file.id)),
+          name: file.name,
+          type: file.type,
+          id: file.id.toString(),
+        });
+      }
+    }
+
+    tree.unshift(renderedObject);
+    tree = [tree];
+  }
+  return tree;
+};
 
 export const getConversation = async (
   post?: Post,
-  depth: number = -1,
-): Promise<Post[]> => {
+  { depth = -1 }: {
+    depth?: number;
+  } = {},
+): Promise<any[]> => {
   const db = await getDB();
   if (!post) {
     return [];
@@ -55,59 +86,36 @@ export const getConversation = async (
 
   try {
     const posts = [];
+    let tree: any[] = [];
     let targetId = post.id;
     while (true) {
-      const [[T]] = await db.query<[[Post]]>(
-        `SELECT * FROM ${TABLE_POST} WHERE id = $targetId FETCH mentions`,
-        { targetId },
+      const [[post]] = await db.query<[[Post]]>(
+        `SELECT * FROM type::table($table) WHERE id = $targetId FETCH mentions, source, files, source`,
+        { targetId, table: TABLE_POST },
       );
-      if (!T) {
+      if (!post) {
         break;
       }
-      posts.push(T);
-      if (depth > -1 && posts.length >= depth) {
+      posts.push(post);
+      if (depth > -1 && tree.length >= depth) {
         break;
       }
-      targetId = T.target as unknown as RecordId;
+      targetId = post.target as unknown as RecordId;
     }
-    //
-    // let currentPost = post;
-    // let count = 0;
-    // while (true) {
-    //   if (depth > -1 && count >= depth) {
-    //     break;
-    //   }
-    //   count++;
-    //   posts.push(currentPost);
-    //   if (!currentPost.target) {
-    //     break;
-    //   }
-    //   let T = currentPost.target;
-    //   // Target is actually a post id and not a post
-    //   if ((currentPost.target as unknown as RecordId).tb) {
-    //     [[T]] = await db.query<[[Post]]>(
-    //       `SELECT * FROM ${TABLE_POST} WHERE id = $target FETCH mentions`,
-    //       { target: currentPost.target },
-    //     );
-    //   }
-    //   currentPost = T;
-    // }
     return posts;
   } finally {
     await db.close();
   }
 };
 
-import { vectorSum } from "@/lib/util/vector-sum";
-
 export const getRelevant = async ({
-  conversation,
+  posts,
   agent,
   limit = 8,
   threshold = 0,
   embeddingMethod = "concat",
 }: {
-  conversation: Post[];
+  posts: Post[];
   agent: Agent;
   limit?: number;
   threshold?: number;
@@ -127,32 +135,32 @@ export const getRelevant = async ({
     switch (embeddingMethod) {
       case "concat":
         embedded = await embed(
-          conversation.map(({ content }) => content).join("\n\n"),
+          posts.map(({ content }) => content).join("\n\n"),
         );
         break;
+      // TODO: these alternate methods of embedding are not tested
       case "sum":
-        embedded = vectorSum(conversation.map(({ embedding }) => embedding));
+        embedded = vectorSum(posts.map(({ embedding }) => embedding));
         break;
       case "sum-geometric-reduction":
         // Each embeding is multiplied by a decreasing factor before summing
         const factor = 0.9;
-        const embeddings = conversation.map(({ embedding }, i) =>
+        const embeddings = posts.map(({ embedding }, i) =>
           embedding.map((x) => x * Math.pow(factor, i))
         );
         embedded = vectorSum(embeddings);
         break;
       case "sum-weighted":
         embedded = vectorSum(
-          conversation.map(({ embedding }, i, conversation) =>
+          posts.map(({ embedding }, i, posts) =>
             embedding.map(
-              (x) => (x * (conversation.length - i + 1)) / conversation.length,
+              (x) => (x * (posts.length - i + 1)) / posts.length,
             )
           ),
         );
         break;
     }
-    // TODO: what's a better way to get an embedding for a conversation?
-    // Would we instead extract the embeddingd and add them?
+
     const [bookmarked, remembered] = await db.query<[Post[], Post[]]>(
       queries.join(";"),
       {
@@ -170,16 +178,76 @@ export const getRelevant = async ({
 
 ///////
 
+const createContent = async (
+  { target, source, streaming = false, bibliography = [] }: {
+    target?: Post;
+    source?: Agent;
+    streaming?: boolean;
+    bibliography?: Post[];
+  } = {},
+) => {
+  if (!source) {
+    throw new Error("Agent required");
+  }
+  const posts = await getConversation(target);
+  const tree = await TreeifyPosts(posts);
+  const conversation = stringify(tree, {
+    indentation: 4 as unknown as string,
+    showBoundry: false,
+  }).trim();
+  const fetchedRelevant = await getRelevant({
+    posts,
+    agent: source,
+  });
+  bibliography.push(...posts, ...fetchedRelevant);
+  const relevant = fetchedRelevant.map(({ content }) => (content || "").trim())
+    .join(
+      "\n\n",
+    ).trim();
+
+  let content;
+  let out;
+  if (source) {
+    if (conversation.length) {
+    }
+    if (!source.content) {
+      source = await updateAgent(source.id, source);
+    }
+    let systemMessage;
+    if (!conversation) {
+      systemMessage = `{content}
+Please say something interestingand relevant to your personality.
+      `;
+    }
+
+    out = await agentResponse(source, {
+      streaming,
+      conversation,
+      relevant,
+      systemMessage,
+    });
+  }
+  if (streaming) {
+    const chunks = [];
+    for await (const chunk of out as LangchainGenerator) {
+      chunks.push(chunk);
+    }
+    content = chunks.join("\n");
+  } else {
+    const chunk = out as BaseMessageChunk;
+    content = chunk.content as string;
+  }
+  return content;
+};
+
 export const generatePost = async ({
   tools,
   target,
   streaming = false,
   source,
-  bibliography,
+  bibliography = [],
   depth,
   forward,
-  content: messageContent = [],
-  rewind = 0,
 }: {
   tools?: string[];
   target?: Post;
@@ -188,49 +256,18 @@ export const generatePost = async ({
   bibliography?: Post[];
   depth?: number;
   forward?: Forward;
-  content?: [string, string][];
-  rewind?: number;
 }): Promise<Post> => {
   // content will be generated by a tool or an agent.
-
   const db = await getDB();
   try {
-    bibliography = bibliography || [];
-    const conversation = await getConversation(target, -1);
-    let relevant: Post[] = [];
-    let content;
-    let out;
-    if (source) {
-      if (conversation.length) {
-        relevant = await getRelevant({ conversation, agent: source });
-      }
-      if (!source.content) {
-        source = await updateAgent(source.id, source);
-      }
-      out = await agentResponse(source, {
-        streaming,
-        conversation,
-        relevant,
-        content: messageContent,
-        rewind,
-      });
-    }
-    if (streaming) {
-      const chunks = [];
-      for await (const chunk of out as LangchainGenerator) {
-        chunks.push(chunk);
-      }
-      content = chunks.join("\n");
-    } else {
-      const chunk = out as BaseMessageChunk;
-      content = chunk.content as string;
-    }
+    const content = await createContent({ target, bibliography, source });
+
     const post = (await createPost(content, {
       source,
       target,
       streaming,
       tools,
-      bibliography: bibliography.concat(conversation).concat(relevant),
+      bibliography,
       depth,
       forward,
     })) as Post;
@@ -362,7 +399,7 @@ const processContent = (
         if (!hashtag) {
           continue;
         }
-        const { handler, name, description } = hashtag;
+        const { handler, name } = hashtag;
         const result = await handler({
           embedding,
           source,
@@ -425,7 +462,7 @@ const processContent = (
 import type { Forward } from "@/lib/util/forwards";
 
 export const createPost = async (
-  content: string | undefined | null | [string, string][],
+  content: string | undefined | null | [string][],
   {
     embedding,
     source,
@@ -437,7 +474,6 @@ export const createPost = async (
     dropLog = false,
     bibliography,
     forward = [],
-    rewind = 0,
     logCreation = false,
     noProcess = false,
   }: {
@@ -451,7 +487,6 @@ export const createPost = async (
     dropLog?: boolean;
     bibliography?: Post[];
     forward?: Forward;
-    rewind?: number;
     logCreation?: boolean;
     noProcess?: boolean;
   } = {},
@@ -505,10 +540,8 @@ export const createPost = async (
         bibliography,
         depth,
         forward,
-        content,
-        rewind,
       });
-    } else if ((!content || noProcess) && !Array.isArray(content)) {
+    } else if ((!content || noProcess)) {
       if (!content && !files.length) {
         throw new Error("No content or files provided.");
       }
@@ -637,9 +670,9 @@ const ADDITIONAL_FIELDS =
 export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
   const queries = [];
 
-  // select target
+  // select post
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where id = $id FETCH source, target, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where id = $id FETCH source, target, target.files, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions, files`,
   );
   // select incoming relationships
   // precedes
@@ -649,11 +682,11 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
   // // select outgoing relationships
   // // precedes
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_PRECEDES}<-(post where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_PRECEDES}<-(post where id = $id) FETCH mentions, files`,
   );
   // // elicits
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_ELICITS}<-(post where id = $id) FETCH mentions`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_ELICITS}<-(post where id = $id) FETCH mentions, files, target.files`,
   );
   // // remembers
   queries.push(
@@ -677,6 +710,7 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
     ] = await db.query(queries.join(";"), {
       id,
     });
+
     if (post.target) {
       post.target = replaceContentWithLinks(post.target);
     }
@@ -695,7 +729,6 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
       remembers,
       container,
     };
-
     return obj;
   } finally {
     await db.close();

@@ -30,7 +30,7 @@ import { createFiles } from "@/lib/database/file";
 
 export { getAgent, getAgents } from "@/lib/database/helpers";
 import { respond } from "@/lib/ai";
-
+import consola from "@/lib/util/logging";
 export const nameExists = async (name: string): Promise<boolean> => {
   const db = await getDB();
   try {
@@ -118,7 +118,7 @@ export const genCharacter = async ({
           id,
         ),
       ),
-      PROMPTS_SUMMARIZE.LLM_PROMPT, //TODO: I DON'T  THINK I BROKE ANYHTING< BUT I,m in the middle of makinf this dynamic to account for the first message and id passed
+      PROMPTS_SUMMARIZE.LLM_PROMPT,
     );
   } else {
     // nothing is provided
@@ -300,65 +300,45 @@ import {
   generateDescriptionPromptWithFirstMessage,
   generateSystemMessage,
   generateSystemMessageAggregate,
-  mapPostsToMessages,
 } from "@/lib/templates/dynamic";
 
 // map a list of post to messages
-
-const mergeRelevant = async (posts: Post[]) => {
-  return [...posts]
-    .map(({ content }) => content)
-    .join("\n\n").trim();
-};
 
 export const agentResponse = async (
   agent: Agent & { content: string },
   {
     streaming = false,
-    conversation = [],
-    relevant = [],
-    content = [],
-    rewind = 0,
+    relevant,
+    conversation,
+    systemMessage,
   }: {
     streaming?: boolean;
-    conversation?: Post[];
-    relevant?: Post[];
-    content?: [string, string][];
-    rewind?: number;
+    relevant?: string;
+    conversation?: string;
+    systemMessage?: string;
   } = {},
 ): Promise<LangchainGenerator | BaseMessageChunk> => {
-  let relevantKnowledge;
-  let messages: [string, string][];
-  let systemMessage;
-  if (conversation.length) {
-    relevantKnowledge = await mergeRelevant(relevant);
-    messages = mapPostsToMessages(conversation);
-    if (rewind) {
-      messages = messages.slice(
-        0,
-        -rewind,
-      );
-    }
-    messages = messages.concat(content);
-    systemMessage = [
-      "system",
-      await generateSystemMessage(Boolean(relevantKnowledge)),
-    ];
-  } else {
-    messages = [];
-    systemMessage = ["system", `{content}`];
+  if (!systemMessage) {
+    systemMessage = await generateSystemMessage();
   }
+  const invocation = {
+    id: agent.id.toString(),
+    content: agent.content,
+    relevant,
+    conversation,
+  };
 
+  consola.box(
+    `Generating response from ${agent.name}(${agent.id.toString()})`,
+  );
   const results = await respond({
-    messages: [systemMessage].concat(messages) as [string, string][],
-    invocation: {
-      relevantKnowledge,
-      id: agent.id.toString(),
-      content: agent.content,
-    },
+    messages: [["system", systemMessage]],
+    invocation,
     parameters: agent.parameters,
     streaming,
   });
+  // TODO: this is probably a good place to implement tool calls.
+  // See example: https://github.com/ollama/ollama-js/blob/main/examples/tools/tools.ts
   if (streaming) {
     // TODO: split iterator here an add callback above
     return results as LangchainGenerator;

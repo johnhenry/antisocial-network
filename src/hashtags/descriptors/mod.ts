@@ -1,6 +1,6 @@
 import type { Descriptor, DescriptorSingleName } from "@/hashtags/types";
-import mixtureOfAgents from "@/hashtags/plugins/moa/descriptor";
-const descriptors: Record<string, Descriptor> = { mixtureOfAgents };
+import advancedPrompting from "@/hashtags/plugins/ap/descriptor";
+const descriptors: Record<string, Descriptor> = { advancedPrompting };
 
 export const descriptorsByName: Record<string, DescriptorSingleName> = {};
 for (const [_, descriptor] of Object.entries(descriptors)) {

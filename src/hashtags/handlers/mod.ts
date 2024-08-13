@@ -1,4 +1,4 @@
 import type { Handler } from "@/hashtags/types";
-import mixtureOfAgents from "@/hashtags/plugins/moa/handler";
-const handlers: Record<string, Handler> = { mixtureOfAgents };
+import advancedPrompting from "@/hashtags/plugins/ap/handler";
+const handlers: Record<string, Handler> = { advancedPrompting };
 export default handlers;

@@ -15,8 +15,8 @@ import {
 // Logging
 ////////
 
-export const LOG_LEVEL: URLProtocol = read("LOG_LEVEL", {
-  defaultValue: 0,
+export const LOG_LEVEL: number = read("LOG_LEVEL", {
+  defaultValue: 2,
   cast: parseInt,
 });
 

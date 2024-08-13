@@ -1,6 +1,6 @@
 {
   "name": "antisocial-network",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -39,6 +39,7 @@
     "@langchain/openai": "^0.2.1",
     "compromise": "^14.13.0",
     "compromise-paragraphs": "^0.1.0",
+    "consola": "^3.2.3",
     "cronmower": "^0.0.3",
     "dotenv": "^16.4.5",
     "draft-js": "^0.11.7",

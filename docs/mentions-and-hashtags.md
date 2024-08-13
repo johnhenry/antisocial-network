@@ -55,42 +55,6 @@ Add More "|"s for more recipients.
         [agent:5678]: I'm doing well too. Great to hear!
 ```
 
-## Hashtags
-
-Hashtags function like mentions, but call tools instead of agents.
-
-### Differences from Mentions
-
-There are a few key differences:
-
-- Hash tags begin with the "#" symbol.
-
-  - e.g. `#calculator 15% of 230`
-
-- Tools are (currently) built into the system.
-  They cannot be created and modified by users like agents.
-
-- Tools can be passed arguments in the form of URL query parameters.
-
-  - e.g. `#weatherapp?location=NewYork&unit=celsius`
-
-- Tools take precedence over mentions and may modifiy the recipients of a message.
-
-### Synergies with Mentions
-
-Tools and agents can be used together
-
-### Agent-tool usage
-
-Agents know how to use tools to get answers.
-
-```
-@bill-the-agent use a tool to tell me the time in UTC-0.
-  [bill-the-agent]: What times is it in UTC-0? #timetool|@bill-the-agent
-    [#timetool]: The time in UTC-0 is 12:00am \n @bill-the-agent
-        [bill-the-agent]: It is 12:00am in UTC-0.
-```
-
 ### Back and Forth Conversation
 
 Introducing multiple agents into a thread can create a back and forth conversation.
