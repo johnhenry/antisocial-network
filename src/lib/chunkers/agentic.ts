@@ -3,6 +3,7 @@ import ollama from "ollama";
 import { embed } from "@/lib/ai";
 import { createUnembededSentenceChunker } from "@/lib/chunkers/sentence";
 import { getSettingsObject } from "@/lib/database/settings";
+import consola from "@/lib/util/logging";
 
 const decideBoundary = async (
   currentChunk: string[],
@@ -72,7 +73,7 @@ Should a new chunk start? Respond using the provided function.`,
   if (
     !response.message.tool_calls || response.message.tool_calls.length === 0
   ) {
-    console.log("The model didn't use the function. Its response was:");
+    consola.log("The model didn't use the function. Its response was:");
     return false;
   }
 
