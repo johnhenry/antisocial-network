@@ -40,10 +40,13 @@ export const replaceContentWithLinks = <
     for (const mention of item.mentions) {
       const { id: rId } = mention;
       const id = rId.toString();
+      if (!mention.name) {
+        continue;
+      }
       item.content = item.content.replaceAll(
         new RegExp(`${id}`, "g"),
         useLink
-          ? `<a href="/agent/${id}" title="${mention.content}">@${mention.name}</a>`
+          ? `<a href="/agent/${id}" title="${mention.content}">${mention.name}</a>`
           : `@${mention.name}`,
       );
     }

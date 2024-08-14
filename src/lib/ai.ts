@@ -52,10 +52,10 @@ export const respond = async (
   };
   consola.info("settings");
   LogTable.log(settings);
-  console.log({ settings });
+  consola.info({ settings });
   consola.info("parameters");
   LogTable.log(parameters);
-  console.log({ parameters });
+  consola.info({ parameters });
 
   try {
     let invoker: Invoker;

@@ -20,6 +20,8 @@ import type {
   AgentPlusExt,
   Cron,
   CronExt,
+  Entity,
+  EntityExt,
   ErrorExt,
   File,
   FileExt,
@@ -35,11 +37,14 @@ import type {
   RelationExt,
 } from "@/types/mod";
 
+import type { RecordId } from "surrealdb.js";
+
 export const mapErrorToErrorExt = (error: Error): ErrorExt => {
   const { name, message: content, cause } = error;
   const id = `${genRandSurrealQLString("error", ":")}`;
   const isError = true;
   return {
+    timestamp: Date.now(),
     isError,
     id,
     name,
@@ -163,4 +168,31 @@ export const mapCronToCronExt = (cron: Cron): CronExt => {
     target: target ? mapPostToPostExt(target) : undefined,
     ...rest,
   };
+};
+
+export const mapEntityToEntityExt = (entity: Entity): EntityExt => {
+  // Find entity's type
+  // Note: some entities lack an id field, so we need to check for it
+  const identifier = (entity as { id?: RecordId }).id?.toString();
+  if (!identifier) {
+    // This is an error
+    return mapErrorToErrorExt(entity as Error);
+  }
+  const [type] = identifier.split(":");
+  switch (type) {
+    case "agent":
+      return mapAgentToAgentExt(entity as Agent);
+    case "file":
+      return mapFileToFileExt(entity as File);
+    case "post":
+      return mapPostToPostExt(entity as Post);
+    case "log":
+      return mapLogToLogExt(entity as Log);
+    case "cron":
+      return mapCronToCronExt(entity as Cron);
+      // case "relation":
+    //   return mapRelationToRelationExt(entity as Relation);// TODO: shoud we add RelationExt to EntityExt?
+    default:
+      throw new Error(`Unknown type: ${type}`);
+  }
 };

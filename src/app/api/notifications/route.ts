@@ -1,6 +1,8 @@
 import getWriteManager from "@/lib/write-space";
 
 // Prevents this route's response from being cached on Vercel
+export const dynamic = "force-dynamic";
+
 export const GET = (request: Request) => {
   // https://upstash.com/blog/sse-streaming-llm-responses
   const ts = new TransformStream();

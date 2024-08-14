@@ -10,6 +10,7 @@ export type RequiredWith<T, K extends keyof T> =
 
 export type ErrorExt = {
   id: string;
+  timestamp: number;
   isError: true;
   name: string;
   content: string;
@@ -149,15 +150,15 @@ export type FileExt = Omit<File, "id" | "embedding" | "data" | "owner"> & {
   owner?: AgentExt;
 };
 
-export type Entity = Agent | AgentTemp | File | Post | Log | Cron | Error;
+export type Entity = Post | Agent | AgentTemp | File | Log | Cron | Error;
 // `Error is a built in type`
 // AgentTemp will becaome AgentExt
 export type EntityExt =
+  | PostExt
   | AgentExt
   | FileExt
-  | PostExt
-  | CronExt
   | LogExt
+  | CronExt
   | ErrorExt;
 
 export type EntToExt =

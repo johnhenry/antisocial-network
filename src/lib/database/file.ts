@@ -214,7 +214,6 @@ export const createFile = async (
       );
     }
     await putObject(buff, { id: newFile.id.id as string });
-    // createLog(newFile);
     return newFile;
   } finally {
     await db.close();

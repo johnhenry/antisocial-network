@@ -17,7 +17,7 @@ import { mentionMatch } from "@/lib/util/match";
 import type { EntityExt } from "@/types/mod";
 type InputBoxProps = {
   Wrapper?: ComponentClass<any> | string;
-  entityReady: (post: EntityExt) => void;
+  entityReady?: (post: EntityExt) => void;
   extractText?: (s: string) => void;
   className?: string;
   sourceId?: string;

@@ -11,8 +11,6 @@ import {
   IconLog,
   IconHelp,
 } from "@/components/icons";
-import Notifier from "@/components/notifier";
-import ToastNotification from "@/components/toast-notification";
 
 import "./globals.css";
 
@@ -25,7 +23,6 @@ export const metadata: Metadata = {
   description: "Social Networking, but without the people",
 };
 
-import { Suspense } from "react";
 const Page: FC<Props> = async ({ children }: Props) => {
   const cssFilePath = path.join(__dirname, "critical.css");
   const criticalCSS = await readFile(cssFilePath, "utf-8");
@@ -38,17 +35,7 @@ const Page: FC<Props> = async ({ children }: Props) => {
       </head>
       <body>
         <main>
-          <Suspense
-            fallback={<article className="loading">Loading...</article>}
-          >
-            <Notifier>
-              <ToastNotification
-                className="toast-notification"
-                duration={5000}
-              />
-            </Notifier>
-            {children}
-          </Suspense>
+          {children}
           <header className="inverted-colors">
             <h1>
               <a href="/">
@@ -77,13 +64,13 @@ const Page: FC<Props> = async ({ children }: Props) => {
                 </span>
                 <span className="collapse-text-portrait">Settings</span>
               </a>
-              <a href="/logs">
+              {/* <a href="/logs">
                 <span className="menu-icon">
                   <IconLog />
                 </span>
                 <span className="collapse-text-portrait">Logs</span>
-              </a>
-              <a href="/settings">
+              </a> */}
+              <a href="/help">
                 <span className="menu-icon">
                   <IconHelp />
                 </span>

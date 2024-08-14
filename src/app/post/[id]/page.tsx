@@ -95,79 +95,85 @@ const Page: FC<PageProps> = ({ params }) => {
   const { post, before, after, container } = postPlus;
 
   return (
-    <article className="post-single">
-      <Masquerade
-        masquerade={masquerade}
-        setMasquerade={setMasquerade}
-        className="agent-masquerade"
-      />
-      {post.target ? (
-        <ul className="list-tight">
-          {[post.target].map((post) => (
-            <Post
-              key={post.id}
-              Wrapper={"li"}
-              className="target entity"
-              masquerade={masquerade}
-              setMasquerade={setMasquerade}
-              {...post}
-            />
-          ))}
-        </ul>
-      ) : null}
-      <Post
-        Wrapper="div"
-        className="post entity"
-        masquerade={masquerade}
-        setMasquerade={setMasquerade}
-        {...post}
-      />
-      <nav>
-        {before ? (
-          <a
-            href={`/post/${before.id}`}
-            className="before"
-            title={before.content}
-          >
-            <IconArrowLeft />
-          </a>
+    <>
+      <article className="post-single">
+        <Masquerade
+          masquerade={masquerade}
+          setMasquerade={setMasquerade}
+          className="agent-masquerade"
+        />
+        {post.target ? (
+          <ul className="list-tight">
+            {[post.target].map((post) => (
+              <Post
+                key={post.id}
+                Wrapper={"li"}
+                className="target entity"
+                masquerade={masquerade}
+                setMasquerade={setMasquerade}
+                {...post}
+              />
+            ))}
+          </ul>
         ) : null}
-        {container ? (
-          <a
-            href={`/file/${container.id}`}
-            className="container"
-            title={container.content}
-          >
-            <IconFile />
-          </a>
+        <Post
+          Wrapper="div"
+          className="post entity"
+          masquerade={masquerade}
+          setMasquerade={setMasquerade}
+          {...post}
+        />
+        <nav>
+          {before ? (
+            <a
+              href={`/post/${before.id}`}
+              className="before"
+              title={before.content}
+            >
+              <IconArrowLeft />
+            </a>
+          ) : null}
+          {container ? (
+            <a
+              href={`/file/${container.id}`}
+              className="container"
+              title={container.content}
+            >
+              <IconFile />
+            </a>
+          ) : null}
+          {after ? (
+            <a
+              href={`/post/${after.id}`}
+              className="after"
+              title={after.content}
+            >
+              <IconArrowRight />
+            </a>
+          ) : null}
+        </nav>
+        <InputBox
+          Wrapper={"div"}
+          className="input-box"
+          entityReady={entityReady}
+          buttonText="Reply"
+          targetId={post?.id}
+          sourceId={masquerade?.agent.id}
+        />
+        {elicits && elicits.length ? (
+          <ul className="list-tight">
+            {elicits.map((post) => (
+              <Post
+                key={post.id}
+                Wrapper={"li"}
+                className="elicits entity"
+                {...post}
+              />
+            ))}
+          </ul>
         ) : null}
-        {after ? (
-          <a href={`/post/${after.id}`} className="after" title={after.content}>
-            <IconArrowRight />
-          </a>
-        ) : null}
-      </nav>
-      <InputBox
-        Wrapper={"div"}
-        className="input-box"
-        entityReady={entityReady}
-        buttonText="Reply"
-        targetId={post?.id}
-        sourceId={masquerade?.agent.id}
-      />
-      {elicits && elicits.length ? (
-        <ul className="list-tight">
-          {elicits.map((post) => (
-            <Post
-              key={post.id}
-              Wrapper={"li"}
-              className="elicits entity"
-              {...post}
-            />
-          ))}
-        </ul>
-      ) : null}
-    </article>
+      </article>
+    </>
   );
 };
 

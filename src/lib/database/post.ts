@@ -25,7 +25,6 @@ import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
 import parsePostContent from "@/lib/util/parse-post-content";
 import { createFiles } from "@/lib/database/file";
-import { createLog } from "@/lib/database/log";
 export { getPost, getPosts } from "@/lib/database/helpers";
 import { RecordId, StringRecordId } from "surrealdb.js";
 import {
@@ -40,6 +39,7 @@ import { tail } from "@/lib/util/forwards";
 import { getBase64File } from "@/lib/database/file";
 import { stringify } from "@/lib/message-format/index.mjs";
 import vectorSum from "@/lib/util/vector-sum";
+import { alertEntity } from "@/lib/database/mod";
 
 export const TreeifyPosts = async (posts: Post[], { attachment = "summary" }: {
   attachment?: "summary" | "raw ";
@@ -573,16 +573,24 @@ export const createPost = async (
     } else {
       throw new Error("Invalid content provided.");
     }
-    if (logCreation) {
-      createLog(post, { drop: dropLog });
-    }
+
     if (source) {
       await relate(source.id, REL_INSERTED, post.id);
     }
     if (target) {
       await relate(target.id, REL_ELICITS, post.id);
     }
-    return replaceContentWithLinks(post);
+    const [[hydratedPost]] = await db.query<[[Post]]>(
+      `SELECT * OMIT embedding FROM type::table($table) WHERE id = $id FETCH source, target`,
+      {
+        id: post.id,
+        table: TABLE_POST,
+      },
+    );
+    if (logCreation) {
+      alertEntity(post, { drop: false });
+    }
+    return replaceContentWithLinks(hydratedPost);
   } finally {
     await db.close();
   }

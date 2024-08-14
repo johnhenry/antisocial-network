@@ -11,6 +11,10 @@ import {
   URLProtocol,
 } from "@/types/url";
 
+export const NEXT_PORT: URLPort = read("CRONMOWER_PORT", {
+  defaultValue: "3000",
+});
+
 /////////
 // Logging
 ////////

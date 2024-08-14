@@ -41,6 +41,7 @@ import {
   mapAgentPlusToAgentPlusExt,
   mapAgentToAgentExt,
   mapCronToCronExt,
+  mapEntityToEntityExt,
   mapErrorToErrorExt,
   mapFilePlusToFilePlusExt,
   mapFileToFileExt,
@@ -49,6 +50,9 @@ import {
   mapPostToPostExt,
   mapRelationToRelationExt,
 } from "@/lib/util/convert-types";
+
+import { NEXT_PORT } from "@/config/mod";
+import consola from "@/lib/util/logging";
 
 export const sourceNTarget = async (
   sourceId?: string,
@@ -379,3 +383,71 @@ export const clearDB = async () => {
     await db.close();
   }
 };
+
+export const alertEntity = (
+  entity: Entity,
+  { drop = false, action = "created" }: { drop?: Boolean; action?: string } =
+    {},
+) => {
+  try {
+  } catch (error) {
+    consola.error(error);
+  }
+  const externalEntity = mapEntityToEntityExt(entity);
+  const separator = "--".repeat(2 ** 5);
+  consola.log(`Entity Log: ${action}`);
+  consola.info(separator);
+  consola.info(
+    `${externalEntity.id}`,
+    `${action}`,
+    `${new Date(externalEntity.timestamp)}`,
+  );
+  consola.info(separator);
+  if (!drop) {
+    const body = JSON.stringify(
+      externalEntity,
+      null,
+      " ",
+    );
+
+    fetch(`http://localhost:${NEXT_PORT}/api/notifications`, {
+      body,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+};
+
+// export const createLog = async (
+//   target: Exclude<Entity, Error | void>,
+//   { type = "created", content, metadata, print = true, drop = false }: {
+//     type?: string;
+//     content?: string;
+//     print?: boolean;
+//     drop?: boolean;
+//     metadata?: JSON;
+//   } = {},
+// ): Promise<Log | void> => {
+//   if (drop) {
+//     return;
+//   }
+//   const db = await getDB();
+//   try {
+//     const [log] = await db.create(TABLE_LOG, {
+//       timestamp: Date.now(),
+//       target: target.id,
+//       type,
+//       content: content ? content : `${type}: ${target.id.toJSON()}`,
+//       metadata,
+//     }) as Log[];
+//     const l = { ...log, id: log.id.toString() };
+//     if (print) {
+
+//     }
+//     return log;
+//   } finally {
+//     db.close();
+//   }
+// };

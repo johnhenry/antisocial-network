@@ -9,7 +9,6 @@ import type {
   Post,
 } from "@/types/mod";
 import type { BaseMessageChunk } from "@langchain/core/messages";
-import { createLog } from "@/lib/database/log";
 import {
   DEFAULT_PARAMETERS_AGENT,
   REL_BOOKMARKS,
@@ -31,6 +30,8 @@ import { createFiles } from "@/lib/database/file";
 export { getAgent, getAgents } from "@/lib/database/helpers";
 import { respond } from "@/lib/ai";
 import consola from "@/lib/util/logging";
+
+import { alertEntity } from "@/lib/database/mod";
 export const nameExists = async (name: string): Promise<boolean> => {
   const db = await getDB();
   try {
@@ -68,7 +69,6 @@ export const createTempAgent = async (
         context,
       },
     }) as AgentTemp[];
-    createLog(agent, { type: "created-temp" });
     return agent;
   } finally {
     db.close();
@@ -179,7 +179,6 @@ export const createAgent = async ({
       }),
     }) as Agent[];
     1;
-    createLog(agent);
     if (files) {
       await createFiles({ files, owner: agent });
     }
@@ -245,7 +244,7 @@ export const updateAgent = async (
       timestamp: agent.timestamp,
       lastupdated: Date.now(),
     }) as Agent;
-    createLog(agent, { type: "updated" });
+    alertEntity(updatedAgent, { action: "updated" });
     return updatedAgent;
   } finally {
     db.close();

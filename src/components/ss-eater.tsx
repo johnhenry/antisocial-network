@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import clsx from "clsx";
 const { error } = console;
 type Props = {
+  src: string;
   className?: string;
   duration?: number;
   cacheTime?: number;
@@ -19,7 +20,7 @@ type Props = {
 const Notifier: FC<Props> = ({
   cacheTime = 5000,
   children,
-  path = "/api/notifications",
+  src = "/api/notifications",
 }) => {
   const [message, setMessage] = useState<Message>();
   const [active, setActive] = useState<boolean>(false);
@@ -29,47 +30,35 @@ const Notifier: FC<Props> = ({
     setMessage({ text, url, type });
   };
   useEffect(() => {
-    const eventSource = new EventSource(path);
-    eventSource.onmessage = (event) => {
-      const notification = JSON.parse(event.data);
-      const { target, type } = notification;
-      const record = `${type}:${target}`;
-      if (seen.has(record)) {
-        return;
-      }
-      seen.add(record);
-      setSeen(new Set(seen));
-      setTimeout(() => {
-        seen.delete(record);
+    let eventSource: EventSource;
+    const connect = () => {
+      eventSource = new EventSource(src);
+      eventSource.onmessage = (event) => {
+        const notification = JSON.parse(event.data);
+        const { id } = notification;
+        if (seen.has(id)) {
+          return;
+        }
+        setMessage(JSON.parse(event.data));
+        seen.add(id);
         setSeen(new Set(seen));
-      }, cacheTime);
-      switch (type) {
-        case "create-temp":
-          // I do not want to show a temorary notification for this
-          // as to not inspire the user to visit the page before it's ready.
-          break;
-        case "created":
-          {
-            const [nType] = target.split(":");
-            const link = `/${nType}/${target}`;
-            showNotification(`New ${nType} created!`, link, type);
-          }
-          break;
-        case "updated":
-          {
-            const [nType] = target.split(":");
-            const link = `/${nType}/${target}`;
-            showNotification(`${nType} updated!`, link, type);
-          }
-          break;
-      }
+        setTimeout(() => {
+          seen.delete(id);
+          setSeen(new Set(seen));
+        }, cacheTime);
+      };
+      eventSource.onerror = (e) => {
+        setActive(false);
+        error("SSE error:", e);
+        try {
+          eventSource.close();
+        } finally {
+          setTimeout(connect, 1000);
+        }
+      };
+      setActive(true);
     };
-    eventSource.onerror = (e) => {
-      setActive(false);
-      error("SSE error:", e);
-      eventSource.close();
-    };
-    setActive(true);
+    connect();
     return () => {
       try {
         setActive(false);
