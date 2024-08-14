@@ -16,7 +16,7 @@ import {
 ////////
 
 export const LOG_LEVEL: number = read("LOG_LEVEL", {
-  defaultValue: 2,
+  defaultValue: 0,
   cast: parseInt,
 });
 

@@ -1,6 +1,7 @@
 "use client";
 
-import type { FC, ComponentType } from "react";
+import type { FC, ComponentType, ReactNode, ReactElement } from "react";
+import { cloneElement } from "react";
 
 import type { Message } from "@/components/toast-notification";
 import ToastNotification from "@/components/toast-notification";
@@ -11,6 +12,7 @@ type Props = {
   className?: string;
   duration?: number;
   cacheTime?: number;
+  children: ReactNode;
   Wrapper?: ComponentType<any> | string;
 };
 
@@ -19,6 +21,7 @@ const Notifier: FC<Props> = ({
   duration,
   Wrapper = "div",
   cacheTime = 5000,
+  children,
   ...props
 }) => {
   const [message, setMessage] = useState<Message>();
@@ -79,14 +82,42 @@ const Notifier: FC<Props> = ({
       }
     };
   }, []);
-  return (
-    <ToastNotification
-      {...props}
-      duration={duration}
-      message={message}
-      Wrapper={Wrapper}
-      className={[active ? "active" : "", className].join(" ")}
-    />
-  );
+  const UpdatedChildren = [];
+  if (children) {
+    if (Array.isArray(children)) {
+      children.forEach((child: ReactElement, index) => {
+        const className = active
+          ? "active "
+          : "" + (child.props.className || "");
+        UpdatedChildren.push(
+          cloneElement(child, {
+            key: index,
+            showNotification,
+            className,
+          })
+        );
+      });
+    } else {
+      const child: ReactElement = children as ReactElement;
+      const className = active ? "active " : "" + (child.props.className || "");
+      UpdatedChildren.push(
+        cloneElement(child, {
+          key: 0,
+          message,
+          className,
+        })
+      );
+    }
+  }
+  // return (
+  //   <ToastNotification
+  //     {...props}
+  //     duration={duration}
+  //     message={message}
+  //     Wrapper={Wrapper}
+  //     className={[active ? "active" : "", className].join(" ")}
+  //   />
+  // );
+  return UpdatedChildren;
 };
 export default Notifier;

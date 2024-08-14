@@ -12,6 +12,7 @@ import {
   IconHelp,
 } from "@/components/icons";
 import Notifier from "@/components/notifier";
+import ToastNotification from "@/components/toast-notification";
 
 import "./globals.css";
 
@@ -40,7 +41,12 @@ const Page: FC<Props> = async ({ children }: Props) => {
           <Suspense
             fallback={<article className="loading">Loading...</article>}
           >
-            <Notifier className="toast-notification" />
+            <Notifier>
+              <ToastNotification
+                className="toast-notification"
+                duration={5000}
+              />
+            </Notifier>
             {children}
           </Suspense>
           <header className="inverted-colors">
