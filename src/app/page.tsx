@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC, ComponentClass } from "react";
-import type { PostExt, EntityExt, AgentPlusExt, LogExt } from "@/types/mod";
+import type { PostExt, EntityExt, AgentPlusExt } from "@/types/mod";
 import { useEffect, useState } from "react";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
 import { getPostExternal, getPostsExternal } from "@/lib/database/mod";
@@ -15,6 +15,10 @@ import useLocalStorage from "@/lib/hooks/use-localstorage";
 import { MASQUERADE_KEY } from "@/config/mod";
 import Masquerade from "@/components/masquerade";
 import { IconFile, IconAgent, IconPost, IconSearch } from "@/components/icons";
+import orderByTimeStampAndRemoveDuplicates from "@/lib/util/order-and-remove-duplicates";
+import SSEater from "@/components/ss-eater";
+import MessageHandler from "@/components/message-handler";
+import ToastNotification from "@/components/toast-notification";
 const SearchOptions = ({
   searchCount,
   setSearchCount,
@@ -94,10 +98,6 @@ const getFetchChildren = (start = 0) => {
   };
 };
 
-import orderByTimeStampAndRemoveDuplicates from "@/lib/util/order-and-remove-duplicates";
-import SSEater from "@/components/ss-eater";
-import MessageHandler from "@/components/message-handler";
-import ToastNotification from "@/components/toast-notification";
 const RELOAD_INTERVAL = 60000;
 const Page: FC<PageProps> = ({}) => {
   const [searchText, setSearchText] = useState("");
@@ -227,32 +227,28 @@ const Page: FC<PageProps> = ({}) => {
       <SSEater src="/api/notifications">
         <MessageHandler
           map={(item) => {
-            console.log({ item });
             const [type] = item.id.split(":");
-            let text, url;
+            let text;
+            const id = item.id;
+            const url = `/${type}/${item.id}`;
             switch (type) {
               case "error":
               case "file":
                 return;
               case "agent":
-                text = `@${item.name || "🖥️"} ${item.content.replace(
-                  "You are ",
-                  "is "
-                )}`;
-                url = `/${type}/${item.id}`;
+                text = `[${item.name}] ${item.content}`;
                 break;
               case "post":
-                text = `${item.source?.name ? `[${item.source.name}]` : ""}
-${item.content}`;
-                url = `/${type}/${item.id}`;
-
+                text = `${item.source?.name ? `@${item.source.name}: ` : ""}${
+                  item.content
+                }`;
                 getPostExternal(item.id).then((post) => setPrepended([post]));
                 break;
               default:
                 return;
             }
 
-            return { text, url, type };
+            return { id, text, url, type };
           }}
           onMessage={(message) => {
             console.log(message);

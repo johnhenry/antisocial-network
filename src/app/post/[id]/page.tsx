@@ -1,27 +1,20 @@
 "use client";
 
 import type { FC } from "react";
-import type {
-  PostExt,
-  PostPlusExt,
-  AgentPlusExt,
-  EntityExt,
-  ErrorExt,
-  LogExt,
-} from "@/types/mod";
+import type { PostExt, PostPlusExt, AgentPlusExt } from "@/types/mod";
 import { useEffect, useState } from "react";
 import Post from "@/components/post";
 import InputBox from "@/components/input-box";
-import { getPostPlusExternal } from "@/lib/database/mod";
+import { getPostPlusExternal, getPostExternal } from "@/lib/database/mod";
 import { useRouter } from "next/navigation";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import { MASQUERADE_KEY } from "@/config/mod";
 import Masquerade from "@/components/masquerade";
-
 import { IconFile, IconArrowLeft, IconArrowRight } from "@/components/icons";
-
 import DynamicLoader from "@/components/dynamic-loader";
-
+import SSEater from "@/components/ss-eater";
+import MessageHandler from "@/components/message-handler";
+import ToastNotification from "@/components/toast-notification";
 type PageProps = {
   params: {
     id: string;
@@ -46,49 +39,6 @@ const Page: FC<PageProps> = ({ params }) => {
     load();
     return () => {};
   }, []);
-  const entityReady = (entity: EntityExt | void) => {
-    if (!entity) {
-      return;
-    }
-
-    const [type, id] = entity.id.split(":");
-    if (type === "error") {
-      alert(`Error: ${(entity as ErrorExt).content}`);
-    }
-
-    if (type === "post") {
-      if ((entity as PostExt).target?.id === identifier) {
-        setElicits((elicits) => [entity as PostExt, ...elicits]);
-        return;
-      }
-    }
-    switch (type) {
-      case "log":
-        const {
-          type: logType,
-          metadata: { force, url },
-        } = entity as LogExt & { metadata: { force: boolean; url: string } };
-        switch (logType) {
-          case "redirect": {
-            if (!force && !confirm(`Navigate to ${url}?`)) {
-              return;
-            }
-            if (url.startsWith("http://" || url.startsWith("https://"))) {
-              return (window.location.href = url as string);
-            }
-            return router.push(url as string);
-          }
-        }
-        return;
-      case "post":
-      case "file":
-      case "agent":
-        if (confirm(`navigate to new ${type}? (${id})`)) {
-          router.push(`/${type}/${entity.id}`);
-        }
-        break;
-    }
-  };
   if (!postPlus) {
     return <DynamicLoader />;
   }
@@ -155,7 +105,6 @@ const Page: FC<PageProps> = ({ params }) => {
         <InputBox
           Wrapper={"div"}
           className="input-box"
-          entityReady={entityReady}
           buttonText="Reply"
           targetId={post?.id}
           sourceId={masquerade?.agent.id}
@@ -173,6 +122,50 @@ const Page: FC<PageProps> = ({ params }) => {
           </ul>
         ) : null}
       </article>
+      <SSEater src="/api/notifications">
+        <MessageHandler
+          map={(item) => {
+            const [type] = item.id.split(":");
+            let text;
+            const id = item.id;
+            const url = `/${type}/${item.id}`;
+            switch (type) {
+              case "error":
+              case "file":
+                return;
+              case "agent":
+                text = `@${item.name}: ${item.content}`;
+                break;
+              case "post":
+                text = `${item.source?.name ? `@${item.source.name}: ` : ""}${
+                  item.content
+                }`;
+                try {
+                  if ((item as PostExt).target?.id === identifier) {
+                    getPostExternal(item.id).then((post: PostExt) =>
+                      setElicits((elicits) => [post, ...elicits])
+                    );
+                    return;
+                  } else {
+                    text = `${item.source?.name ? `[${item.source.name}]` : ""}
+${item.content}`;
+                    break;
+                  }
+                } catch (e) {
+                  console.error(e);
+                }
+              default:
+                return;
+            }
+            return { id, text, url, type };
+          }}
+          onMessage={(message) => {
+            console.log(message);
+          }}
+        >
+          <ToastNotification className="toast-notification" duration={5000} />
+        </MessageHandler>
+      </SSEater>
     </>
   );
 };
