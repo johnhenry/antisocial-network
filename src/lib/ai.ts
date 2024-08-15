@@ -47,7 +47,6 @@ export const respond = async (
 ): Promise<
   BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
 > => {
-  console.log({ toolNames });
   const settings = await getSettingsObject();
   const [repo, model] =
     (toolNames?.length

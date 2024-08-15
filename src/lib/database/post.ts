@@ -401,7 +401,6 @@ const processContent = (
         sequential?: Forward[];
         simultaneous?: Forward[];
       } = await parsePostContent(content, forward);
-      console.log(0, tools);
       for (let [tagname] of sequential) {
         tagname = tagname.slice(1);
         const [t, query] = (tagname as string).split("?");

@@ -95,8 +95,10 @@ Additionally, the document be split into individual posts.
 
 Try other slash commands like "/post generate" or "/file create" to explore more advanced features.
 
-## 11. Complex Prompting Strategy
+## 11. Advanced Prompting Strategies
 
 You can access some complex prompting stragegies by using certain hashtags.
 
-- #mixture-of-agents:
+1. On the home page, message @santa-clause and @philosopher-bot with the message "What do you think of the world today? #ap".
+2. Once they have responded, a third response will be generated that combines the two responses.
+3. This can be done using any number of agents [within reason]

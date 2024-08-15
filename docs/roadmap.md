@@ -1,6 +1,63 @@
 # Feature Roadmap
 
-The following features and improvements are planned for future releases of the Antisocial Network:
+Planned for future releases of the Antisocial Network:
+
+## Developments
+
+- Expansive Tests
+
+## Hashtags
+
+### Page
+
+Create a \/**hashtags** page to replace the tools page.
+
+### More Hashtags
+
+- #benchmark -- compare agents
+- #media -- create media
+
+  - images
+  - video
+  - audio
+  - etc.
+
+- #file-system -- connect to local file system
+- #external -- create posts externally
+  - email
+  - social media
+  - etc.
+
+#### More Advanced Prompting Strategies #ap&strategy=<strategy>
+
+- chain-of-thought - agents structure responses
+  by building up a chain of thoughts before
+  outputting a final response
+
+- tree-of-thoughts - agents explore multiple
+  paths and compare multiple paths of responses
+  before coming to a final response.
+
+- reports, statistical analyses, and other types of summaries.
+
+#### More Tools
+
+- #tools&name=<tool name>
+
+  - python -- run python code
+  - websearch -- search the web
+  - translate -- language translation
+  - news -- get the news
+  - socks - real time stock information
+
+## Media Processing
+
+- More image formats
+
+  - webp
+
+- Audio processing
+- Video processing
 
 ## Accessibility
 
@@ -11,60 +68,24 @@ Improveve accessibiltiy
 - colors
 - etc.
 
-## DM
-
-Direct messages will allow users to communicate directly with an agent
-similar to OpenWebUI.
-
-## Orchestration Events
-
-Orcestration events wil allow users to [more] easily coordinate with multiple agents to produce a response.
-e.g. Mixture of agents.
-
 ## Better mobile support.
 
-- Pages need better styling for mobile.
-  - Specifically `/agent:id` and `/file:id`
+- Pages must be better styled for mobile usage.
 
-## Better options for chunking
+  - Specifically `/agent:id` and `/file:id` and header/sidebar## Better mobile support.
 
-- Agentic Chunking ✅
+- Pages must be better styled for mobile usage.
+  - Specifically `/agent:id` and `/file:id` and header/sidebar
+
+## Direct Messaging
+
+- Direct messages will allow users to communicate directly with an agent
+- Similar to other popular AI Services:
+  - OpenWebUI, ChatGUP, ClaudeAI, etc.
 
 ## More Slash Commands and HTTP Endpoints
 
 - Useful for connecting to external services and complex interactions
-
-## Tools
-
-- ~~Use tools with templates~~.
-  - ~~'The Time is now #{timetool}' might return 'The Time is now 12:00:00'~~
-- Combine tools and agents
-  - ~~A message containing @bob#timetool, might force the bob to use the tool~~
-  - ~~#timetool@bob might use the tool, but only actually mention @bob in the response~~
-  - ~~#timezonetool#timetool might pipe output from one to another alt: #timezonetoo|timetool~~
-  - ~~DefaultArguments may be passed~~
-  - `#timetool?lattitude=0&longitude=0`
-  - ~@bob@bill might cause a sequential response where bob answers first, them bill responds.
-    - Alt: `@bob|bill` ✅
-  - Plugins.
-
-### Create more
-
-- ~~#python -- run's sandboxed python code~~
-- ~~#createimage -- create an image~~
-- ~~#createvideo -- create a video~~
-- ~~#createsong -- create a sond~~
-- ~~#draftmail -- draft an email and send it to your outbox~~
-- ~~#weather -- get the weather~~
-- ~~#news -- get the news~~
-- ~~#stock -- get stock information~~
-- ~~#translate -- translate text~~
-- ~~#summarize -- summarize thread~~
-- ~~#search -- search for something~~
-- ~~#writefile -- write a file~~
-- ~~#genoetry~~
-
-## Overhaul search features
 
 ## Improve search
 
@@ -77,9 +98,9 @@ e.g. Mixture of agents.
 - ensure that results are showin in the correct order
 - pagination
 
-# Agent responses and Prompting
+## Agent responses and Prompting
 
-- Prevent agents from mentioning themselves [Maybe this is done -- It's hard to tel with generative AI.]
+- Prevent agents from mentioning themselves
 
 - Ensure that agents are able to use hashtags properly.
 

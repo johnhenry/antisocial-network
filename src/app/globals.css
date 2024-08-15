@@ -830,7 +830,7 @@ article.logs {
       display: block;
     }
     .entity-link {
-      display: none;
+      /* display: none; */
     }
   }
   .elicits {

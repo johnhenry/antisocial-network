@@ -22,8 +22,6 @@ export const tools: Handler = async (
   for (const tool of names) {
     tools.push(tool);
   }
-  console.log({ tools });
-
   return { tools, simultaneous };
 };
 export default tools;

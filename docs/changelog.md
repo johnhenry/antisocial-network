@@ -4,18 +4,31 @@
 
 Changes since last update:
 
-## Hashtag
+## Test
 
-- Added some tests: Thanks @mdemin914
-  - Hashtags now work Differently:
-  - Remove tools page (tt will return in some form)
+- Added test from @mdemin914. Thanks!
+  - Unfortunately, I have broken them,
+    but the framweork provided will
+    be useful in the very near future.
+  - Tests will be a priority for the next release.
+
+## Hashtag and tool use
+
+- Removed tools page
+
+- Hashtags now work differently:
+
   - Before, hashtags would parse the post and to return the result of a function.
-    - This only proved somewhat ueful, was confusing and not very fleible.
-    - In the future, tool/function calling use will be more tightly integrated with the conversation
+
+    - This only proved somewhat ueful, was confusing and not very flexible.
+
   - Now hashtags are more like macros that change how a post is processed
-    - Only one hastag currently available: #advanced-prompting, but other are planned
+    - Tool use is now more tightly integrated with the conversation
+      and enabled via a hashtag "#tools" or "#tl"
+    - Only two hashtags are currently available:
       - #tools - enable tool calling
-      - #media - create media
+      - #advanced-prompting - enable complex prompting strategies
+      - ... more planned
 
 ## Hashtag: #advanced prompts
 
