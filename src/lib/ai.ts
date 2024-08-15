@@ -17,6 +17,8 @@ import { SIZE_EMBEDDING_VECTOR } from "@/config/mod";
 import { createLogError } from "@/lib/database/log";
 import consola, { LogTable } from "@/lib/util/logging";
 import { renderChatPromptTemplate } from "@/lib/util/render-templates";
+import * as tools from "@/lib/tools/mod";
+
 type Invoker =
   | ChatGroq
   | OpenAI
@@ -32,6 +34,7 @@ export const respond = async (
     streaming = false,
     source,
     target,
+    toolNames = [],
   }: {
     messages?: [string, string][];
     invocation?: Record<string, any>;
@@ -39,12 +42,24 @@ export const respond = async (
     streaming?: boolean;
     target?: Post;
     source?: Agent;
+    toolNames?: string[];
   } = {},
 ): Promise<
   BaseMessageChunk | AsyncGenerator<BaseMessageChunk, void, unknown>
 > => {
+  console.log({ toolNames });
   const settings = await getSettingsObject();
-  const [repo, model] = (parameters?.model || settings.model).split("::");
+  const [repo, model] =
+    (toolNames?.length
+      ? (parameters?.modeltools || settings.modeltools || parameters?.model ||
+        settings.model)
+      : (parameters?.model || settings.model)).split(
+        "::",
+      );
+  // const [repo, model] = (parameters?.model || settings.model).split(
+  //   "::",
+  // );
+
   const arg: Record<any, any> = {
     ...parameters,
     model,
@@ -52,10 +67,10 @@ export const respond = async (
   };
   consola.info("settings");
   LogTable.log(settings);
-  consola.info({ settings });
+  consola.info(settings);
   consola.info("parameters");
   LogTable.log(parameters);
-  consola.info({ parameters });
+  consola.info(parameters);
 
   try {
     let invoker: Invoker;
@@ -85,6 +100,7 @@ export const respond = async (
         invoker = new ChatOllama(arg);
       }
     }
+
     const prompt = ChatPromptTemplate.fromMessages(messages);
     const chain = prompt.pipe(
       invoker as RunnableLike,
@@ -93,6 +109,24 @@ export const respond = async (
       "Starting inference ",
       await renderChatPromptTemplate(messages, invocation),
     );
+    if (toolNames.length) {
+      const boundTools: any[] = [];
+      try {
+        consola.start("Binding tools");
+        for (const toolName of toolNames) {
+          // @ts-ignore TODO: trouble understaning the error :
+          const tool: any = tools[toolName] as any;
+          if (tool) {
+            boundTools.push(tool);
+            consola.start(`${toolName} bound`);
+          }
+        }
+        (invoker as ChatOllama).bindTools(boundTools);
+        consola.start("Tools bound");
+      } catch (error) {
+        consola.error(`Error binding tools: ${(error as Error).message}`);
+      }
+    }
     if (streaming) {
       return chain.stream(invocation).then(async function* (textStream) {
         consola.start("Output: Start");

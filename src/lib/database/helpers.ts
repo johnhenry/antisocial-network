@@ -5,7 +5,6 @@ import { StringRecordId } from "surrealdb.js";
 import { TABLE_AGENT, TABLE_FILE, TABLE_LOG, TABLE_POST } from "@/config/mod";
 import renderText from "@/lib/util/render-text";
 import { embed } from "@/lib/ai";
-import addBreakingSpaces from "@/lib/util/add-breaking-spaces";
 
 export const replaceAgentIdWithName = async (
   id: string,

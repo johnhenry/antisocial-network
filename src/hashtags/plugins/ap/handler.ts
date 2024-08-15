@@ -76,7 +76,7 @@ export const advancedPrompting: Handler = (
     original,
     dehydrated,
     simultaneous,
-    params,
+    query,
     depth,
     streaming,
     bibliography,
@@ -129,6 +129,8 @@ export const advancedPrompting: Handler = (
     } finally {
       await db.close();
     }
+
+    const params = Object.fromEntries(new URLSearchParams(query).entries());
 
     let rounds = Number(params.rounds) || DEFAULT_ROUNDS;
     const strategy = params.strategy || DEFAULT_STRATEGY;

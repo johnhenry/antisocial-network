@@ -30,11 +30,10 @@ declare module "@/tools/descriptors" {
   export default Record<string, RegisteredDescriptor>;
 }
 
-declare module "@/tools/descriptors" {
-  import { Tool } from "@/types/tools";
-  export default Record<string, Tool>;
-}
-
 declare module "@jest/globals" {
   export default any;
+}
+declare module "@/lib/tools/mod" {
+  import type { Tool } from "@/lib/tools/mod";
+  export default Record<string, any>;
 }

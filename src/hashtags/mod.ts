@@ -4,6 +4,7 @@ import descriptorsByKey from "@/hashtags/descriptors/mod";
 import handlersByKey from "@/hashtags/handlers/mod";
 
 const FullDescriptors: Record<string, DescriptorFull> = {};
+
 for (const [k, descriptor] of Object.entries(descriptorsByKey)) {
   const handler = handlersByKey[k];
   if (Array.isArray(descriptor.name)) {
@@ -17,9 +18,9 @@ for (const [k, descriptor] of Object.entries(descriptorsByKey)) {
   } else {
     FullDescriptors[descriptor.name] = {
       ...descriptor,
+      name: descriptor.name,
       handler,
     } as DescriptorFull;
   }
 }
-
 export default FullDescriptors;

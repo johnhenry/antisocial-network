@@ -310,11 +310,13 @@ export const agentResponse = async (
     relevant,
     conversation,
     systemMessage,
+    toolNames,
   }: {
     streaming?: boolean;
     relevant?: string;
     conversation?: string;
     systemMessage?: string;
+    toolNames?: string[];
   } = {},
 ): Promise<LangchainGenerator | BaseMessageChunk> => {
   if (!systemMessage) {
@@ -335,9 +337,9 @@ export const agentResponse = async (
     invocation,
     parameters: agent.parameters,
     streaming,
+    toolNames,
   });
-  // TODO: this is probably a good place to implement tool calls.
-  // See example: https://github.com/ollama/ollama-js/blob/main/examples/tools/tools.ts
+
   if (streaming) {
     // TODO: split iterator here an add callback above
     return results as LangchainGenerator;

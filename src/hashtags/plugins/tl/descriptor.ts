@@ -1,6 +1,7 @@
 import type { Descriptor } from "@/hashtags/types";
+
 export const advancedPrompting: Descriptor = {
-  "name": ["ap", "advanced-prompting"],
-  "description": "Use avanced prompting strategies like mixture of agents.",
+  "name": ["tl", "tools"],
+  "description": "Enable tool usage for agents.",
 };
 export default advancedPrompting;

@@ -10,6 +10,7 @@ export type Handler = (...args: any[]) => Promise<{
   dehydrated?: string;
   simultaneous: Forward[] | undefined;
   files?: FileProto[];
+  tools?: string[];
 }>;
 export type DescriptorSingleName = {
   name: string;

@@ -250,7 +250,9 @@ const MODELS_OTHER = read("MODELS_OTHER", {
 });
 
 const MODELS_TOOL = read("MODELS_TOOL", {
-  defaultValue: ["ollama::llama3.1:latest", "ollama::llama3:latest"].concat([
+  defaultValue: ["llama3.1:latest", "llama3:latest"].map((model) =>
+    `ollama::${model}`
+  ).concat([
     "llama-3.1-405b-reasoning",
     "llama-3.1-70b-versatile",
     "llama-3.1-8b-instant",

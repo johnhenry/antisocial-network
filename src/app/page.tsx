@@ -2,7 +2,7 @@
 
 import type { FC, ComponentClass } from "react";
 import type { PostExt, EntityExt, AgentPlusExt } from "@/types/mod";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
 import { getPostExternal, getPostsExternal } from "@/lib/database/mod";
 import InfiniteScroller from "@/components/infinite-scroller";
@@ -176,12 +176,14 @@ const Page: FC<PageProps> = ({}) => {
           setMasquerade={setMasquerade}
           className="agent-masquerade"
         />
-        <InputBox
-          Wrapper={"div"}
-          className="input-box"
-          extractText={setSearchText}
-          sourceId={masquerade?.agent.id}
-        />
+        <Suspense fallback={<span className="spinner" />}>
+          <InputBox
+            Wrapper={"div"}
+            className="input-box"
+            extractText={setSearchText}
+            sourceId={masquerade?.agent.id}
+          />
+        </Suspense>
         <SearchOptions
           searchCount={searchCount}
           setSearchCount={setSearchCount}

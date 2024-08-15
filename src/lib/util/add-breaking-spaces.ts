@@ -8,7 +8,7 @@ const addBreakingSpaces = (
     throw new Error("Invalid starting index.");
   }
 
-  const insertBreakingSpace = (s, index, space) =>
+  const insertBreakingSpace = (s: string, index: number, space: string) =>
     s.slice(0, index) + space + s.slice(index);
 
   let result = str;
