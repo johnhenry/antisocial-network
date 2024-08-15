@@ -101,6 +101,10 @@ Improve accessibility:
   - Improve `docker-compose.yml`
 - Nvidia Nim
 
+## Settings
+
+- Controls to limit recursive responses
+
 ## Other Considerations
 
 - CLI?
