@@ -1,16 +1,22 @@
 "use client";
+export type Props = { params: { id: string } };
+
 import type { AgentExt, AgentPlusExt, ErrorExt } from "@/types/mod";
 import type { FC } from "react";
 import { useEffect, useState, useRef } from "react";
-import { getAgentPlusExternal, updateAgentExternal } from "@/lib/database/mod";
+import {
+  getAgentPlusExternal,
+  updateAgentExternal,
+  cloneAgentExternal,
+} from "@/lib/database/mod";
 import obfo from "obfo";
 import { MODELS, MASQUERADE_KEY } from "@/config/mod";
 import imageFromString from "@/lib/util/image-from-string";
 import DynamicLoader from "@/components/dynamic-loader";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
-export type Props = { params: { id: string } };
 import Masquerade from "@/components/masquerade";
-import { IconMask } from "@/components/icons";
+import { IconMask, IconClone } from "@/components/icons";
+import { useRouter } from "next/navigation";
 
 const Page: FC<Props> = ({ params }) => {
   const [agentPlus, setAgentPlus] = useState<AgentPlusExt | undefined>(
@@ -20,7 +26,7 @@ const Page: FC<Props> = ({ params }) => {
     MASQUERADE_KEY,
     null // TODO: can this be undefined? I think there may be some wiere interactions with local storage.
   );
-
+  const router = useRouter();
   const identifier = decodeURIComponent(params.id || "");
   const [dirty, setDirty] = useState(false);
   const formRef = useRef(null);
@@ -75,6 +81,23 @@ const Page: FC<Props> = ({ params }) => {
   if (!agentPlus) {
     return <DynamicLoader />;
   }
+  const clone = async () => {
+    const name = prompt(
+      `Clone agent ${identifier}`,
+      agentPlus.agent.name + "_0"
+    )?.trim();
+    if (name) {
+      const newAgent = await cloneAgentExternal(identifier, {
+        name,
+      });
+      if ((newAgent as ErrorExt).isError) {
+        alert(`Error: ${(newAgent as ErrorExt).content}`);
+        return;
+      }
+      alert(`Agent cloned!`);
+      router.push(`/agent/${newAgent.id}`);
+    }
+  };
   const toggleMasquerade = () => {
     return masquerade?.agent.id === agentPlus.agent.id
       ? setMasquerade(null)
@@ -101,6 +124,9 @@ const Page: FC<Props> = ({ params }) => {
             ✓
           </button>
         ) : null}
+        <button title="clone" onClick={clone}>
+          <IconClone />
+        </button>
       </h2>
       <main>
         <header>
@@ -129,12 +155,14 @@ const Page: FC<Props> = ({ params }) => {
                 as {agent.name}
               </button>
             </label>
+
             <label>
               Model
               <select
                 name="model"
                 defaultValue={agent.parameters.model}
                 onChange={taint}
+                data-obfo-cast="string"
               >
                 {MODELS.map((model) => (
                   <option key={model} value={model}>
@@ -460,6 +488,16 @@ const Page: FC<Props> = ({ params }) => {
                   type="number"
                   onChange={taint}
                   defaultValue={agent.parameters.typicalP}
+                  data-obfo-cast="number"
+                />
+              </label>
+              <label>
+                seed
+                <input
+                  name="seed"
+                  type="number"
+                  onChange={taint}
+                  defaultValue={agent.parameters.seed}
                   data-obfo-cast="number"
                 />
               </label>

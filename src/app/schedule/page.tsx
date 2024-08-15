@@ -1,18 +1,14 @@
 "use client";
 import type { CronExt } from "@/types/mod";
 import type { FC, ChangeEvent, LegacyRef } from "react";
-import { useEffect, useRef, useState } from "react";
-
 import type { Trigger } from "@/components/text-pop-triggers";
+import { useEffect, useRef, useState } from "react";
+import TextareaWithPopup from "@/components/text-pop";
 import {
   At_AgentName_ID,
   Hashtag_ToolName,
 } from "@/components/text-pop-triggers";
 
-const DEFAULT_TRIGGERS: Record<string, Trigger> = {
-  "@": At_AgentName_ID,
-  "#": Hashtag_ToolName,
-};
 import {
   createCronExternal,
   getAllCronExternal,
@@ -22,7 +18,10 @@ import {
 import obfo from "obfo";
 
 import { TIME_ZONES } from "@/config/mod";
-
+const DEFAULT_TRIGGERS: Record<string, Trigger> = {
+  "@": At_AgentName_ID,
+  "#": Hashtag_ToolName,
+};
 const TimezoneSelector = ({
   zones = TIME_ZONES,
   defaultValue = "+00:00",
@@ -30,7 +29,7 @@ const TimezoneSelector = ({
 }) => {
   return (
     <select defaultValue={defaultValue} {...props}>
-      {zones.map(([zone, location]) => (
+      {zones.map(([zone]) => (
         <option key={zone} value={zone === "±00:00" ? "+00:00" : `UTC${zone}`}>
           {`UTC${zone}`}
         </option>
@@ -38,8 +37,6 @@ const TimezoneSelector = ({
     </select>
   );
 };
-import TextareaWithPopup from "@/components/text-pop";
-import { set } from "zod";
 
 const Page: FC = () => {
   const textArea = useRef<LegacyRef<HTMLTextAreaElement> | undefined>(

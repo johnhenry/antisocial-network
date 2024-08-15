@@ -1,0 +1,15 @@
+{
+  "watch": [
+    "src"
+  ],
+  "ext": "js,jsx,ts,tsx,json",
+  "ignore": [
+    "src/**/*.test.js",
+    "src/**/*.spec.js"
+  ],
+  "exec": "next build",
+  "verbose": true,
+  "events": {
+    "restart": "echo '\nChanges detected. Rebuilding...\n'"
+  }
+}

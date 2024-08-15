@@ -1,7 +1,7 @@
 import type { Descriptor } from "@/types/tools";
 
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { OpenMeteoSchema } from '@/tools/openmeteoweather/open-meteo-schema';
+import { OpenMeteoSchema } from "@/lib/tools/lib/weather/open-meteo-schema";
 const descriptor: Descriptor = {
   type: "function",
   function: {

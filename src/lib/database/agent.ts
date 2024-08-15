@@ -9,7 +9,6 @@ import type {
   Post,
 } from "@/types/mod";
 import type { BaseMessageChunk } from "@langchain/core/messages";
-import { createLog } from "@/lib/database/log";
 import {
   DEFAULT_PARAMETERS_AGENT,
   REL_BOOKMARKS,
@@ -28,12 +27,11 @@ import { RecordId } from "surrealdb.js";
 import removeValuesFromObject from "@/lib/util/removeValuesFromObject";
 import { createFiles } from "@/lib/database/file";
 
-import { getEntity, getLatest } from "@/lib/database/helpers";
+export { getAgent, getAgents } from "@/lib/database/helpers";
 import { respond } from "@/lib/ai";
+import consola from "@/lib/util/logging";
 
-export const getAgent = getEntity<Agent>;
-export const getAgents = getLatest<Agent>(TABLE_AGENT);
-
+import { alertEntity } from "@/lib/database/mod";
 export const nameExists = async (name: string): Promise<boolean> => {
   const db = await getDB();
   try {
@@ -51,11 +49,15 @@ export const nameExists = async (name: string): Promise<boolean> => {
 };
 
 export const createTempAgent = async (
-  { name, context }: { name?: string; context?: string } = {},
+  { name, context, id_suffix }: {
+    name?: string;
+    context?: string;
+    id_suffix?: string;
+  } = {},
 ): Promise<AgentTemp> => {
   const db = await getDB();
   try {
-    const id = new RecordId(TABLE_AGENT, genRandSurrealQLString());
+    const id = new RecordId(TABLE_AGENT, id_suffix ?? genRandSurrealQLString());
     const embedding = await embed(name + id.toString());
     const [agent] = await db.create(TABLE_AGENT, {
       timestamp: Date.now(),
@@ -67,7 +69,6 @@ export const createTempAgent = async (
         context,
       },
     }) as AgentTemp[];
-    createLog(agent, { type: "created-temp" });
     return agent;
   } finally {
     db.close();
@@ -117,7 +118,7 @@ export const genCharacter = async ({
           id,
         ),
       ),
-      PROMPTS_SUMMARIZE.LLM_PROMPT, //TODO: I DON'T  THINK I BROKE ANYHTING< BUT I,m in the middle of makinf this dynamic to account for the first message and id passed
+      PROMPTS_SUMMARIZE.LLM_PROMPT,
     );
   } else {
     // nothing is provided
@@ -178,7 +179,6 @@ export const createAgent = async ({
       }),
     }) as Agent[];
     1;
-    createLog(agent);
     if (files) {
       await createFiles({ files, owner: agent });
     }
@@ -244,7 +244,7 @@ export const updateAgent = async (
       timestamp: agent.timestamp,
       lastupdated: Date.now(),
     }) as Agent;
-    createLog(agent, { type: "updated" });
+    alertEntity(updatedAgent, { action: "updated" });
     return updatedAgent;
   } finally {
     db.close();
@@ -256,7 +256,7 @@ export const getAgentPlus = async (id: StringRecordId): Promise<AgentPlus> => {
   const ADDITIONAL_FIELDS = `string::concat("", id) as id`;
   // select target
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding FROM agent where id = $id FETCH source, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding FROM agent where id = $id FETCH source, mentions, target, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
   );
   // select incoming relationships
   // remembered
@@ -299,50 +299,47 @@ import {
   generateDescriptionPromptWithFirstMessage,
   generateSystemMessage,
   generateSystemMessageAggregate,
-  mapPostsToMessages,
 } from "@/lib/templates/dynamic";
 
 // map a list of post to messages
 
-const mergeRelevant = async (posts: Post[]) => {
-  return [...posts]
-    .map(({ content }) => content)
-    .join("\n\n").trim();
-};
-
 export const agentResponse = async (
   agent: Agent & { content: string },
-  { streaming = false, conversation = [], relevant = [] }: {
+  {
+    streaming = false,
+    relevant,
+    conversation,
+    systemMessage,
+    toolNames,
+  }: {
     streaming?: boolean;
-    conversation?: Post[];
-    relevant?: Post[];
+    relevant?: string;
+    conversation?: string;
+    systemMessage?: string;
+    toolNames?: string[];
   } = {},
 ): Promise<LangchainGenerator | BaseMessageChunk> => {
-  let relevantKnowledge;
-  let messages: string[][];
-  let systemMessage;
-  if (conversation.length) {
-    relevantKnowledge = await mergeRelevant(relevant);
-    messages = mapPostsToMessages(conversation);
-    systemMessage = [
-      "system",
-      await generateSystemMessage(Boolean(relevantKnowledge)),
-    ];
-  } else {
-    messages = [];
-    systemMessage = ["system", `{content}`];
+  if (!systemMessage) {
+    systemMessage = await generateSystemMessage();
   }
+  const invocation = {
+    id: agent.id.toString(),
+    content: agent.content,
+    relevant,
+    conversation,
+  };
 
+  consola.box(
+    `Generating response from ${agent.name}(${agent.id.toString()})`,
+  );
   const results = await respond({
-    messages: [systemMessage].concat(messages) as [string, string][],
-    invocation: {
-      relevantKnowledge,
-      id: agent.id.toString(),
-      content: agent.content,
-    },
+    messages: [["system", systemMessage]],
+    invocation,
     parameters: agent.parameters,
     streaming,
+    toolNames,
   });
+
   if (streaming) {
     // TODO: split iterator here an add callback above
     return results as LangchainGenerator;
@@ -479,4 +476,29 @@ export const aggregateResponse = async (
     return results as LangchainGenerator;
   }
   return results as BaseMessageChunk;
+};
+
+export const cloneAgent = async (
+  identifier: StringRecordId,
+  { name = "", suffix = "_0" }: { name?: string; suffix?: string } = {},
+): Promise<Agent> => {
+  name = name.trim();
+  const db = await getDB();
+  try {
+    const agent = await db.select<Agent>(identifier);
+    const { id, ...rest } = agent;
+    const newName = name ? name : agent.name + suffix;
+    if (await nameExists(newName)) {
+      throw new Error(`Agent with name: ${newName} exists`);
+    }
+    const [newAgent] = await db.create(TABLE_AGENT, {
+      ...rest,
+      timestamp: Date.now(),
+      name: newName,
+    }) as [Agent];
+
+    return newAgent;
+  } finally {
+    await db.close();
+  }
 };

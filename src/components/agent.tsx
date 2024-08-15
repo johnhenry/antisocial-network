@@ -1,5 +1,5 @@
 import type { FC, ReactNode, ComponentClass } from "react";
-import type { FileExt, AgentExt } from "@/types/mod";
+import type { AgentExt } from "@/types/mod";
 import imageFromString from "@/lib/util/image-from-string";
 import timeAgo from "@/lib/util/time-ago";
 import { IconAgent } from "@/components/icons";
@@ -11,28 +11,6 @@ type PostProps = AgentExt & {
   className?: string;
   masquerade?: AgentExt;
   setMasquerade?: (masquerade: AgentExt | null) => void;
-};
-type PostFileProps = {
-  file: FileExt;
-};
-
-const PostFile: FC<PostFileProps> = ({ file }) => {
-  const body = file.type.startsWith("image/") ? (
-    <img
-      src={`/file/${file.id}/raw`}
-      width="256"
-      alt={file.content}
-      title={file.content}
-    ></img>
-  ) : (
-    <iframe
-      src={`/file/${file.id}/raw`}
-      width="256"
-      title={file.content}
-    ></iframe>
-  );
-
-  return <a href={`/file/${file.id}`}>{body}</a>;
 };
 
 const Agent: FC<PostProps> = ({

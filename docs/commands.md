@@ -82,18 +82,6 @@ Arguments:
 
 - `<id>`: Identifier of the post to clone
 
-##### merge
-
-Combine multiple posts into a single post.
-
-```
-/post merge <id>
-```
-
-Arguments:
-
-- `<id>`: Identifier of the main post to merge others into
-
 ### file
 
 Manage files in the Antisocial Network.
@@ -185,7 +173,7 @@ Navigate to a specific URL for debugging purposes.
 Arguments:
 
 - `<url>`: The URL to navigate to
-- `--force`: Force navigation to the URL without popup
+- `--force`: Force navigation to the URL, bypassing popup
 
 ## Notes
 

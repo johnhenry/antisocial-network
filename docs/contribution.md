@@ -1,5 +1,5 @@
 # Contribution
 
-Not a whole lot here yet.
+Not much to add here yet.
 
-At this point, please ensure that the project builds before submitting a PR.
+At this point, please ensure that the project builds successfully before submitting a PR.

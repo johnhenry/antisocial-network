@@ -41,7 +41,6 @@ const castAsBoolean: string[] = [];
 
 export const updateSettings = async (
   settings: Setting[],
-  partial = true,
 ): Promise<Setting[]> => {
   const db = await getDB();
   try {
@@ -75,11 +74,10 @@ export const updateSettings = async (
 };
 
 export const updateSettingsObject = async (
-  settings: Record<string, string | number | boolean | undefined>,
+  newSettings: Setting[] = [],
 ): Promise<Setting[]> => {
   const db = await getDB();
   try {
-    const newSettings: Setting[] = [];
     const oldSettings = await getSettings();
     for (const [name, value] of Object.entries(oldSettings)) {
       const setting = oldSettings.find((s) => s.name === name)!;

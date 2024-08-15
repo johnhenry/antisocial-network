@@ -5,15 +5,12 @@ import { fileURLToPath } from "url";
 import path from "path";
 
 import {
-  IconAgent,
-  IconFile,
-  IconTool,
+  // IconTool,
   IconSchedule,
   IconSetting,
-  IconLog,
+  // IconLog,
   IconHelp,
 } from "@/components/icons";
-import Notifier from "@/components/notifier";
 
 import "./globals.css";
 
@@ -26,7 +23,6 @@ export const metadata: Metadata = {
   description: "Social Networking, but without the people",
 };
 
-import { Suspense } from "react";
 const Page: FC<Props> = async ({ children }: Props) => {
   const cssFilePath = path.join(__dirname, "critical.css");
   const criticalCSS = await readFile(cssFilePath, "utf-8");
@@ -39,12 +35,7 @@ const Page: FC<Props> = async ({ children }: Props) => {
       </head>
       <body>
         <main>
-          <Suspense
-            fallback={<article className="loading">Loading...</article>}
-          >
-            <Notifier className="toast-notification" />
-            {children}
-          </Suspense>
+          {children}
           <header className="inverted-colors">
             <h1>
               <a href="/">
@@ -55,12 +46,12 @@ const Page: FC<Props> = async ({ children }: Props) => {
               </a>
             </h1>
             <nav>
-              <a href="/tools">
+              {/* <a href="/tools">
                 <span className="menu-icon">
                   <IconTool />
                 </span>
                 <span className="collapse-text-portrait">Tools</span>
-              </a>
+              </a> */}
               <a href="/schedule">
                 <span className="menu-icon">
                   <IconSchedule />
@@ -73,13 +64,17 @@ const Page: FC<Props> = async ({ children }: Props) => {
                 </span>
                 <span className="collapse-text-portrait">Settings</span>
               </a>
-              <a href="/logs">
+              {/* <a href="/logs">
                 <span className="menu-icon">
                   <IconLog />
                 </span>
                 <span className="collapse-text-portrait">Logs</span>
-              </a>
-              <a href="/settings">
+              </a> */}
+              <a
+                rel="noopener"
+                href="https://github.com/johnhenry/antisocial-network"
+                target="_blank"
+              >
                 <span className="menu-icon">
                   <IconHelp />
                 </span>

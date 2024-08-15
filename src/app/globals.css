@@ -367,7 +367,7 @@ body > main {
     padding-right: 1rem;
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
-  /* padding:0.5rem 1rem; */
+    /* padding:0.5rem 1rem; */
   }
 
   .option {
@@ -375,21 +375,20 @@ body > main {
     padding-right: 1rem;
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-  /* padding:0.5rem 1rem; */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    /* padding:0.5rem 1rem; */
     position: "absolute";
     background-color: var(--color-text);
     color: var(--color-midground);
     .avatar {
       width: 2rem;
       height: 2rem;
-      display:flex;
+      display: flex;
       align-items: center;
       justify-content: center;
-      margin-right:0.5rem;
-
+      margin-right: 0.5rem;
     }
     .symbol {
       font-size: 1.25rem;
@@ -526,9 +525,7 @@ article.loader {
       }
     }
   }
-
 }
-
 
 @keyframes faceInOutQueryCycler {
   0%,
@@ -574,6 +571,12 @@ article.loader {
     display: inline-block;
   }
 }
+
+code,
+pre {
+  white-space: normal;
+}
+
 dl {
   width: 100%;
 }
@@ -618,6 +621,9 @@ article.logs {
     gap: var(--size-gap);
     > .agent-link {
       display: contents;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .img {
       grid-area: im;
@@ -717,6 +723,7 @@ article.logs {
         &::after {
           content: none;
         }
+        transition: white-space 1s;
         &:hover {
           white-space: normal;
           overflow: visible;
@@ -823,7 +830,7 @@ article.logs {
       display: block;
     }
     .entity-link {
-      display: none;
+      /* display: none; */
     }
   }
   .elicits {
@@ -1171,8 +1178,9 @@ details {
   z-index: 1000;
   background-color: transparent;
   min-width: 128px;
-  max-width: 75%;
+  max-width: 256px;
   gap: var(--size-gap-inner);
+  font-size: 0.75rem;
 
   > * {
     margin-top: -0px;

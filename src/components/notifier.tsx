@@ -1,25 +1,25 @@
 "use client";
 
-import type { FC, ComponentType } from "react";
+import type { FC, ComponentType, ReactNode, ReactElement } from "react";
+import { cloneElement } from "react";
 
 import type { Message } from "@/components/toast-notification";
-import ToastNotification from "@/components/toast-notification";
 import { useState, useEffect } from "react";
-
+import clsx from "clsx";
 const { error } = console;
 type Props = {
   className?: string;
   duration?: number;
   cacheTime?: number;
+  children: ReactNode;
+  path?: string;
   Wrapper?: ComponentType<any> | string;
 };
 
 const Notifier: FC<Props> = ({
-  className,
-  duration,
-  Wrapper = "div",
   cacheTime = 5000,
-  ...props
+  children,
+  path = "/api/notifications",
 }) => {
   const [message, setMessage] = useState<Message>();
   const [active, setActive] = useState<boolean>(false);
@@ -29,10 +29,10 @@ const Notifier: FC<Props> = ({
     setMessage({ text, url, type });
   };
   useEffect(() => {
-    const eventSource = new EventSource("/api/notifications");
+    const eventSource = new EventSource(path);
     eventSource.onmessage = (event) => {
       const notification = JSON.parse(event.data);
-      const { id, timestamp, target, type, content, metadata } = notification;
+      const { target, type } = notification;
       const record = `${type}:${target}`;
       if (seen.has(record)) {
         return;
@@ -79,14 +79,28 @@ const Notifier: FC<Props> = ({
       }
     };
   }, []);
-  return (
-    <ToastNotification
-      {...props}
-      duration={duration}
-      message={message}
-      Wrapper={Wrapper}
-      className={[active ? "active" : "", className].join(" ")}
-    />
-  );
+  const UpdatedChildren = [];
+  if (children) {
+    if (Array.isArray(children)) {
+      children.forEach((child: ReactElement, key) => {
+        UpdatedChildren.push(
+          cloneElement(child, {
+            key,
+            showNotification,
+            className: clsx(child.props.className, { active }),
+          })
+        );
+      });
+    } else {
+      const child: ReactElement = children as ReactElement;
+      UpdatedChildren.push(
+        cloneElement(child, {
+          message,
+          className: clsx(child.props.className, { active }),
+        })
+      );
+    }
+  }
+  return UpdatedChildren;
 };
 export default Notifier;

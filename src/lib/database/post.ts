@@ -8,7 +8,6 @@ import type {
   PostPlus,
 } from "@/types/mod";
 import type { BaseMessageChunk } from "@langchain/core/messages";
-
 import {
   REL_BOOKMARKS,
   REL_CONTAINS,
@@ -21,30 +20,65 @@ import {
   TABLE_POST,
 } from "@/config/mod";
 import { embed, tokenize } from "@/lib/ai";
-
 import { getDB, relate } from "@/lib/db";
 import { isSlashCommand, trimSlashCommand } from "@/lib/util/command-format";
 import processCommand from "@/lib/util/command";
 import parsePostContent from "@/lib/util/parse-post-content";
 import { createFiles } from "@/lib/database/file";
-import { createLog } from "@/lib/database/log";
-import { getEntity, getLatest } from "@/lib/database/helpers";
+export { getPost, getPosts } from "@/lib/database/helpers";
 import { RecordId, StringRecordId } from "surrealdb.js";
 import {
   agentResponse,
   aggregateResponse,
   updateAgent,
 } from "@/lib/database/agent";
-import { toolResponse } from "@/lib/database/tool";
-
 import { replaceContentWithLinks } from "@/lib/database/helpers";
-
 import hash from "@/lib/util/hash";
+import hashtags from "@/hashtags/mod";
+import { tail } from "@/lib/util/forwards";
+import { getBase64File } from "@/lib/database/file";
+import { stringify } from "@/lib/message-format/index.mjs";
+import vectorSum from "@/lib/util/vector-sum";
+import { alertEntity } from "@/lib/database/mod";
+
+export const TreeifyPosts = async (posts: Post[], { attachment = "summary" }: {
+  attachment?: "summary" | "raw ";
+} = {}): Promise<any[]> => {
+  let tree: any[] = [];
+  for (const post of posts) {
+    // assign rendered object
+    const renderedObject: Record<string, any> = {
+      _: post.content,
+      name: post.source?.name,
+      id: post.source?.id.toString(),
+      type: "text/plain ",
+    };
+    if (post.files && post.files.length) {
+      renderedObject.attachments = [];
+      for (const file of post.files) {
+        renderedObject.attachments.push({
+          _: attachment === "summary"
+            ? `description of content: ${file.content}`
+            : await (getBase64File(file.id)),
+          name: file.name,
+          type: file.type,
+          id: file.id.toString(),
+        });
+      }
+    }
+
+    tree.unshift(renderedObject);
+    tree = [tree];
+  }
+  return tree;
+};
 
 export const getConversation = async (
   post?: Post,
-  depth: number = -1,
-): Promise<Post[]> => {
+  { depth = -1 }: {
+    depth?: number;
+  } = {},
+): Promise<any[]> => {
   const db = await getDB();
   if (!post) {
     return [];
@@ -52,26 +86,21 @@ export const getConversation = async (
 
   try {
     const posts = [];
-    let currentPost = post;
-    let count = 0;
+    let tree: any[] = [];
+    let targetId = post.id;
     while (true) {
-      if (depth > -1 && count >= depth) {
+      const [[post]] = await db.query<[[Post]]>(
+        `SELECT * FROM type::table($table) WHERE id = $targetId FETCH mentions, source, files, source`,
+        { targetId, table: TABLE_POST },
+      );
+      if (!post) {
         break;
       }
-      count++;
-      posts.push(currentPost);
-      if (!currentPost.target) {
+      posts.push(post);
+      if (depth > -1 && tree.length >= depth) {
         break;
       }
-      let T = currentPost.target;
-      // Target is actually a post id and not a post
-      if ((currentPost.target as unknown as RecordId).tb) {
-        [[T]] = await db.query<[[Post]]>(
-          `SELECT * FROM ${TABLE_POST} WHERE id = $target`,
-          { target: currentPost.target },
-        );
-      }
-      currentPost = T;
+      targetId = post.target as unknown as RecordId;
     }
     return posts;
   } finally {
@@ -79,16 +108,14 @@ export const getConversation = async (
   }
 };
 
-import { vectorSum } from "@/lib/util/vector-sum";
-
 export const getRelevant = async ({
-  conversation,
+  posts,
   agent,
   limit = 8,
   threshold = 0,
   embeddingMethod = "concat",
 }: {
-  conversation: Post[];
+  posts: Post[];
   agent: Agent;
   limit?: number;
   threshold?: number;
@@ -108,34 +135,32 @@ export const getRelevant = async ({
     switch (embeddingMethod) {
       case "concat":
         embedded = await embed(
-          conversation
-            .map(({ content }) => content)
-            .join("\n\n"),
+          posts.map(({ content }) => content).join("\n\n"),
         );
         break;
+      // TODO: these alternate methods of embedding are not tested
       case "sum":
-        embedded = vectorSum(conversation.map(({ embedding }) => embedding));
+        embedded = vectorSum(posts.map(({ embedding }) => embedding));
         break;
       case "sum-geometric-reduction":
         // Each embeding is multiplied by a decreasing factor before summing
         const factor = 0.9;
-        const embeddings = conversation.map(({ embedding }, i) =>
+        const embeddings = posts.map(({ embedding }, i) =>
           embedding.map((x) => x * Math.pow(factor, i))
         );
         embedded = vectorSum(embeddings);
         break;
       case "sum-weighted":
         embedded = vectorSum(
-          conversation.map(({ embedding }, i, conversation) =>
-            embedding.map((x) =>
-              x * (conversation.length - i + 1) / (conversation.length)
+          posts.map(({ embedding }, i, posts) =>
+            embedding.map(
+              (x) => (x * (posts.length - i + 1)) / posts.length,
             )
           ),
         );
         break;
     }
-    // TODO: what's a better way to get an embedding for a conversation?
-    // Would we instead extract the embeddingd and add them?
+
     const [bookmarked, remembered] = await db.query<[Post[], Post[]]>(
       queries.join(";"),
       {
@@ -153,82 +178,125 @@ export const getRelevant = async ({
 
 ///////
 
-export const generatePost = async (
-  { tools, target, streaming = false, source, bibliography, depth }: {
-    tools?: string[];
+const createContent = async (
+  { target, source, streaming = false, bibliography = [], toolNames = [] }: {
     target?: Post;
-    streaming?: boolean;
     source?: Agent;
+    streaming?: boolean;
     bibliography?: Post[];
-    depth?: number;
-  },
-): Promise<Post> => {
-  // content will be generated by a tool or an agent.
+    toolNames?: string[];
+  } = {},
+) => {
+  if (!source) {
+    throw new Error("Agent required");
+  }
+  const posts = await getConversation(target);
+  const tree = await TreeifyPosts(posts);
+  const conversation = stringify(tree, {
+    indentation: 4 as unknown as string,
+    showBoundry: false,
+  }).trim();
+  const fetchedRelevant = await getRelevant({
+    posts,
+    agent: source,
+  });
+  bibliography.push(...posts, ...fetchedRelevant);
+  const relevant = fetchedRelevant.map(({ content }) => (content || "").trim())
+    .join(
+      "\n\n",
+    ).trim();
 
+  let content;
+  let out;
+  if (source) {
+    if (conversation.length) {
+    }
+    if (!source.content) {
+      source = await updateAgent(source.id, source);
+    }
+    let systemMessage;
+    if (!conversation) {
+      systemMessage = `{content}
+Please say something interestingand relevant to your personality.
+      `;
+    }
+
+    out = await agentResponse(source, {
+      streaming,
+      conversation,
+      relevant,
+      systemMessage,
+      toolNames,
+    });
+  }
+  if (streaming) {
+    const chunks = [];
+    for await (const chunk of out as LangchainGenerator) {
+      chunks.push(chunk);
+    }
+    content = chunks.join("\n");
+  } else {
+    const chunk = out as BaseMessageChunk;
+    content = chunk.content as string;
+  }
+  return content;
+};
+
+export const generatePost = async ({
+  tools,
+  target,
+  streaming = false,
+  source,
+  bibliography = [],
+  depth,
+  forward,
+  toolNames = [],
+}: {
+  tools?: string[];
+  target?: Post;
+  streaming?: boolean;
+  source?: Agent;
+  bibliography?: Post[];
+  depth?: number;
+  forward?: Forward;
+  toolNames?: string[];
+}): Promise<Post> => {
+  // content will be generated by a tool or an agent.
   const db = await getDB();
   try {
-    bibliography = bibliography || [];
-    const conversation = await getConversation(target, -1);
-    let relevant: Post[] = [];
-    let content;
-    let mentions;
-    let out;
-    if (tools && tools.length) {
-      out = await toolResponse(tools, {
-        target,
-        streaming,
-        conversation,
-        source,
-      });
-      // if (target?.source) {
-      //   mentions = [target.source];
-      // }
-    } else if (source) {
-      if (conversation.length) {
-        relevant = await getRelevant(
-          { conversation, agent: source },
-        );
-      }
-      if (!source.content) {
-        source = await updateAgent(source.id, source);
-      }
-      out = await agentResponse(source, {
-        streaming,
-        conversation,
-        relevant,
-      });
-    }
-    if (streaming) {
-      const chunks = [];
-      for await (const chunk of out as LangchainGenerator) {
-        chunks.push(chunk);
-      }
-      content = chunks.join("\n");
-    } else {
-      const chunk = out as BaseMessageChunk;
-      content = chunk.content as string;
-    }
+    const content = await createContent({
+      target,
+      bibliography,
+      source,
+      toolNames,
+    });
 
-    return createPost(content, {
+    const post = (await createPost(content, {
       source,
       target,
       streaming,
       tools,
-      bibliography: bibliography.concat(conversation).concat(relevant),
+      bibliography,
       depth,
-    }) as Promise<Post>;
+      forward,
+    })) as Post;
+    return post;
+  } catch (e) {
+    throw e;
   } finally {
     db.close();
   }
 };
 
-export const aggregatePostReplies = async (
-  { source, target, streaming = false }: {
-    source: Agent;
-    target: Post;
-    streaming?: boolean;
-  },
-): Promise<Post> => {
+export const aggregatePostReplies = async ({
+  source,
+  target,
+  streaming = false,
+}: {
+  source: Agent;
+  target: Post;
+  streaming?: boolean;
+}): Promise<Post> => {
   const db = await getDB();
   try {
     if (!source.content) {
@@ -246,7 +314,7 @@ export const aggregatePostReplies = async (
       const chunk = out as BaseMessageChunk;
       content = chunk.content as string;
     }
-    const [post] = await db.create(TABLE_POST, {
+    const [post] = (await db.create(TABLE_POST, {
       timestamp: Date.now(),
       content,
       embedding: await embed(content),
@@ -254,44 +322,194 @@ export const aggregatePostReplies = async (
       hash: hash(content),
       source: source ? source.id : undefined,
       target: target ? target.id : undefined,
-    }) as Post[];
+    })) as Post[];
     return replaceContentWithLinks(post);
   } finally {
     db.close();
   }
 };
 
-export const createPost = async (
-  content: string | undefined | false | null,
+export const stringIdToAgent = async (id: string): Promise<Agent> => {
+  const db = await getDB();
+  try {
+    const [[agent]] = await db.query<[[Agent]]>(
+      `SELECT * FROM ${TABLE_AGENT} WHERE id = $id`,
+      { id: new StringRecordId(id) },
+    );
+    return agent;
+  } finally {
+    await db.close();
+  }
+};
+
+const processContent = (
+  content: string,
   {
     embedding,
     source,
     files = [],
-    tools: inputTools,
+
     target,
     streaming = false,
     depth = 2 ** 2,
     dropLog = false,
     bibliography,
+    forward = [],
   }: {
     embedding?: number[];
     source?: Agent;
     files?: FileProto[];
-    tools?: string[];
+
     target?: Post;
     streaming?: boolean;
     depth?: number;
     dropLog?: boolean;
     bibliography?: Post[];
+    forward?: Forward;
+  } = {},
+): Promise<Post> => {
+  return new Promise(async (rs, rj) => {
+    if (depth === 0) {
+      throw new Error("Depth limit reached.");
+    }
+    depth -= 1;
+    let resolved = false;
+    const resolve = (post: Post) => {
+      if (!resolved) {
+        rs(post);
+        resolved = true;
+      }
+    };
+    const reject = (e: unknown) => {
+      if (!resolved) {
+        rj(e);
+        resolved = true;
+      }
+    };
+    const db = await getDB();
+    try {
+      let tools: string[] = [];
+      let post;
+      let {
+        original,
+        dehydrated,
+        sequential,
+        simultaneous,
+      }: {
+        original?: string;
+        dehydrated?: string;
+        sequential?: Forward[];
+        simultaneous?: Forward[];
+      } = await parsePostContent(content, forward);
+      for (let [tagname] of sequential) {
+        tagname = tagname.slice(1);
+        const [t, query] = (tagname as string).split("?");
+        const hashtag = hashtags[t as string];
+        if (!hashtag) {
+          continue;
+        }
+        const { handler, name } = hashtag;
+        const result = await handler({
+          embedding,
+          source,
+          files,
+          tools,
+          target,
+          streaming,
+          depth,
+          dropLog,
+          bibliography,
+          forward,
+          dehydrated,
+          original,
+          simultaneous,
+          name,
+          query,
+        });
+        ({
+          post,
+          dehydrated,
+          simultaneous = [],
+          files = [],
+          tools = [],
+        } = result);
+        if (post) {
+          resolve(post);
+        }
+      }
+      if (dehydrated || files.length) {
+        post = (await createPost(dehydrated, {
+          embedding,
+          source,
+          files,
+          tools: [],
+          target,
+          streaming,
+          depth,
+          dropLog,
+          bibliography,
+          forward: simultaneous,
+          noProcess: true,
+        })) as Post;
+        resolve(post);
+      }
+      for (const sim of simultaneous) {
+        const source = await stringIdToAgent(sim[0] as string);
+        const forward = tail(sim);
+        createPost(tools, {
+          source,
+          target: post,
+          depth,
+          streaming,
+          bibliography,
+          forward,
+        });
+      }
+    } catch (e) {
+      reject(e);
+    } finally {
+      await db.close();
+    }
+  });
+};
+
+import type { Forward } from "@/lib/util/forwards";
+
+export const createPost = async (
+  content: string | undefined | null | string[],
+  {
+    embedding,
+    source,
+    files = [],
+    tools: inputTools, //remove
+    target,
+    streaming = false,
+    depth = 2 ** 2,
+    dropLog = false,
+    bibliography,
+    forward = [],
+    logCreation = true,
+    noProcess = false,
+  }: {
+    embedding?: number[];
+    source?: Agent;
+    files?: FileProto[];
+    tools?: string[]; //remove
+    target?: Post;
+    streaming?: boolean;
+    depth?: number;
+    dropLog?: boolean;
+    bibliography?: Post[];
+    forward?: Forward;
+    logCreation?: boolean;
+    noProcess?: boolean;
   } = {},
 ): Promise<Entity | void> => {
   const db = await getDB();
   try {
     let post: Post;
-    const scanned: (string | [string, Agent])[] = [];
-    const mentions: Agent[] = [];
-    const tools: string[] = [];
-    if (content) {
+
+    if (content && typeof content === "string" && !noProcess) {
       // create a message
       if (isSlashCommand(content)) {
         return processCommand(trimSlashCommand(content), {
@@ -301,50 +519,32 @@ export const createPost = async (
           dropLog,
         });
       } else {
-        // create a post
-        const parsed = await parsePostContent(content, scanned);
-        const createdFiles = await createFiles({ files, owner: source });
-        const contents = createdFiles.map(({ content }) => content);
-        contents.unshift(parsed);
-        const content_ = contents.join("\n");
-        for (const scan of scanned) {
-          if (typeof scan === "string") {
-            tools.push(scan.slice(1));
-          } else {
-            const [_, agent] = scan;
-            mentions.push(agent);
-          }
-        }
-        [post] = await db.create(TABLE_POST, {
-          timestamp: Date.now(),
-          content: parsed,
-          embedding: embedding ? embedding : await embed(content_),
-          count: tokenize(content_).length,
-          hash: hash(content_),
-          files: createdFiles,
-          mentions: mentions && mentions.length
-            ? mentions.map((post) => post.id)
-            : undefined,
-          tools: inputTools,
-          source: source ? source.id : undefined,
-          target: target ? target.id : undefined,
-          bibliography: bibliography && bibliography.length
-            ? bibliography.map((post) => post.id)
-            : undefined,
-        }) as Post[];
+        // create a post from content
+        post = await processContent(content, {
+          embedding,
+          source,
+          files,
+          target,
+          streaming,
+          depth,
+          dropLog,
+          bibliography,
+          forward,
+        });
       }
     } else if (content === null) {
       // temporary content will be created later.
-      [post] = await db.create(TABLE_POST, {
+      [post] = (await db.create(TABLE_POST, {
         timestamp: Date.now(),
         embedding: await embed(""),
         source: source ? source.id : undefined,
         target: target ? target.id : undefined,
-        bibliography,
-      }) as Post[];
-    } else if (content === false) {
+        bibliography: bibliography
+          ? bibliography.map(({ id }) => id)
+          : undefined,
+      })) as Post[];
+    } else if (Array.isArray(content)) {
       // content will be generated by a tool or an agent.
-
       post = await generatePost({
         tools: inputTools,
         target,
@@ -352,64 +552,57 @@ export const createPost = async (
         source,
         bibliography,
         depth,
+        forward,
+        toolNames: content,
       });
-    } else if (!content) {
-      // Content undefined, but files possibly provided.
-      if (!files.length) {
+    } else if ((!content || noProcess)) {
+      if (!content && !files.length) {
         throw new Error("No content or files provided.");
       }
       const createdFiles = await createFiles({ files, owner: source });
-      const contents = createdFiles.map(({ content }) => content);
-      const content = contents.join("\n");
-      [post] = await db.create(TABLE_POST, {
+      const filesIds = createdFiles.map(({ id }) => id);
+      const fileContent = createdFiles.map(({ content }) => content);
+      const mentions: Agent[] = [];
+      for (const sim of forward) {
+        mentions.push(await stringIdToAgent(sim[0] as string));
+      }
+      const finalContent = content || "";
+      const phantomContents = (
+        content ? [content].concat(fileContent) : fileContent
+      ).join("\n");
+      [post] = (await db.create(TABLE_POST, {
         timestamp: Date.now(),
-        content: "",
-        embedding: embedding ? embedding : await embed(content),
-        count: tokenize(content).length,
-        hash: hash(content),
-        files: createdFiles,
+        content: finalContent || "",
+        embedding: embedding ? embedding : await embed(phantomContents),
+        count: tokenize(finalContent).length,
+        hash: hash(phantomContents),
+        files: filesIds,
+        mentions: mentions.map(({ id }) => id),
         source: source ? source.id : undefined,
         target: target ? target.id : undefined,
-        bibliography,
-      }) as Post[];
+        bibliography: bibliography
+          ? bibliography.map(({ id }) => id)
+          : undefined,
+      })) as Post[];
     } else {
       throw new Error("Invalid content provided.");
     }
 
-    createLog(post, { drop: dropLog });
     if (source) {
       await relate(source.id, REL_INSERTED, post.id);
     }
     if (target) {
       await relate(target.id, REL_ELICITS, post.id);
     }
-    const next = async (depth = 0) => {
-      if (depth === 0) {
-        return;
-      }
-      depth -= 1;
-      if (tools && tools.length) {
-        await createPost(false, {
-          tools,
-          target: post,
-          depth,
-          streaming,
-          bibliography,
-        });
-      } else {
-        for (const source of mentions) {
-          await createPost(false, {
-            source,
-            target: post,
-            depth,
-            streaming,
-            bibliography,
-          });
-        }
-      }
-    };
-    next(depth);
-    return replaceContentWithLinks(post);
+    const [[hydratedPost]] = await db.query<[[Post]]>(
+      `SELECT * OMIT embedding FROM type::table($table) WHERE id = $id FETCH source, target`,
+      {
+        id: post.id,
+        table: TABLE_POST,
+      },
+    );
+    alertEntity(hydratedPost, { drop: !logCreation });
+    return replaceContentWithLinks(hydratedPost);
   } finally {
     await db.close();
   }
@@ -422,11 +615,13 @@ export const updatePendingPost = async (
     embedding,
     files = [],
     source,
+    forward = [],
   }: {
     content?: string;
     embedding?: number[];
     files?: FileProto[];
     source?: Agent;
+    forward?: Forward[];
   } = {},
 ): Promise<Post> => {
   if (!(content || "").trim()) {
@@ -434,25 +629,36 @@ export const updatePendingPost = async (
   }
   const db = await getDB();
   try {
-    const mentions: string[] = [];
-    const content_ = await parsePostContent(content as string, mentions);
-    const post = await db.update(id, {
+    // TODO: what to do with the rest of the data
+    // sequential? original?,
+
+    const {
+      dehydrated,
+    }: {
+      original?: string;
+      dehydrated?: string;
+      sequential?: Forward[];
+      simultaneous?: Forward[];
+    } = await parsePostContent(content!, forward);
+    const mentions: Agent[] = [];
+    for (const sim of forward) {
+      mentions.push(await stringIdToAgent(sim[0] as string));
+    }
+    const content_ = dehydrated;
+    const post = (await db.update(id, {
       timestamp: Date.now(),
       hash: hash(content_),
-      raw: content,
       content: content_,
       embedding: embedding ? embedding : await embed(content_),
       source,
-    }) as Post;
+      mentions: mentions.map(({ id }) => id),
+    })) as Post;
     await createFiles({ files, owner: source });
     return replaceContentWithLinks(post);
   } finally {
     await db.close();
   }
 };
-
-export const getPost = getEntity<Post>;
-export const getPosts = getLatest<Post>(TABLE_POST);
 
 export const replaceAgentIdWithName = async (
   id: string,
@@ -477,14 +683,16 @@ export const replaceAgentIdWithName = async (
   }
 };
 
+const ADDITIONAL_FIELDS =
+  `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source
+    `;
+
 export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
   const queries = [];
-  const ADDITIONAL_FIELDS =
-    `string::concat("", id) as id, IF source IS NOT NULL AND source IS NOT NONE THEN {id:string::concat("", source.id), name:source.name, hash:source.hash, image:source.image} ELSE NULL END AS source
-    `;
-  // select target
+
+  // select post
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where id = $id FETCH source, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where id = $id FETCH source, target, target.files, target.mentions, target.bibliography, target.source, mentions, mentions.bibliography, bibliography, bibliography.mentions, files`,
   );
   // select incoming relationships
   // precedes
@@ -494,11 +702,11 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
   // // select outgoing relationships
   // // precedes
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_PRECEDES}<-(post where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_PRECEDES}<-(post where id = $id) FETCH mentions, files`,
   );
   // // elicits
   queries.push(
-    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_ELICITS}<-(post where id = $id)`,
+    `SELECT *, ${ADDITIONAL_FIELDS} OMIT embedding, data FROM post where <-${REL_ELICITS}<-(post where id = $id) FETCH mentions, files, target.files`,
   );
   // // remembers
   queries.push(
@@ -512,17 +720,17 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
 
   const db = await getDB();
   try {
-    const [
-      [post],
-      [before],
-      [after],
-      elicits,
-      remembers,
-      [container],
-    ]: [[Post], [Post], [Post], Post[], Agent[], [File]] = await db
-      .query(queries.join(";"), {
-        id,
-      });
+    const [[post], [before], [after], elicits, remembers, [container]]: [
+      [Post],
+      [Post],
+      [Post],
+      Post[],
+      Agent[],
+      [File],
+    ] = await db.query(queries.join(";"), {
+      id,
+    });
+
     if (post.target) {
       post.target = replaceContentWithLinks(post.target);
     }
@@ -533,15 +741,14 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
       after: after ? replaceContentWithLinks(after, true) : undefined,
       elicits: elicits
         ? await Promise.all(
-          elicits.filter((x) => x).map((post) =>
-            replaceContentWithLinks(post, true)
-          ),
+          elicits
+            .filter((x) => x)
+            .map((post) => replaceContentWithLinks(post, true)),
         )
         : undefined,
       remembers,
       container,
     };
-
     return obj;
   } finally {
     await db.close();
@@ -549,7 +756,7 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
 };
 const CLONE_FORBIDDEN_KEYS = ["id", "timestamp"];
 
-// export type Keeper = "mentions" | "tools" | "source" | "target" | "container";
+// export type Keeper = "mentions" | "hashtag" | "source" | "target" | "container";
 
 export type Keeper = string;
 
@@ -584,10 +791,10 @@ export const clonePost = async (
   }
   const db = await getDB();
   try {
-    const [clone] = await db.create(TABLE_POST, {
+    const [clone] = (await db.create(TABLE_POST, {
       timestamp: Date.now(),
       ...props,
-    }) as Post[];
+    })) as Post[];
     return replaceContentWithLinks(clone);
   } finally {
     await db.close();

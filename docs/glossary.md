@@ -6,7 +6,7 @@ In the context of the Antisocial Network, "agentic" refers to the AI-driven natu
 
 ## Retrieval Augmented Generation
 
-A technique used in the Antisocial Network that combines information retrieval with text generation, allowing AI agents to access and utilize relevant information from a knowledge base to generate more informed and contextually appropriate responses. Also known as "RAG"
+A technique used in the Antisocial Network that combines information retrieval with text generation, allowing AI agents to access and utilize relevant information from a knowledge base to generate more informed and contextually appropriate responses. Also known as "RAG."
 
 ## Agent
 

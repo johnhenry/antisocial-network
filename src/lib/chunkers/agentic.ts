@@ -3,6 +3,7 @@ import ollama from "ollama";
 import { embed } from "@/lib/ai";
 import { createUnembededSentenceChunker } from "@/lib/chunkers/sentence";
 import { getSettingsObject } from "@/lib/database/settings";
+import consola from "@/lib/util/logging";
 
 const decideBoundary = async (
   currentChunk: string[],
@@ -11,7 +12,7 @@ const decideBoundary = async (
 ): Promise<boolean> => {
   const settings = await getSettingsObject();
 
-  const [repo, model] = ((parameters?.model || settings.modeltools) as string)
+  const [_repo, model] = ((parameters?.model || settings.modeltools) as string)
     .split("::");
 
   const messages = [
@@ -72,15 +73,13 @@ Should a new chunk start? Respond using the provided function.`,
   if (
     !response.message.tool_calls || response.message.tool_calls.length === 0
   ) {
-    console.log("The model didn't use the function. Its response was:");
-    console.log(response.message.content);
+    consola.log("The model didn't use the function. Its response was:");
     return false;
   }
 
   const toolCall = response.message.tool_calls[0];
   if (toolCall.function.name === "decide_new_chunk") {
-    const { isTrue, confidence, explanation } = toolCall.function.arguments;
-    console.log({ isTrue, confidence, explanation });
+    const { isTrue } = toolCall.function.arguments;
     return isTrue;
   }
 
@@ -130,22 +129,3 @@ const createAgenticChunker = ({
 };
 
 export default createAgenticChunker;
-
-// // Example usage
-// async function run() {
-//   const sentences = [
-//     "The quick brown fox jumps over the lazy dog.",
-//     "This sentence is about something completely different.",
-//     "Machine learning is a subset of artificial intelligence.",
-//     "AI systems can process large amounts of data quickly.",
-//     "Natural language processing is a key component of many AI applications.",
-//   ];
-
-//   for await (const chunk of agenticChunker(sentences, 2)) {
-//     console.log("New chunk:");
-//     chunk.forEach((item) => console.log(item.text));
-//     console.log("---");
-//   }
-// }
-
-// run().catch((error) => console.error("An error occurred:", error));

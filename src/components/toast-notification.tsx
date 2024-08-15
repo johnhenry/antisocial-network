@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useCallback, FC, ComponentType } from "react";
 
 export type Message = {

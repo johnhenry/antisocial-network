@@ -5,18 +5,17 @@ const genRandomIntString = () => {
 
 class WriterManager {
   #writers: Record<string, any> = {};
-  #id:number;
+  #id: number;
   constructor() {
     this.#id = Math.random();
   }
-  get id () {
+  get id() {
     return this.#id;
   }
   setWriter(writer: any) {
     const name = genRandomIntString();
 
     this.#writers[name] = writer;
-    // console.log("Writer set", this.#writers, name);
     return name;
   }
   get writers() {
@@ -34,7 +33,6 @@ class WriterManager {
     return false;
   }
   sendToWriters(data: string) {
-    // console.log("Sending to writers", this.#writers, data);
     for (const writer of Object.values(this.writers)) {
       writer.write(`data: ${data}\n\n`);
     }
@@ -48,30 +46,3 @@ const getWriterManager = () => {
 };
 
 export default getWriterManager;
-
-// const writers: Record<string, any> = {};
-
-// export const setWriter = (writer: any) => {
-//   const name = genRandomIntString();
-//   writers[name] = writer;
-//   console.log("Writer set", writers, name);
-//   return name;
-// };
-
-// export const deleteWriter = async (name: string): boolean => {
-//   const writer = writers[name];
-//   if (writer) {
-//     await writer.ready;
-//     await writer.close();
-//     delete writers[name];
-//     return true;
-//   }
-//   return false;
-// };
-
-// export const sendToWriters = (data: string) => {
-//   console.log("Sending to writers", writers, data);
-//   for (const writer of Object.values(writers)) {
-//     writer.write(`data: ${data}\n\n`);
-//   }
-// };

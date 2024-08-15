@@ -4,7 +4,7 @@ import { StringRecordId } from "surrealdb.js";
 import { mapAgentToAgentExt } from "@/lib/util/convert-types";
 
 export const GET: NextRoute<{ id: string }> = async (
-  request: unknown,
+  _request: unknown,
   { params: { id } },
 ) => {
   // view single cron JOB

@@ -10,6 +10,20 @@ import {
   URLPort,
   URLProtocol,
 } from "@/types/url";
+
+export const NEXT_PORT: URLPort = read("CRONMOWER_PORT", {
+  defaultValue: "3000",
+});
+
+/////////
+// Logging
+////////
+
+export const LOG_LEVEL: number = read("LOG_LEVEL", {
+  defaultValue: 0,
+  cast: parseInt,
+});
+
 ////////
 // Cronmower
 ////////
@@ -133,6 +147,7 @@ export const ALL_TABLES = [
   "tool",
   "log",
   "cron",
+  "error",
 ];
 export const [
   TABLE_SETTINGS,
@@ -142,6 +157,7 @@ export const [
   TABLE_TOOL,
   TABLE_LOG,
   TABLE_CRON,
+  TABLE_ERROR,
 ] = ALL_TABLES;
 
 //
@@ -234,7 +250,18 @@ const MODELS_OTHER = read("MODELS_OTHER", {
 });
 
 const MODELS_TOOL = read("MODELS_TOOL", {
-  defaultValue: ["ollama::llama3.1:latest", "ollama::llama3:latest"],
+  defaultValue: ["llama3.1:latest", "llama3:latest"].map((model) =>
+    `ollama::${model}`
+  ).concat([
+    "llama-3.1-405b-reasoning",
+    "llama-3.1-70b-versatile",
+    "llama-3.1-8b-instant",
+    "llama3-70b-8192",
+    "llama3-8b-8192",
+    "mixtral-8x7b-32768",
+    "gemma-7b-it",
+    "gemma2-9b-it",
+  ].map((model) => `groq::${model}`)),
   cast: (s: string) => s.split(","),
 });
 
@@ -281,7 +308,7 @@ export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   logitsAll: undefined,
   lowVram: undefined,
   mainGpu: 0,
-  model: undefined,
+  model: MODEL_BASIC,
   baseUrl: undefined,
   mirostat: 0,
   mirostatEta: 0.1,
@@ -309,6 +336,7 @@ export const DEFAULT_PARAMETERS_AGENT: AgentParameters = {
   useMMap: undefined,
   vocabOnly: undefined,
   format: undefined,
+  seed: -1,
 };
 
 export const SETTINGS_DEFAULT: Setting[] = [
@@ -370,6 +398,13 @@ export const SETTINGS_DEFAULT: Setting[] = [
     label: "Character Limit",
     type: "number",
     defaultValue: CHAR_LIMIT,
+  },
+  {
+    name: "ollamaKeepAlive",
+    label: "Ollama Keep Alive",
+    type: "select",
+    options: ["5m", "10m", "20m", "30m", "1h", "2h", "3h", "4h", "5h"],
+    defaultValue: "20m",
   },
   {
     name: "embedding_vector_size",

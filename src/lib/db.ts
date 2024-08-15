@@ -100,12 +100,6 @@ export const getAll = async (table: string) => {
     await db.close();
   }
 };
-const ensureRecordId = (id: RecordId | StringRecordId | string) => {
-  if (typeof id === "string") {
-    return new StringRecordId(id);
-  }
-  return id;
-};
 
 export const relate = async (
   inn: RecordId | StringRecordId,

@@ -1,3 +1,9 @@
+import { describe, expect, it } from "@jest/globals";
+// describe.skip("agent", () => {
+//   it("should be able to create an agent", () => {
+//     expect(true).toBeTruthy();
+//   });
+// });
 import { createAgent, genCharacter } from "@/lib/database/agent";
 import { deleteEntityById } from "@/lib/database/helpers";
 // tests complain if there are console.logs after they finish

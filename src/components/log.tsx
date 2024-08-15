@@ -2,7 +2,7 @@
 import type { FC, ComponentClass } from "react";
 import type { LogExt } from "@/types/mod";
 import { IconLink } from "@/components/icons";
-import type { HasId, HasTimestamp } from "@/types/misc";
+import type { HasId } from "@/types/misc";
 
 type LogProps = LogExt & {
   Wrapper?: ComponentClass<any> | string;

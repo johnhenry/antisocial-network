@@ -23,7 +23,7 @@ type PostProps = PostExt & {
 import Attachment from "@/components/attachment";
 import { relateExt, unrelateExt } from "@/lib/database/mod";
 
-import TOOLS from "@/tools/descriptors";
+import { descriptorsByName as hashtags } from "@/hashtags/descriptors/mod";
 
 const Post: FC<PostProps> = ({
   id,
@@ -141,13 +141,13 @@ const Post: FC<PostProps> = ({
               : null}
             {tools && tools.length
               ? tools
-                  .map((tool) => TOOLS[tool])
-                  .map((tool) => {
+                  .map((tagname) => hashtags[tagname])
+                  .map((tagname) => {
                     return (
                       <a
-                        key={tool.name}
-                        href={`/tools/`}
-                        title={`#${tool.name}\n${tool.description}`}
+                        key={tagname.name}
+                        href={`/hashtags/`}
+                        title={`#${tagname.name}\n${tagname.description}`}
                       >
                         {<IconTool />}
                       </a>

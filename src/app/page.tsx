@@ -1,21 +1,13 @@
 "use client";
-import DynamicLoader from "@/components/dynamic-loader";
 
 import type { FC, ComponentClass } from "react";
-import type {
-  PostExt,
-  EntityExt,
-  AgentPlusExt,
-  RequiredWith,
-  LogExt,
-} from "@/types/mod";
-import { useEffect, useState } from "react";
+import type { PostExt, EntityExt, AgentPlusExt } from "@/types/mod";
+import { useEffect, useState, Suspense } from "react";
 import useDebouncedEffect from "@/lib/hooks/use-debounce";
-import { getPostsExternal } from "@/lib/database/mod";
+import { getPostExternal, getPostsExternal } from "@/lib/database/mod";
 import InfiniteScroller from "@/components/infinite-scroller";
 import Entity from "@/components/entity";
 import InputBox from "@/components/input-box";
-import { useRouter } from "next/navigation";
 type PageProps = {};
 const SIZE = 4;
 import { getEntitiesExternal } from "@/lib/database/mod";
@@ -23,6 +15,10 @@ import useLocalStorage from "@/lib/hooks/use-localstorage";
 import { MASQUERADE_KEY } from "@/config/mod";
 import Masquerade from "@/components/masquerade";
 import { IconFile, IconAgent, IconPost, IconSearch } from "@/components/icons";
+import orderByTimeStampAndRemoveDuplicates from "@/lib/util/order-and-remove-duplicates";
+import SSEater from "@/components/ss-eater";
+import MessageHandler from "@/components/message-handler";
+import ToastNotification from "@/components/toast-notification";
 
 const SearchOptions = ({
   searchCount,
@@ -103,9 +99,8 @@ const getFetchChildren = (start = 0) => {
   };
 };
 
-import orderByTimeStampAndRemoveDuplicates from "@/lib/util/order-and-remove-duplicates";
+const RELOAD_INTERVAL = 60000;
 const Page: FC<PageProps> = ({}) => {
-  const router = useRouter();
   const [searchText, setSearchText] = useState("");
   const [prependedItems, setPrepended] = useState<PostExt[]>([]);
   const [searchCount, setSearchCount] = useState(8);
@@ -131,7 +126,7 @@ const Page: FC<PageProps> = ({}) => {
     let timeout: ReturnType<typeof setTimeout>;
     const reload = () => {
       setFetchChildren(() => getFetchChildren(0));
-      timeout = setTimeout(reload, 10000);
+      timeout = setTimeout(reload, RELOAD_INTERVAL);
     };
     reload();
     return () => {
@@ -139,49 +134,7 @@ const Page: FC<PageProps> = ({}) => {
     };
   }, []);
 
-  const entityReady = (entity: EntityExt | void) => {
-    if (!entity) {
-      return;
-    }
-    const [type, id] = entity.id.split(":");
-
-    switch (type) {
-      case "log":
-        const {
-          type: logType,
-          metadata: { force, url },
-        } = entity as LogExt & { metadata: { force: boolean; url: string } };
-        switch (logType) {
-          case "redirect": {
-            if (!force && !confirm(`Navigate to ${url}?`)) {
-              return;
-            }
-            if (url.startsWith("http://" || url.startsWith("https://"))) {
-              return (window.location.href = url as string);
-            }
-            return router.push(url as string);
-          }
-        }
-        return;
-      case "error":
-        alert(`Error: ${entity.content}`);
-        break;
-      case "post":
-        const post = entity as PostExt;
-        setPrepended([post]);
-        break;
-      case "file":
-      case "agent":
-        if (confirm(`navigate to new ${type}? (${id})`)) {
-          router.push(`/${type}/${entity.id}`);
-        }
-        break;
-    }
-    // TOOO: add post to scroll list?
-    // can i add some method that allows me to prepend items to the list
-  };
-  const finiteScroll =
-    searchText.trim() || searchPosts || searchFiles || searchAgents;
+  const finiteScroll = searchPosts || searchFiles || searchAgents;
 
   const search = async (
     searchText: string,
@@ -216,62 +169,96 @@ const Page: FC<PageProps> = ({}) => {
   );
 
   return (
-    <article>
-      <Masquerade
-        masquerade={masquerade}
-        setMasquerade={setMasquerade}
-        className="agent-masquerade"
-      />
-      <InputBox
-        Wrapper={"div"}
-        className="input-box"
-        extractText={setSearchText}
-        sourceId={masquerade?.agent.id}
-        entityReady={entityReady}
-      />
-      <SearchOptions
-        searchCount={searchCount}
-        setSearchCount={setSearchCount}
-        searchMin={1}
-        searchMax={100}
-        searchPosts={searchPosts}
-        setSearchPosts={setSearchPosts}
-        searchFiles={searchFiles}
-        setSearchFiles={setSearchFiles}
-        searchAgents={searchAgents}
-        setSearchAgents={setSearchAgents}
-        className="search-options"
-      />
-      {finiteScroll ? (
-        <ul>
-          {searchResults.map((entity) => {
-            return (
-              <Entity
-                key={entity.id}
-                {...entity}
-                masquerade={masquerade}
-                setMasquerade={setMasquerade}
-              />
-            );
-          })}
-        </ul>
-      ) : (
-        <div className="infinite-scroller-window">
-          <InfiniteScroller
-            ChildRenderer={Entity}
-            fetchChildren={fetchChildren}
-            prependedItems={prependedItems}
-            resetPrepended={resetPrepended}
-            childProps={{ masquerade, setMasquerade }}
-            FinalItem={({ children, ...props }) => (
-              <li {...props}>
-                <span className="spinner" />
-              </li>
-            )}
+    <>
+      <article>
+        <Masquerade
+          masquerade={masquerade}
+          setMasquerade={setMasquerade}
+          className="agent-masquerade"
+        />
+        <Suspense fallback={<span className="spinner" />}>
+          <InputBox
+            Wrapper={"div"}
+            className="input-box"
+            extractText={setSearchText}
+            sourceId={masquerade?.agent.id}
           />
-        </div>
-      )}
-    </article>
+        </Suspense>
+        <SearchOptions
+          searchCount={searchCount}
+          setSearchCount={setSearchCount}
+          searchMin={1}
+          searchMax={100}
+          searchPosts={searchPosts}
+          setSearchPosts={setSearchPosts}
+          searchFiles={searchFiles}
+          setSearchFiles={setSearchFiles}
+          searchAgents={searchAgents}
+          setSearchAgents={setSearchAgents}
+          className="search-options"
+        />
+        {finiteScroll ? (
+          <ul>
+            {searchResults.map((entity, key) => {
+              return (
+                <Entity
+                  key={key}
+                  {...entity}
+                  masquerade={masquerade}
+                  setMasquerade={setMasquerade}
+                />
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="infinite-scroller-window">
+            <InfiniteScroller
+              ChildRenderer={Entity}
+              fetchChildren={fetchChildren}
+              prependedItems={prependedItems}
+              resetPrepended={resetPrepended}
+              childProps={{ masquerade, setMasquerade }}
+              FinalItem={({ children, ...props }) => (
+                <li {...props}>
+                  <span className="spinner" />
+                </li>
+              )}
+            />
+          </div>
+        )}
+      </article>
+      <SSEater src="/api/notifications">
+        <MessageHandler
+          map={(item) => {
+            const [type] = item.id.split(":");
+            let text;
+            const id = item.id;
+            const url = `/${type}/${item.id}`;
+            switch (type) {
+              case "error":
+              case "file":
+                return;
+              case "agent":
+                text = `[${item.name}] ${item.content}`;
+                break;
+              case "post":
+                text = `${item.source?.name ? `@${item.source.name}: ` : ""}${
+                  item.content
+                }`;
+                getPostExternal(item.id).then((post) => {
+                  setPrepended([post]);
+                });
+                break;
+              default:
+                return;
+            }
+            return { id, text, url, type };
+          }}
+        >
+          <ToastNotification className="toast-notification" duration={5000} />
+        </MessageHandler>
+      </SSEater>
+    </>
   );
 };
 

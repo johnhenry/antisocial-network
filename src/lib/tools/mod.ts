@@ -1,13 +1,32 @@
-import type { Handler } from "@/types/tools";
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
+
+export const subtraction = tool(
+  ({ minuend, subtrahend }: { minuend: number; subtrahend: number }) =>
+    `${minuend - subtrahend}`,
+  {
+    name: "subtraction",
+    description: "subtract two numbers",
+    schema: z.object({
+      minuend: z
+        .number()
+        .describe("The number from which another is to be subtracted."),
+      subtrahend: z.number().describe(
+        "The number to be subtracted from another.",
+      ),
+    }).required(),
+  },
+);
+
 /**
  * Returns the current time for a given timezone offset.
  * @param offset The timezone offset in hours (e.g., -5 for EST, 1 for CET).
  * @returns The current time as a string in the format "YYYY-MM-DD HH:mm:ss".
  * @example
  * const currentTimeInEST = getCurrentTimeForTimezone(-5);
- * console.log(currentTimeInEST); // Output: current time in EST
  */
-const handler: Handler = ({ offset }: { offset: number }) => {
+
+export const time = tool(({ offset }: { offset: number }) => {
   const now = new Date();
   // Get the UTC time in milliseconds
   const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -21,10 +40,18 @@ const handler: Handler = ({ offset }: { offset: number }) => {
   const hours = String(localTime.getHours()).padStart(2, "0");
   const minutes = String(localTime.getMinutes()).padStart(2, "0");
   const seconds = String(localTime.getSeconds()).padStart(2, "0");
-
   return `The time for UTC${
     offset >= 0 ? "+" : ""
   }${offset} is ${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
+}, {
+  name: "time",
+  description: "Return the current time for a given timezone offset",
+  schema: z.object({
+    offset: z
+      .number()
+      .describe("Timezone offset").default(0),
+  }),
+});
 
-export default handler;
+export { default as weather } from "@/lib/tools/lib/weather/mod";
+export { default as javascript } from "@/lib/tools/lib/javascript/mod";

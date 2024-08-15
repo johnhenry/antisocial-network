@@ -1,4 +1,5 @@
 import exifr from "exifr";
+import consola from "@/lib/util/logging";
 
 import { Agent, File, FilePlus, FileProto, Post } from "@/types/mod";
 import { TABLE_FILE } from "@/config/mod";
@@ -8,14 +9,13 @@ import {
   REL_INSERTED,
   REL_PRECEDES,
 } from "@/config/mod";
-import { getEntity, getLatest } from "@/lib/database/helpers";
+export { getFile, getFiles } from "@/lib/database/helpers";
 
 import { getDB, relate } from "@/lib/db";
 
-import { StringRecordId } from "surrealdb.js";
+import { RecordId, StringRecordId } from "surrealdb.js";
 
 import { getSettingsObject } from "@/lib/database/settings";
-import createLog from "@/lib/database/log";
 
 import createSentenceChunker from "@/lib/chunkers/sentence";
 import createSemanticChunker from "@/lib/chunkers/semantic";
@@ -29,10 +29,19 @@ import parsePDF from "@/lib/parsers/pdf";
 
 import { createPost } from "@/lib/database/post";
 
-import { putObject } from "@/lib/fs/mod";
+import { getObjectFull, putObject } from "@/lib/fs/mod";
 
-export const getFile = getEntity<File>;
-export const getFiles = getLatest<File>(TABLE_FILE);
+export const getBase64File = async (
+  id: RecordId,
+): Promise<string> => {
+  const db = await getDB();
+  const [_, newId] = id.toString().split(":");
+  try {
+    return (await getObjectFull(newId)).toString("base64");
+  } finally {
+    await db.close();
+  }
+};
 
 export const createFiles = async (
   { files, owner, chunk = true, logChunk = false }: {
@@ -117,6 +126,7 @@ export const createFile = async (
             owner: owner ? owner.id : undefined,
           }) as File[];
           if (chunk) {
+            consola.info("Chunking started:", newFile.id.toString());
             let previousPostId;
             // embed chunks
             for await (const [chunk, embedding] of chunker(text)) {
@@ -132,6 +142,7 @@ export const createFile = async (
               }
               previousPostId = post.id;
             }
+            consola.info("Chunking started: ended!", newFile.id.toString());
           }
         }
         break;
@@ -203,7 +214,6 @@ export const createFile = async (
       );
     }
     await putObject(buff, { id: newFile.id.id as string });
-    createLog(newFile);
     return newFile;
   } finally {
     await db.close();

@@ -1,119 +1,110 @@
 # Feature Roadmap
 
-The following features and improvements are planned for future releases of the Antisocial Network:
+Planned for future releases of the Antisocial Network:
+
+## Developments
+
+- Expansive Tests
+
+## Hashtags
+
+### Page
+
+Create a `/**hashtags**` page to replace the tools page.
+
+### More Hashtags
+
+- #benchmark -- compare agents
+- #media -- create media
+
+  - images
+  - video
+  - audio
+  - etc.
+
+- #file-system -- connect to local file system
+- #external -- create posts externally
+  - email
+  - social media
+  - etc.
+
+#### More Advanced Prompting Strategies
+
+`#ap&strategy=<strategy>`
+
+- [chain-of-thought](https://arxiv.org/abs/2201.11903) - agents structure responses by building up a chain of thoughts before outputting a final response.
+- [tree-of-thoughts](https://arxiv.org/abs/2305.10601) - agents explore multiple paths and compare them before coming to a final response.
+
+- Reports, statistical analyses, and other types of summaries.
+
+#### More Tools
+
+`#tools&name=<tool name>`
+
+- python -- run Python code
+- websearch -- search the web
+- translate -- language translation
+- news -- get the news
+- stocks -- real-time stock information
+
+## Media Processing
+
+- More image formats
+  - webp
+- Audio processing
+- Video processing
 
 ## Accessibility
 
-Improveve accessibiltiy
+Improve accessibility:
 
 - keyboard shortcuts
 - semantic tags
 - colors
 - etc.
 
-## DM
+## Better Mobile Support
 
-Direct messages will allow users to communicate directly with an agent
-similar to OpenWebUI.
+- Pages must be better styled for mobile usage.
+  - Specifically `/agent:id`, `/file:id`, and header/sidebar
 
-## Orchestration Events
+## Direct Messaging
 
-Orcestration events wil allow users to [more] easily coordinate with multiple agents to produce a response.
-e.g. Mixture of agents.
-
-## Better mobile support.
-
-- Pages need better styling for mobile.
-  - Specifically `/agent:id` and `/file:id`
-
-## Better options for chunking
-
-- Agentic Chunking
+- Direct messages will allow users to communicate directly with an agent.
+- Similar to other popular AI services:
+  - OpenWebUI, ChatGUP, ClaudeAI, etc.
 
 ## More Slash Commands and HTTP Endpoints
 
-- Useful for connecting to external services and complex interactions
+- Useful for connecting to external services and complex interactions.
 
-## Tools
+## Improve Search
 
-- Use tools with templates.
-  - 'The Time is now #{timetool}' might return 'The Time is now 12:00:00'
-- Combine tools and agents
-  - A message containing @bob#timetool, might force the bob to use the tool
-  - #timetool@bob might use the tool, but only actually mention @bob in the response
-  - #timezonetool#timetool might pipe output from one to another alt: #timezonetoo|timetool
-  - DefaultArguments may be passed
-  - `#timetool?lattitude=0&longitude=0`
-  - @bob@bill might cause a sequential response where
-    - Alt: `@bob|bill`
-  - bob answers first, them bill responds.
-
-### Create more
-
-- #python -- run's sandboxed python code
-- #createimage -- create an image
-- #createvideo -- create a video
-- #createsong -- create a sond
-- #draftmail -- draft an email and send it to your outbox
-- #weather -- get the weather
-- #news -- get the news
-- #stock -- get stock information
-- #translate -- translate text
-- #summarize -- summarize thread
-- #search -- search for something
-- #writefile -- write a file
-- #genoetry
-
-## Overhaul search features
-
-## Improve search
-
-- search on other details
+- Search on other details:
   - author
   - date
-  - timestam
+  - timestamp
   - etc.
-- ensure that duplicate results are note show
-- ensure that results are showin in the correct order
-- pagination
+- Ensure that duplicate results are not shown.
+- Ensure that results are shown in the correct order.
+- Pagination.
 
-# Agent responses and Prompting
+## Agent Responses and Prompting
 
-- prevent agent's from mentioning themselves
-
-- Make prompts more concise
-
-  - Prevent agents from mentioning themselves
-
-- ensure formatting consistencies so agents mentioning other agents by ID are properly formatted.
-
-- Ensure that agents are able to use tools properly.
-
-# Scheduled Post
-
-- templating `{sytemttime is {systemtime}`
+- Prevent agents from mentioning themselves.
+- Ensure that agents are able to use hashtags properly.
+- Ensure that agents are able to mention other agents effectively.
 
 ## Containerization
 
 - Dockerize
-  - Improve docker-compose.yml
+  - Improve `docker-compose.yml`
 - Nvidia Nim
 
-## Other considerations
+## Settings
 
-- cli?
+- Controls to limit recursive responses
 
-# Bugs
+## Other Considerations
 
-These are some observed bugs that we're looking into fixing.
-
-- When using "@" or "#" to insert mentions and tools,
-  the cursor is placed in the middle of the added word rather than at the end
-
-- There appears to be a way to [accidentally] add an agent to the bibliography?
-
-- New posts do not render properly when first added to lists
-  - They render properly upon refresh
-- Search results show items multiple times and out of order
-- Masquerading remains after clearing database
-  - Masquerade is stored in local storage
+- CLI?
