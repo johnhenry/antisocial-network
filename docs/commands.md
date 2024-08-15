@@ -173,7 +173,7 @@ Navigate to a specific URL for debugging purposes.
 Arguments:
 
 - `<url>`: The URL to navigate to
-- `--force`: Force navigation to the URL without popup
+- `--force`: Force navigation to the URL, bypassing popup
 
 ## Notes
 
