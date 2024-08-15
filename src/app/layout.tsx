@@ -70,7 +70,11 @@ const Page: FC<Props> = async ({ children }: Props) => {
                 </span>
                 <span className="collapse-text-portrait">Logs</span>
               </a> */}
-              <a href="/help">
+              <a
+                rel="noopener"
+                href="https://github.com/johnhenry/antisocial-network"
+                target="_blank"
+              >
                 <span className="menu-icon">
                   <IconHelp />
                 </span>

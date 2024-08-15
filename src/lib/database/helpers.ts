@@ -5,6 +5,8 @@ import { StringRecordId } from "surrealdb.js";
 import { TABLE_AGENT, TABLE_FILE, TABLE_LOG, TABLE_POST } from "@/config/mod";
 import renderText from "@/lib/util/render-text";
 import { embed } from "@/lib/ai";
+import addBreakingSpaces from "@/lib/util/add-breaking-spaces";
+
 export const replaceAgentIdWithName = async (
   id: string,
 ): Promise<string | null> => {
@@ -46,7 +48,7 @@ export const replaceContentWithLinks = <
       item.content = item.content.replaceAll(
         new RegExp(`${id}`, "g"),
         useLink
-          ? `<a href="/agent/${id}" title="${mention.content}">${mention.name}</a>`
+          ? `<a href="/agent/${id}" title="${mention.content}">@${mention.name}</a>`
           : `@${mention.name}`,
       );
     }

@@ -19,6 +19,7 @@ import orderByTimeStampAndRemoveDuplicates from "@/lib/util/order-and-remove-dup
 import SSEater from "@/components/ss-eater";
 import MessageHandler from "@/components/message-handler";
 import ToastNotification from "@/components/toast-notification";
+
 const SearchOptions = ({
   searchCount,
   setSearchCount,
@@ -242,16 +243,14 @@ const Page: FC<PageProps> = ({}) => {
                 text = `${item.source?.name ? `@${item.source.name}: ` : ""}${
                   item.content
                 }`;
-                getPostExternal(item.id).then((post) => setPrepended([post]));
+                getPostExternal(item.id).then((post) => {
+                  setPrepended([post]);
+                });
                 break;
               default:
                 return;
             }
-
             return { id, text, url, type };
-          }}
-          onMessage={(message) => {
-            console.log(message);
           }}
         >
           <ToastNotification className="toast-notification" duration={5000} />

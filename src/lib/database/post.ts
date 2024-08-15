@@ -434,7 +434,6 @@ const processContent = (
           dropLog,
           bibliography,
           forward: simultaneous,
-          logCreation: resolved,
           noProcess: true,
         })) as Post;
         resolve(post);
@@ -474,7 +473,7 @@ export const createPost = async (
     dropLog = false,
     bibliography,
     forward = [],
-    logCreation = false,
+    logCreation = true,
     noProcess = false,
   }: {
     embedding?: number[];
@@ -587,9 +586,8 @@ export const createPost = async (
         table: TABLE_POST,
       },
     );
-    if (logCreation) {
-      alertEntity(post, { drop: false });
-    }
+    console.log(hydratedPost.content);
+    alertEntity(hydratedPost, { drop: !logCreation });
     return replaceContentWithLinks(hydratedPost);
   } finally {
     await db.close();

@@ -211,7 +211,7 @@ export const blankPost = async (
       return `${padStart}${exec![0]}${padEnd}`;
     },
   );
-  return blanked;
+  return blanked.trim();
 };
 
 export default processPost;

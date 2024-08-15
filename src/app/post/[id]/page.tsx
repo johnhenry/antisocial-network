@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import Post from "@/components/post";
 import InputBox from "@/components/input-box";
 import { getPostPlusExternal, getPostExternal } from "@/lib/database/mod";
-import { useRouter } from "next/navigation";
 import useLocalStorage from "@/lib/hooks/use-localstorage";
 import { MASQUERADE_KEY } from "@/config/mod";
 import Masquerade from "@/components/masquerade";
@@ -24,7 +23,6 @@ const Page: FC<PageProps> = ({ params }) => {
   const identifier = decodeURIComponent(params.id || "");
   const [postPlus, setPostPlus] = useState<PostPlusExt>();
   const [elicits, setElicits] = useState<PostExt[]>([]);
-  const router = useRouter();
   const [masquerade, setMasquerade] = useLocalStorage<AgentPlusExt | null>(
     MASQUERADE_KEY,
     null // TODO: can this be undefined? I think there may be some wiere interactions with local storage.
@@ -158,9 +156,6 @@ ${item.content}`;
                 return;
             }
             return { id, text, url, type };
-          }}
-          onMessage={(message) => {
-            console.log(message);
           }}
         >
           <ToastNotification className="toast-notification" duration={5000} />

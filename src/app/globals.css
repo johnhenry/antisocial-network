@@ -1178,8 +1178,9 @@ details {
   z-index: 1000;
   background-color: transparent;
   min-width: 128px;
-  max-width: 75%;
+  max-width: 256px;
   gap: var(--size-gap-inner);
+  font-size: 0.75rem;
 
   > * {
     margin-top: -0px;

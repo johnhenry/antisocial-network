@@ -9,6 +9,7 @@ import hash from "@/lib/util/hash";
 import { tail } from "@/lib/util/forwards";
 import { Handler } from "@/hashtags/types";
 import consola from "@/lib/util/logging";
+import { blankPost } from "@/lib/util/parse-post-content";
 
 const DEFAULT_ROUNDS = 1;
 const DEFAULT_STRATEGY = "mixture-of-agents";
@@ -16,7 +17,7 @@ const indent = indenturedServant(2);
 const generatePrompt = (text: string) =>
   `# Enhanced Synthesized Response Prompt
 
-You have been provided with a set of responses from various sources to a query:
+You have been provided with a set of responses from various sources to a message:
 
 ${text}
 
@@ -31,9 +32,11 @@ Guidelines:
 - Do not simply replicate the given answers.
 - Ensure your response is well-structured, coherent, and accurate.
 - When sources conflict, explain the discrepancy and justify your chosen stance.
-- If information is uncertain or speculative, clearly indicate this in your response.
+- If information is uncertain or speculative, clearly indicate this in your
+response.
 - Stay within the scope of the provided information. If critical information is missing, state this clearly.
 - Do not add an introduction or conclusion to your response.
+- Format your response as a direct response to the given message.
 
 Evaluation Criteria:
 - Accuracy and reliability of information
@@ -42,18 +45,26 @@ Evaluation Criteria:
 - Appropriate handling of conflicting or uncertain information
 - Proper attribution to sources when necessary
 
+Format:
+- Your response should come in two parts
+  – <synthesized response>: the synthesized respose as described.
+  - <reasoning and justification>: Your reasoning and justififcation for the synthesized response, including, but not limited to the following:
+    - Justification for your synthesis
+    - discussion of any conflicting information
+    - Explanation of uncertainty if present
+    - References to specific sources where relevant
+
 Format your response as follows:
 \`\`\`
-<Your synthesized response>
+<synthesized response>
 
-(<Your reasoning, including:
- - Justification for your synthesis
- - Discussion of any conflicting information
- - Explanation of uncertainty if present
- - References to specific sources where relevant>)
+# Reasoning and Justification
+
+<reasoning and justification>
+
 \`\`\`
 
-Responses from models:
+Responses from sources:
 
 \`
 `;
@@ -62,6 +73,7 @@ export const advancedPrompting: Handler = (
   {
     source,
     target,
+    original,
     dehydrated,
     simultaneous,
     params,
@@ -150,7 +162,9 @@ ${indent`id:${id!}\n\n${content!}`}`
     )
       .join("\n\n");
 
-    const prompt = generatePrompt(indent`${dehydrated}`);
+    const prompt = generatePrompt(
+      indent`${await blankPost(original, { mentions: true, hashtags: true })}`,
+    );
 
     let response = await summarize(
       prompt,
