@@ -389,7 +389,7 @@ const processContent = (
     const db = await getDB();
     try {
       let tools: string[] = [];
-      let post;
+
       let {
         original,
         dehydrated,
@@ -401,6 +401,23 @@ const processContent = (
         sequential?: Forward[];
         simultaneous?: Forward[];
       } = await parsePostContent(content, forward);
+      const CONTEXT: any = {};
+      CONTEXT.tools = tools;
+      CONTEXT.original = original;
+      CONTEXT.dehydrated = dehydrated;
+      CONTEXT.sequential = sequential;
+      CONTEXT.simultaneous = simultaneous;
+      CONTEXT.embedding = embedding;
+      CONTEXT.source = source;
+      CONTEXT.files = files;
+      CONTEXT.target = target;
+      CONTEXT.streaming = streaming;
+      CONTEXT.depth = depth;
+      CONTEXT.dropLog = dropLog;
+      CONTEXT.bibliography = bibliography;
+      CONTEXT.forward = forward;
+      CONTEXT.dehydrated = dehydrated;
+      CONTEXT.original = original;
       for (let [tagname] of sequential) {
         tagname = tagname.slice(1);
         const [t, query] = (tagname as string).split("?");
@@ -409,59 +426,39 @@ const processContent = (
           continue;
         }
         const { handler, name } = hashtag;
-        const result = await handler({
-          embedding,
-          source,
-          files,
-          tools,
-          target,
-          streaming,
-          depth,
-          dropLog,
-          bibliography,
-          forward,
-          dehydrated,
-          original,
-          simultaneous,
-          name,
-          query,
-        });
-        ({
-          post,
-          dehydrated,
-          simultaneous = [],
-          files = [],
-          tools = [],
-        } = result);
-        if (post) {
-          resolve(post);
+        CONTEXT.name = name;
+        CONTEXT.query = query;
+        await handler(CONTEXT);
+        if (CONTEXT.post) {
+          resolve(CONTEXT.post);
         }
       }
-      if (dehydrated || files.length) {
-        post = (await createPost(dehydrated, {
-          embedding,
-          source,
-          files,
-          tools: [],
-          target,
-          streaming,
-          depth,
-          dropLog,
-          bibliography,
-          forward: simultaneous,
+      if (CONTEXT.dehydrated || CONTEXT.files.length) {
+        CONTEXT.post = (await createPost(CONTEXT.dehydrated, {
+          embedding: CONTEXT.embedding,
+          source: CONTEXT.source,
+          files: CONTEXT.files,
+          tools: CONTEXT.tools,
+          target: CONTEXT.target,
+          streaming: CONTEXT.streaming,
+          depth: CONTEXT.depth,
+          dropLog: CONTEXT.dropLog,
+          bibliography: CONTEXT.bibliography,
+          forward: CONTEXT.simultaneous,
           noProcess: true,
         })) as Post;
-        resolve(post);
+        resolve(CONTEXT.post);
+        CONTEXT.target = CONTEXT.post;
       }
-      for (const sim of simultaneous) {
+      for (const sim of simultaneous || []) {
         const source = await stringIdToAgent(sim[0] as string);
         const forward = tail(sim);
-        createPost(tools, {
+        createPost(CONTEXT.tools, {
           source,
-          target: post,
-          depth,
-          streaming,
-          bibliography,
+          target: CONTEXT.target,
+          depth: CONTEXT.depth,
+          streaming: CONTEXT.streaming,
+          bibliography: CONTEXT.bibliography,
           forward,
         });
       }

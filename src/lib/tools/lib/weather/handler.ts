@@ -5,6 +5,7 @@ import { OpenMeteoSchema } from "@/lib/tools/lib/weather/open-meteo-schema";
 import { OpenMeteoClient } from "@/lib/tools/lib/weather/open-meteo-client";
 
 const fetchWeather = async (params: OpenMeteoParams) => {
+  console.log("WEATHER", params);
   try {
     // Validate the input parameters
     const validParams = OpenMeteoSchema.parse(params);

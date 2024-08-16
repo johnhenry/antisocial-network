@@ -58,7 +58,8 @@ Format your response as follows:
 \`\`\`
 <synthesized response>
 
-# Reasoning and Justification
+---
+Reasoning and Justification
 
 <reasoning and justification>
 
@@ -70,7 +71,9 @@ Responses from sources:
 `;
 
 export const advancedPrompting: Handler = (
-  {
+  CONTEXT,
+) => {
+  const {
     source,
     target,
     original,
@@ -82,36 +85,37 @@ export const advancedPrompting: Handler = (
     bibliography,
     name,
     files,
-  },
-) => {
+  } = CONTEXT;
+
   return new Promise(async (rs, rj) => {
     // Because the function may continue after running, we wrap int in a promise and ensure that resolve/reject is only called once.
     let resolved = false;
-    const resolve = (post: any) => {
+    const resolve = (something?: unknown) => {
       if (!resolved) {
-        rs(post);
+        rs(something);
         resolved = true;
       }
     };
-    const reject = (e: unknown) => {
+    const reject = (e?: unknown) => {
       if (!resolved) {
         rj(e);
         resolved = true;
       }
     };
-    let post;
-    const forwards = [];
-    const mentions = [];
-    for (const sim of simultaneous) {
-      const agent = await stringIdToAgent(sim[0] as string);
-      mentions.push(agent);
-      const forward = tail(sim);
-      forwards.push(forward);
-    }
-    const createdFiles = await createFiles({ files, owner: source });
     const db = await getDB();
+
     try {
-      [post] = await db.create(TABLE_POST, {
+      const forwards = [];
+      const mentions = [];
+      for (const sim of simultaneous) {
+        const agent = await stringIdToAgent(sim[0] as string);
+        mentions.push(agent);
+        const forward = tail(sim);
+        forwards.push(forward);
+      }
+      const createdFiles = await createFiles({ files, owner: source });
+
+      const [post] = await db.create(TABLE_POST, {
         timestamp: Date.now(),
         content: dehydrated,
         embedding: await embed(dehydrated as string),
@@ -122,85 +126,91 @@ export const advancedPrompting: Handler = (
         files: createdFiles.map((x) => x.id),
         mentions: mentions.map((x) => x.id),
       }) as Post[];
-      resolve({ post });
-    } catch (e) {
-      reject(e);
-      throw e;
-    } finally {
-      await db.close();
-    }
+      CONTEXT.post = post;
+      resolve();
 
-    const params = Object.fromEntries(new URLSearchParams(query).entries());
+      const params = Object.fromEntries(new URLSearchParams(query).entries());
 
-    let rounds = Number(params.rounds) || DEFAULT_ROUNDS;
-    const strategy = params.strategy || DEFAULT_STRATEGY;
-    if (strategy !== DEFAULT_STRATEGY) {
-      throw new Error(`Invalid strategy: ${strategy}`);
-    }
+      let rounds = Number(params.rounds) || DEFAULT_ROUNDS;
+      const strategy = params.strategy || DEFAULT_STRATEGY;
+      if (strategy !== DEFAULT_STRATEGY) {
+        throw new Error(`Invalid strategy: ${strategy}`);
+      }
 
-    const layers = [];
-    for (let i = 0; i < mentions.length; i++) {
-      const source = mentions[i];
-      const forward = forwards[i];
-      const pendingPost = createPost([], {
+      const layers = [];
+      for (let i = 0; i < mentions.length; i++) {
+        const source = mentions[i];
+        const forward = forwards[i];
+        const pendingPost = createPost([], {
+          source,
+          target: post,
+          depth,
+          streaming,
+          bibliography,
+          forward,
+        });
+        layers.push(pendingPost.then((pendingPost) => {
+          return [pendingPost, source];
+        }));
+      }
+      const responses = (await Promise.all(layers)).map(([post, agent]) => [
+        (post as Post).content,
+        (agent as Agent).id.toString(),
+      ]);
+      const text = responses.map(([content, id], index) =>
+        `Response ${index}:
+${indent`id:${id!}\n\n${content!}`}`
+      )
+        .join("\n\n");
+
+      const prompt = generatePrompt(
+        indent`${await blankPost(original, {
+          mentions: true,
+          hashtags: true,
+        })}`,
+      );
+
+      const response = [
+        await summarize(
+          prompt,
+          text,
+        ),
+      ];
+
+      rounds -= 1;
+      if (rounds > 0) {
+        response.push(`${"\n".repeat(4)}${"-".repeat(2 ** 5)}${"\n".repeat(4)}
+Think about how you would improve this response and give what you
+
+#${name}?rounds=${rounds}&strategy=${strategy}
+${mentions.map((x) => x.id.toString()).join(" ")}`);
+      }
+
+      const res = await createPost(response.join(""), {
         source,
         target: post,
         depth,
         streaming,
         bibliography,
-        forward,
+        forward: [],
+        // forward: forwards.reduce((a, b) => merge(a as Forward, b as Forward), []),
       });
-      layers.push(pendingPost.then((pendingPost) => {
-        return [pendingPost, source];
-      }));
-    }
-    const responses = (await Promise.all(layers)).map(([post, agent]) => [
-      (post as Post).content,
-      (agent as Agent).id.toString(),
-    ]);
-    const text = responses.map(([content, id], index) =>
-      `Response ${index}:
-${indent`id:${id!}\n\n${content!}`}`
-    )
-      .join("\n\n");
 
-    const prompt = generatePrompt(
-      indent`${await blankPost(original, { mentions: true, hashtags: true })}`,
-    );
-
-    let response = await summarize(
-      prompt,
-      text,
-    );
-
-    rounds -= 1;
-    if (rounds > 0) {
-      response += `${"\n".repeat(4)}${"-".repeat(2 ** 5)}${"\n".repeat(4)}
-Think about how you would improve this response and give what you
-
-#${name}?rounds=${rounds}&strategy=${strategy}
-${mentions.map((x) => x.id.toString()).join(" ")}`;
-    }
-
-    const res = await createPost(response, {
-      source,
-      target: post,
-      depth,
-      streaming,
-      bibliography,
-      forward: [],
-      // forward: forwards.reduce((a, b) => merge(a as Forward, b as Forward), []),
-    });
-
-    if (rounds > 0) {
-      if (rounds === 1) {
-        console.info("Final round");
+      if (rounds > 0) {
+        if (rounds === 1) {
+          console.info("Final round");
+        } else {
+          consola.info(`${rounds} rounds left.`);
+        }
+        console.info((res as Post).content);
       } else {
-        consola.info(`${rounds} rounds left.`);
+        consola.info("Continuing");
       }
-      console.info((res as Post).content);
-    } else {
-      consola.info("Continuing");
+    } catch (e) {
+      reject(e);
+      throw e;
+    } finally {
+      await db.close();
     }
   });
 };

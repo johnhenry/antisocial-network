@@ -1,5 +1,5 @@
 "use server";
-import { ALL_TABLES } from "@/config/mod";
+import { DB_NAMESPACE } from "@/config/mod";
 import type {
   Agent,
   AgentExt,
@@ -376,9 +376,7 @@ export const cronStateExternal = (
 export const clearDB = async () => {
   const db = await getDB();
   try {
-    for (const table of ALL_TABLES) {
-      await db.delete(table);
-    }
+    await db.query(`REMOVE NAMESPACE ${DB_NAMESPACE}`);
   } finally {
     await db.close();
   }

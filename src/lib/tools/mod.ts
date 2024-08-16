@@ -2,8 +2,10 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
 export const subtraction = tool(
-  ({ minuend, subtrahend }: { minuend: number; subtrahend: number }) =>
-    `${minuend - subtrahend}`,
+  ({ minuend, subtrahend }: { minuend: number; subtrahend: number }) => {
+    console.log("Subtraction Used!");
+    return `${minuend - subtrahend}`;
+  },
   {
     name: "subtraction",
     description: "subtract two numbers",

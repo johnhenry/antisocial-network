@@ -16,7 +16,6 @@ import { PROMPTS_SUMMARIZE } from "@/lib/templates/static";
 import { SIZE_EMBEDDING_VECTOR } from "@/config/mod";
 import { createLogError } from "@/lib/database/log";
 import consola, { LogTable } from "@/lib/util/logging";
-import { renderChatPromptTemplate } from "@/lib/util/render-templates";
 import * as tools from "@/lib/tools/mod";
 
 type Invoker =
@@ -99,14 +98,11 @@ export const respond = async (
         invoker = new ChatOllama(arg);
       }
     }
-
+    consola.start(`Starting inference using ${repo}::${model}`);
     const prompt = ChatPromptTemplate.fromMessages(messages);
+    consola.info(await prompt.format(invocation));
     const chain = prompt.pipe(
       invoker as RunnableLike,
-    );
-    consola.start(
-      "Starting inference ",
-      await renderChatPromptTemplate(messages, invocation),
     );
     if (toolNames.length) {
       const boundTools: any[] = [];
@@ -117,7 +113,7 @@ export const respond = async (
           const tool: any = tools[toolName] as any;
           if (tool) {
             boundTools.push(tool);
-            consola.start(`${toolName} bound`);
+            consola.start(`Tool: ${toolName} bound`);
           }
         }
         (invoker as ChatOllama).bindTools(boundTools);

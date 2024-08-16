@@ -20,7 +20,7 @@ export const NEXT_PORT: URLPort = read("CRONMOWER_PORT", {
 ////////
 
 export const LOG_LEVEL: number = read("LOG_LEVEL", {
-  defaultValue: 0,
+  defaultValue: 999,
   cast: parseInt,
 });
 
@@ -250,9 +250,11 @@ const MODELS_OTHER = read("MODELS_OTHER", {
 });
 
 const MODELS_TOOL = read("MODELS_TOOL", {
-  defaultValue: ["llama3.1:latest", "llama3:latest"].map((model) =>
-    `ollama::${model}`
-  ).concat([
+  defaultValue: ["llama3.1:latest", "llama3:latest", "mistral:latest"].map((
+    model,
+  ) => `ollama::${model}`).concat([
+    "llama3-groq-70b-8192-tool-use-preview",
+    "llama3-groq-8b-8192-tool-use-preview",
     "llama-3.1-405b-reasoning",
     "llama-3.1-70b-versatile",
     "llama-3.1-8b-instant",

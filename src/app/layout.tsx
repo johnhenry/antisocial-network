@@ -31,6 +31,7 @@ const Page: FC<Props> = async ({ children }: Props) => {
       <head>
         <meta name="charset" content="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/logo-thick.svg" sizes="any" />
         <style dangerouslySetInnerHTML={{ __html: criticalCSS }} />
       </head>
       <body>

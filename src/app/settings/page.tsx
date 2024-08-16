@@ -78,14 +78,14 @@ const Page = () => {
     alert("settings updated!");
   };
   const submitResetDatabase = async () => {
-    const CONFIRMATION_WORD = "RESET";
+    const CONFIRMATION_WORD = Math.random().toString().slice(2).substring(0, 4);
     if (
       !(
         CONFIRMATION_WORD ===
         prompt(`Type "${CONFIRMATION_WORD}" to confirm database reset`)
       )
     ) {
-      return alert(`Invalid confirmation word. Database will not be reset.`);
+      return alert(`Confirmation falied. Database will not be reset.`);
     }
 
     if (
@@ -121,13 +121,13 @@ const Page = () => {
         Submit
       </button>
       <hr />
-      <h2>Reset Database</h2>
+      <h2>Reset Database Namespace</h2>
       <p>
         Resetting the database may cause unforseen consequences. Please be
         careful before deleting.
       </p>
       <button type="button" onClick={submitResetDatabase}>
-        ⚠️ Reset Database ⚠️
+        ⚠️ Reset ⚠️
       </button>
       <hr />
     </article>
