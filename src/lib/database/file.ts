@@ -133,6 +133,7 @@ export const createFile = async (
               const post = await createPost(chunk, {
                 embedding,
                 dropLog: !logChunk,
+                noProcess: true,
               }) as Post;
               await relate(newFile.id, REL_CONTAINS, post.id);
               if (previousPostId) {

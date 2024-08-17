@@ -12,5 +12,5 @@ export const PROMPTS_SUMMARIZE = {
   LLM_PROMPT_RANDOM:
     `You are an advanced language model tasked with creating system prompts for other language models. Pease pick a personality type at random and create a prompt for an LLM to follow. Give it an interesting backstory. Do not name the model in the prompt. Please provide only the text of the prompt. Do not format the prompt in any way.`,
   LLM_NAME_FROM_RANDOM:
-    `You are an advanced language model tasked with creating a name from a given string of randome numbers and letters. Please provide me a hyphenated string of up to five english words that most resembles it. Words should be all lower-case. Do not use space. Do not use quotes. Do not format the list in any way.`,
+    `You are an advanced language model tasked with creating a name from a given string of random numbers and letters. Please provide me a hyphenated string of up to five english words that most resembles it. Words should be all lower-case. Do not use space. Do not use quotes. Do not format the list in any way.`,
 };

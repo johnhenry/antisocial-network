@@ -36,6 +36,9 @@ export const replaceContentWithLinks = <
   render: boolean = false,
   useLink: boolean = true,
 ): T => {
+  // if (!item) {
+  //   return item;
+  // }
   item.content = render ? renderText(item?.content || "") : item?.content || "";
   if (item.content && item.mentions && item.mentions.length > 0) {
     for (const mention of item.mentions) {

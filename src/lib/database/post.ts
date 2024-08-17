@@ -123,10 +123,10 @@ export const getRelevant = async ({
 }): Promise<Post[]> => {
   const queries = [];
   queries.push(
-    `SELECT content, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM ${TABLE_POST} WHERE <-${REL_CONTAINS}<-${TABLE_FILE}<-${REL_BOOKMARKS}<-(${TABLE_AGENT} WHERE id = $id) AND dist > $threshold ORDER BY dist DESC LIMIT $limit`,
+    `SELECT id, content, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM ${TABLE_POST} WHERE <-${REL_CONTAINS}<-${TABLE_FILE}<-${REL_BOOKMARKS}<-(${TABLE_AGENT} WHERE id = $id) AND dist > $threshold ORDER BY dist DESC LIMIT $limit`,
   );
   queries.push(
-    `SELECT content, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM ${TABLE_POST} WHERE <-${REL_REMEMBERS}<-(${TABLE_AGENT} WHERE id = $id) AND dist > $threshold ORDER BY dist DESC LIMIT $limit`,
+    `SELECT id, content, vector::similarity::cosine(embedding, $embedded) AS dist OMIT embedding FROM ${TABLE_POST} WHERE <-${REL_REMEMBERS}<-(${TABLE_AGENT} WHERE id = $id) AND dist > $threshold ORDER BY dist DESC LIMIT $limit`,
   );
 
   const db = await getDB();
@@ -443,7 +443,9 @@ const processContent = (
           streaming: CONTEXT.streaming,
           depth: CONTEXT.depth,
           dropLog: CONTEXT.dropLog,
-          bibliography: CONTEXT.bibliography,
+          bibliography: CONTEXT.bibliography
+            ? CONTEXT.bibliography.filter(Boolean)
+            : undefined,
           forward: CONTEXT.simultaneous,
           noProcess: true,
         })) as Post;
@@ -458,7 +460,9 @@ const processContent = (
           target: CONTEXT.target,
           depth: CONTEXT.depth,
           streaming: CONTEXT.streaming,
-          bibliography: CONTEXT.bibliography,
+          bibliography: CONTEXT.bibliography
+            ? CONTEXT.bibliography.filter(Boolean)
+            : undefined,
           forward,
         });
       }

@@ -66,7 +66,6 @@ export const GET = async (request: NextRequest, options: GETOptions) => {
       },
     });
   } catch (error) {
-    ``;
     console.error("ERROR", error);
     return new Response("Not found.", { status: 404 });
   }
