@@ -342,27 +342,6 @@ export const stringIdToAgent = async (id: string): Promise<Agent> => {
   }
 };
 
-const firstNowRestLater = async (
-  iterator: AsyncIterator<any>,
-): Promise<[any | null, any[]]> => {
-  const unprocessed: any[] = [];
-  let value: any, done: boolean | undefined;
-  do {
-    ({ value, done } = await iterator.next());
-  } while (!(done || value));
-  const firstValue: any | null = value || null;
-  setTimeout(async () => {
-    do {
-      ({ value, done } = await iterator.next());
-      if (value) {
-        unprocessed.push(value);
-      }
-    } while (!done);
-    unprocessed.push(null);
-  });
-  return [firstValue, unprocessed];
-};
-
 const processContent = (
   content: string,
   {
@@ -410,7 +389,7 @@ const processContent = (
     const db = await getDB();
     try {
       let tools: string[] = [];
-      let post;
+
       let {
         original,
         dehydrated,
@@ -449,13 +428,13 @@ const processContent = (
         const { handler, name } = hashtag;
         CONTEXT.name = name;
         CONTEXT.query = query;
-        [post] = await firstNowRestLater(await handler(CONTEXT));
-        if (post) {
-          resolve(post);
+        await handler(CONTEXT);
+        if (CONTEXT.post) {
+          resolve(CONTEXT.post);
         }
       }
-      if (!post) {
-        post = (await createPost(CONTEXT.dehydrated, {
+      if (CONTEXT.dehydrated || CONTEXT.files.length) {
+        CONTEXT.post = (await createPost(CONTEXT.dehydrated, {
           embedding: CONTEXT.embedding,
           source: CONTEXT.source,
           files: CONTEXT.files,
@@ -465,24 +444,23 @@ const processContent = (
           depth: CONTEXT.depth,
           dropLog: CONTEXT.dropLog,
           bibliography: CONTEXT.bibliography,
-          // forward: CONTEXT.simultaneous,
+          forward: CONTEXT.simultaneous,
           noProcess: true,
         })) as Post;
-        resolve(post);
+        resolve(CONTEXT.post);
+        CONTEXT.target = CONTEXT.post;
       }
-      if (post && CONTEXT.simultaneous && CONTEXT.simultaneous.length) {
-        for (const sim of CONTEXT.simultaneous || []) {
-          const source = await stringIdToAgent(sim[0] as string);
-          const forward = tail(sim);
-          createPost(CONTEXT.tools, {
-            source,
-            target: post,
-            depth: CONTEXT.depth,
-            streaming: CONTEXT.streaming,
-            bibliography: CONTEXT.bibliography,
-            forward,
-          });
-        }
+      for (const sim of simultaneous || []) {
+        const source = await stringIdToAgent(sim[0] as string);
+        const forward = tail(sim);
+        createPost(CONTEXT.tools, {
+          source,
+          target: CONTEXT.target,
+          depth: CONTEXT.depth,
+          streaming: CONTEXT.streaming,
+          bibliography: CONTEXT.bibliography,
+          forward,
+        });
       }
     } catch (e) {
       reject(e);

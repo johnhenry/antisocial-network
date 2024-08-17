@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const subtraction = tool(
   ({ minuend, subtrahend }: { minuend: number; subtrahend: number }) => {
+    console.log("Subtraction Used!");
     return `${minuend - subtrahend}`;
   },
   {
