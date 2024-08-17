@@ -454,6 +454,15 @@ const processContent = (
           resolve(post);
         }
       }
+      const ms: any[] = [];
+      if (CONTEXT.simultaneous && CONTEXT.simultaneous.length) {
+        for (const sim of CONTEXT.simultaneous) {
+          const source = await stringIdToAgent(sim[0] as string);
+          const forward = tail(sim);
+          ms.push([source, forward]);
+        }
+      }
+
       if (!post) {
         post = (await createPost(CONTEXT.dehydrated, {
           embedding: CONTEXT.embedding,
@@ -465,15 +474,14 @@ const processContent = (
           depth: CONTEXT.depth,
           dropLog: CONTEXT.dropLog,
           bibliography: CONTEXT.bibliography,
-          // forward: CONTEXT.simultaneous,
+          // forward: ms.map(([source]) => source.toString()),
+          forward: CONTEXT.simultaneous,
           noProcess: true,
         })) as Post;
         resolve(post);
       }
-      if (post && CONTEXT.simultaneous && CONTEXT.simultaneous.length) {
-        for (const sim of CONTEXT.simultaneous || []) {
-          const source = await stringIdToAgent(sim[0] as string);
-          const forward = tail(sim);
+      if (post && ms.length) {
+        for (const [source, forward] of CONTEXT.simultaneous || []) {
           createPost(CONTEXT.tools, {
             source,
             target: post,
@@ -752,6 +760,7 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
 
     if (post.target) {
       post.target = replaceContentWithLinks(post.target);
+      // delete post.target.embedding;
     }
 
     const obj: PostPlus = {
@@ -768,6 +777,7 @@ export const getPostPlus = async (id: StringRecordId): Promise<PostPlus> => {
       remembers,
       container,
     };
+    // console.log(JSON.stringify(obj, null, 2));
     return obj;
   } finally {
     await db.close();
