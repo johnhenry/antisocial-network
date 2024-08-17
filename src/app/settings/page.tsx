@@ -79,21 +79,14 @@ const Page = () => {
   };
   const submitResetDatabase = async () => {
     const CONFIRMATION_WORD = Math.random().toString().slice(2).substring(0, 4);
-    if (
-      !(
-        CONFIRMATION_WORD ===
-        prompt(`Type "${CONFIRMATION_WORD}" to confirm database reset`)
-      )
-    ) {
-      return alert(`Confirmation falied. Database will not be reset.`);
-    }
-
-    if (
-      !confirm(
-        "Please confirm one final time. There will be no chances to undo this action. Are you sure you want to reset the database?"
-      )
-    ) {
+    const CONFIRMATION_RESPONSE = prompt(
+      `Reseting the database can cause unintended behavior.\nThere will be no chances to undo this action.\nIf you sure you want to reset the database, type "${CONFIRMATION_WORD}".`
+    );
+    if (!CONFIRMATION_RESPONSE?.trim()) {
       return;
+    }
+    if (!(CONFIRMATION_WORD === CONFIRMATION_RESPONSE)) {
+      return alert(`Confirmation falied. Database will not be reset.`);
     }
 
     await clearDB();

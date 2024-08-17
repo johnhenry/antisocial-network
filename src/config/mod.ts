@@ -250,7 +250,12 @@ const MODELS_OTHER = read("MODELS_OTHER", {
 });
 
 const MODELS_TOOL = read("MODELS_TOOL", {
-  defaultValue: ["llama3.1:latest", "llama3:latest", "mistral:latest"].map((
+  defaultValue: [
+    "llama3.1:latest",
+    "llama3:latest",
+    "mistral:latest",
+    "mistral-nemo:latest",
+  ].map((
     model,
   ) => `ollama::${model}`).concat([
     "llama3-groq-70b-8192-tool-use-preview",
