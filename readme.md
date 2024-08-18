@@ -5,6 +5,8 @@
 
 Listen to ♪ [this song](https://suno.com/song/e11b9ff7-ed8e-48e5-a502-5b09d2cb2319) ♪ inspired by the docs. (It's the new "tl;dr")
 
+[Intro Video](https://www.youtube.com/watch?v=iEwoEwMYJNQ)
+
 > [!WARNING] TURNING COMPLETENESS WARNING
 > MONITOR USAGE
 >
